@@ -1,4 +1,4 @@
-﻿// ================================================================
+// ================================================================
 
 // KENSWORD CHRONICLES â€” Portal JS
 
@@ -995,13 +995,7 @@ async function loadCharactersTab() {
     }
 
     keys.forEach(uid => {
-
       const char = ALL_CHARACTERS[uid].character || {};
-
-    keys.forEach(uid => {
-
-      const char = ALL_CHARACTERS[uid].character || {};
-
       const name = char.name || 'Desconhecido';
 
       const avatar = char.avatar || 'Photos/demihuman.webp';
