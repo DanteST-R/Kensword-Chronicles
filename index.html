@@ -254,12 +254,38 @@
           <div class="form-section-title">Elementos</div>
           <div class="unique-ability-box">
             <div class="field-group">
-              <label for="reg-element">Elementos Elementais — Escolha um inicial</label>
-              <select id="reg-element">
+              <label for="reg-element">Elemento Inicial — Escolha seu principal</label>
+              <select id="reg-element" onchange="onElementChange()">
                 <option value="">— Escolha seu elemento —</option>
-                <option>🔥 Fogo</option><option>💧 Água</option>
-                <option>🌍 Terra</option><option>🌬️ Vento</option>
+                <optgroup label="Elementos Básicos">
+                  <option value="Fogo">🔥 Fogo</option>
+                  <option value="Água">💧 Água</option>
+                  <option value="Terra">🌍 Terra</option>
+                  <option value="Vento">🌬️ Vento</option>
+                  <option value="Gelo">❄️ Gelo</option>
+                </optgroup>
+                <optgroup label="Elementos Arcanos">
+                  <option value="Planta">🌿 Planta</option>
+                  <option value="Mineral">💎 Mineral</option>
+                  <option value="Relâmpago">⚡ Relâmpago</option>
+                  <option value="Luz">✨ Luz</option>
+                  <option value="Sombra">🌑 Sombra</option>
+                  <option value="Dimensional">🌌 Dimensional</option>
+                </optgroup>
+                <optgroup label="Elementos Místicos">
+                  <option value="Sagrado">🕊️ Sagrado</option>
+                  <option value="Trevas">🦇 Trevas</option>
+                </optgroup>
+                <optgroup label="Elementos Supremos">
+                  <option value="Chaos" disabled>🕳️ Chaos (Primordial - Bloqueado)</option>
+                  <option value="Khosmos" disabled>🌌 Khosmos (Primordial - Bloqueado)</option>
+                </optgroup>
               </select>
+              <div id="element-preview" style="display:none; margin-top:0.8rem; padding:1rem; border:1px solid var(--wood-plank); border-radius:6px; background:rgba(0,0,0,0.15);">
+                <div id="el-prev-title" style="font-family:'Cinzel',serif; font-size:1.1rem; font-weight:bold; color:var(--gold);"></div>
+                <div id="el-prev-traits" style="font-style:italic; font-size:0.85rem; color:#aaa; margin-bottom:0.5rem;"></div>
+                <div id="el-prev-desc" style="font-size:0.9rem; line-height:1.4;"></div>
+              </div>
             </div>
             <div class="field-row">
               <div class="field-group"><label>Elementos Arcanos <span class="admin-only-badge">Admin</span></label><input class="field-readonly" type="text" value="— desbloqueado futuramente —" readonly></div>
@@ -342,6 +368,7 @@
   <button class="nav-tab active" onclick="showTab('history')" id="tab-history"><span class="nav-icon">📜</span>História</button>
   <button class="nav-tab" onclick="showTab('races')" id="tab-races"><span class="nav-icon">🧬</span>Raças</button>
   <button class="nav-tab" onclick="showTab('map')" id="tab-map"><span class="nav-icon">🗺️</span>Continentes</button>
+  <button class="nav-tab" onclick="showTab('elements')" id="tab-elements"><span class="nav-icon">✨</span>Elementos</button>
   <button class="nav-tab" onclick="showTab('characters')" id="tab-characters"><span class="nav-icon">🗡️</span>Personagens</button>
   <button class="nav-tab" onclick="showTab('orgs')" id="tab-orgs"><span class="nav-icon">🏰</span>Organizações</button>
   <button class="nav-tab" onclick="showTab('monsters')" id="tab-monsters"><span class="nav-icon">👾</span>Monstros</button>
@@ -381,6 +408,146 @@
         <p style="font-family:'Cinzel',serif;font-size:0.8rem;color:var(--wood-plank);margin-top:0.8rem;letter-spacing:0.1em;">MAPA OFICIAL DE KENSWORD</p>
       </div>
       <div class="coming-soon"><p>Detalhes sobre cada continente e região serão adicionados em breve.</p></div>
+    </div>
+  </section>
+
+  <section id="tab-content-elements" class="tab-content">
+    <div class="parchment-panel">
+      <h2 class="section-title">✨ Elementos & Aptidões</h2>
+      <div class="ornament-divider"><span>✦</span></div>
+
+      <p style="font-size:1.05rem; line-height:1.6; text-align:center;">Ao ter um elemento, você ganha uma criação e manipulação limitada dele. Para melhorá-la, você deve ter muitos pontos de magia ou até uma habilidade para isso.</p>
+      <div style="text-align:center; font-family:'Cinzel',serif; font-size:1.1rem; margin:1rem 0; color:var(--red-wax);">
+        <strong>100 Pontos [Magia] = 1 Metro [Alcance]</strong>
+      </div>
+      <p style="text-align:center; font-style:italic; margin-bottom:2rem;">Caso queira uma manipulação mais precisa, crie magias ou até mesmo habilidades baseadas no seu elemento.</p>
+
+      <div class="monster-note" style="margin-bottom:2rem;">
+        <h3 style="margin-top:0;font-family:'Cinzel',serif;">Aptidões</h3>
+        <ul style="margin:0.5rem 0 1rem 1.2rem; font-size:0.95rem; line-height:1.5;">
+          <li>Você pode ter diferentes tipos de aptidão dependendo do elemento.</li>
+          <li>A aptidão define o nível de poder das suas magias, isso não faz diferença quando se trata de buffs e debuffs.</li>
+          <li>Lembrando que você pode escolher qual Elemento tem qual aptidão, mas depois de feito, será permanente.</li>
+          <li>Você pode melhorar a aptidão com treinos específicos.</li>
+        </ul>
+        <div style="display:flex; gap:1rem; flex-wrap:wrap; justify-content:space-between; background:rgba(0,0,0,0.05); padding:1rem; border-radius:6px;">
+          <div style="flex:1; min-width:200px;">
+            <strong style="color:var(--red-wax);">1 - Elementais [25/50/75/100]</strong><br>
+            <ul style="list-style:none; padding:0; margin-top:0.3rem;">
+              <li>Elemento 1 - 100%</li>
+              <li>Elemento 2 - 75%</li>
+              <li>Elemento 3 - 50%</li>
+              <li>Elemento 4 - 25%</li>
+            </ul>
+          </div>
+          <div style="flex:1; min-width:200px;">
+            <strong style="color:var(--red-wax);">2 - Arcanos [0/25/50/50/100]</strong><br>
+            <ul style="list-style:none; padding:0; margin-top:0.3rem;">
+              <li>Elemento 1 - 50%</li>
+              <li>Elemento 2 - 25%</li>
+              <li>Dimensional - 50%</li>
+              <li>Luz OU Sombra - 100% ou 0%</li>
+            </ul>
+          </div>
+          <div style="flex:1; min-width:200px;">
+            <strong style="color:var(--red-wax);">3 - Místicos</strong><br>
+            <ul style="list-style:none; padding:0; margin-top:0.3rem;">
+              <li>Sagrado OU Trevas - Mesma aptidão da versão arcana.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="section-title" style="margin-top:2rem; font-size:1.5rem; text-align:left;">Elementos Básicos</h3>
+      <div class="races-grid">
+        <div class="element-card el-fogo">
+          <div class="el-title">🔥 Fogo</div>
+          <div class="el-traits">Calor • Poder de ataque • Destruição</div>
+          <div class="el-desc">Elemento que pode destruir, mas que também pode acabar fazendo o usuário se ferir. Seguindo uma lógica física, a magia tem limite baseado no grau.</div>
+        </div>
+        <div class="element-card el-agua">
+          <div class="el-title">💧 Água</div>
+          <div class="el-traits">Flexibilidade • Suporte • Restauração</div>
+          <div class="el-desc">Sendo muito flexível, possui alto potencial restaurador, podendo curar feridas. Mesmo em lugares secos, pode criar golpes ferozes.</div>
+        </div>
+        <div class="element-card el-terra">
+          <div class="el-title">🌍 Terra</div>
+          <div class="el-traits">Resistente • Ótimo para ferreiros • Construtos</div>
+          <div class="el-desc">Um elemento resistente, que pode criar muralhas inteiras ou até mesmo grandes rochas para lançar em seus inimigos.</div>
+        </div>
+        <div class="element-card el-vento">
+          <div class="el-title">🌬️ Vento</div>
+          <div class="el-traits">Moldável • Nobre • Ágil</div>
+          <div class="el-desc">Poder extremamente útil e nobre. Ventos fortes podem aniquilar, ventos serenos podem acalmar, um dos mais moldáveis.</div>
+        </div>
+        <div class="element-card el-gelo">
+          <div class="el-title">❄️ Gelo</div>
+          <div class="el-traits">Imponente • Nobre • Brutal</div>
+          <div class="el-desc">Poder congelante que traz a geada, sua manipulação é considerada temerosa, possuída principalmente pela Realeza de Korikiwa.</div>
+        </div>
+      </div>
+
+      <h3 class="section-title" style="margin-top:2.5rem; font-size:1.5rem; text-align:left;">Elementos Arcanos</h3>
+      <div class="races-grid">
+        <div class="element-card el-planta">
+          <div class="el-title">🌿 Planta</div>
+          <div class="el-traits">Sereno • Raro • Suporte</div>
+          <div class="el-desc">Traz paz e consolo, curando aliados. Sua manipulação precisa pode criar árvores gigantescas e imponentes.</div>
+        </div>
+        <div class="element-card el-mineral">
+          <div class="el-title">💎 Mineral</div>
+          <div class="el-traits">Moldável • Raro • Ofensivo</div>
+          <div class="el-desc">Manipulação precisa dos minerais, criando tempestades letais. Possibilidades vão de vidro a diamantes, contanto que existam no ambiente.</div>
+        </div>
+        <div class="element-card el-raio">
+          <div class="el-title">⚡ Relâmpago</div>
+          <div class="el-traits">Super ágil • Ofensivo • Nobre</div>
+          <div class="el-desc">Elemento buscado por nobres, mas com melhor uso nas mãos de um verdadeiro velocista.</div>
+        </div>
+        <div class="element-card el-luz">
+          <div class="el-title">✨ Luz</div>
+          <div class="el-traits">Ofensivo • Suporte</div>
+          <div class="el-desc">Fortes ataques ferventes, se encaixa melhor no formato de suporte ou atrapalhando inimigos. Ocupa o mesmo slot de aptidão do Elemento Sagrado.</div>
+        </div>
+        <div class="element-card el-sombra">
+          <div class="el-title">🌑 Sombra</div>
+          <div class="el-traits">Flexível • Recomendado para Majins</div>
+          <div class="el-desc">Sombras que prendem inimigos, firmam contratos, perfuram oponentes ou permitem viagem entre elas. Ocupa slot do Elemento Trevas.</div>
+        </div>
+        <div class="element-card el-dim">
+          <div class="el-title">🌌 Dimensional</div>
+          <div class="el-traits">Mobilidade • Utilidades • Afinidade: 50%</div>
+          <div class="el-desc">Poder pouco conhecido, mas útil para artesãos (bolsa mágica). Em combate, seu melhor uso é a mobilidade, criando portais.</div>
+        </div>
+      </div>
+
+      <h3 class="section-title" style="margin-top:2.5rem; font-size:1.5rem; text-align:left;">Elementos Místicos</h3>
+      <div class="races-grid">
+        <div class="element-card el-sagrado">
+          <div class="el-title">🕊️ Sagrado</div>
+          <div class="el-traits">Suporte • Anti mortos-vivos • Religioso</div>
+          <div class="el-desc">Considerado milagroso, que cura feridas e ilumina o caminho. O usuário deve ser aprovado pela igreja.</div>
+        </div>
+        <div class="element-card el-trevas">
+          <div class="el-title">🦇 Trevas</div>
+          <div class="el-traits">Corruptor • Cruel • Flexível</div>
+          <div class="el-desc">Conhecido pela maldade interminável. Possui diversas artes distintas: necromancia, corrupção e pactos.</div>
+        </div>
+      </div>
+
+      <h3 class="section-title" style="margin-top:2.5rem; font-size:1.5rem; text-align:left;">Elementos Supremos</h3>
+      <div class="races-grid">
+        <div class="element-card el-chaos">
+          <div class="el-title">🕳️ Chaos 🔒</div>
+          <div class="el-traits">O mal absoluto</div>
+          <div class="el-desc">Escuridão definitiva do primordial Umbra. Capaz de acessar dimensões e trazer seres de outros mundos para lutar. Abaixo dele estão todos os monstros.</div>
+        </div>
+        <div class="element-card el-khosmo">
+          <div class="el-title">🌌 Khosmos 🔒</div>
+          <div class="el-traits">Exterminador do mal</div>
+          <div class="el-desc">Criação e controle de todas as formas de vida e leis do cosmos. Pode chamar heróis abençoados para ajustar o equilíbrio.</div>
+        </div>
+      </div>
     </div>
   </section>
 
