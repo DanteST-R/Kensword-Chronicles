@@ -5,6 +5,10 @@ function showTab(name) {
   document.getElementById('tab-content-' + name).classList.add('active');
   document.getElementById('tab-' + name).classList.add('active');
   window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  if (name === 'characters' && typeof loadCharactersTab === 'function') {
+    loadCharactersTab();
+  }
 }
 
 // Build race cards
