@@ -428,8 +428,9 @@ async function handleLogin() {
   } catch (err) {
     setLoading(false);
     btn.disabled = false;
+    console.warn('⚠️ Erro durante o login:', err);
     const msg = translateFirebaseError(err.code || err.message);
-    showErr('login-general-err', '⚠ ' + msg);
+    showErr('login-general-err', '⚠ ' + msg + (err.code ? ' [' + err.code + ']' : ''));
   }
 }
 
