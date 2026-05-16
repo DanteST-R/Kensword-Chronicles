@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kensword Chronicles — Compêndio do Aventureiro</title>
+  <meta name="description" content="O compêndio oficial do RPG medieval Kensword Chronicles.">
+  <!-- Firebase SDK Compat (via CDN) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="auth.css">
+</head>
+<body>
+
+<!-- ===================================================== -->
+<!-- PORTAL DA GUILDA — Tela de Login/Registro             -->
+<!-- ===================================================== -->
+<div id="auth-overlay">
+  <div class="portal-container">
+
+    <div class="portal-header">
+      <span class="portal-emblem">⚔️</span>
+      <h1 class="portal-title">Kensword Chronicles</h1>
+      <p class="portal-subtitle">Portal da Guilda de Aventureiros</p>
+    </div>
+
+    <div class="portal-panel">
+
+      <!-- ── ESCOLHA: Login ou Registro ── -->
+      <div id="auth-choice" class="auth-choice">
+        <div class="auth-choice-title">Escolha seu destino</div>
+        <div class="auth-btn-group">
+          <button class="auth-btn auth-btn-primary" onclick="showAuthForm('register')">
+            <span class="auth-btn-icon">📜</span>
+            <span class="auth-btn-text">
+              Inscreva seu personagem no RPG!
+              <span>Crie uma nova ficha de aventureiro</span>
+            </span>
+          </button>
+          <button class="auth-btn auth-btn-secondary" onclick="showAuthForm('login')">
+            <span class="auth-btn-icon">🗝️</span>
+            <span class="auth-btn-text">
+              Já tem um personagem? Logue aqui!
+              <span>Acesse sua ficha existente</span>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── FORMULÁRIO DE LOGIN ── -->
+      <div id="auth-login" class="auth-form">
+        <button class="form-back-btn" onclick="showAuthChoice()">← Voltar</button>
+        <div class="form-section-title">Identificação do Aventureiro</div>
+        <div class="field-group">
+          <label for="login-name">Nome do Jogador</label>
+          <span class="field-hint">O mesmo nome usado no cadastro</span>
+          <input type="text" id="login-name" placeholder="Seu nome de jogador">
+          <div class="field-error" id="login-name-err">Por favor, insira seu nome.</div>
+        </div>
+        <div class="field-group">
+          <label for="login-pass">Senha</label>
+          <input type="password" id="login-pass" placeholder="Sua senha secreta">
+          <div class="field-error" id="login-pass-err">Por favor, insira sua senha.</div>
+        </div>
+        <div class="field-error" id="login-general-err" style="font-size:0.9rem;margin-top:0.5rem;"></div>
+        <button class="form-submit-btn" id="login-submit-btn" onclick="handleLogin()">🗝️ Entrar no Compêndio</button>
+      </div>
+
+      <!-- ── FORMULÁRIO DE REGISTRO ── -->
+      <div id="auth-register" class="auth-form">
+        <button class="form-back-btn" onclick="showAuthChoice()">← Voltar</button>
+        <div class="register-steps">
+          <div class="step-dot active" id="step-dot-0"></div>
+          <div class="step-dot" id="step-dot-1"></div>
+          <div class="step-dot" id="step-dot-2"></div>
+        </div>
+
+        <!-- PASSO 0: Dados do Jogador -->
+        <div id="reg-step-0" class="reg-step">
+          <div class="form-section-title">Dados do Jogador</div>
+          <div class="field-group">
+            <label for="reg-player-name">Nome do Jogador</label>
+            <span class="field-hint">Coloque seu nome aqui. Esse nome será usado no login.</span>
+            <input type="text" id="reg-player-name" placeholder="Ex: Daniel">
+            <div class="field-error" id="err-player-name"></div>
+          </div>
+          <div class="field-group">
+            <label for="reg-player-age">Idade do Jogador</label>
+            <span class="field-hint">Coloque sua idade aqui.</span>
+            <input type="number" id="reg-player-age" placeholder="Ex: 20" min="1" max="120">
+            <div class="field-error" id="err-player-age"></div>
+          </div>
+          <div class="field-group">
+            <label>Disponibilidade</label>
+            <span class="field-hint">Coloque que tempo você fica livre.</span>
+            <div class="checkbox-group">
+              <label class="checkbox-pill"><input type="checkbox" name="avail" value="Manhã"> 🌅 Manhã</label>
+              <label class="checkbox-pill"><input type="checkbox" name="avail" value="Tarde"> ☀️ Tarde</label>
+              <label class="checkbox-pill"><input type="checkbox" name="avail" value="Noite"> 🌙 Noite</label>
+              <label class="checkbox-pill"><input type="checkbox" name="avail" value="Madrugada"> 🌃 Madrugada</label>
+            </div>
+            <div class="field-error" id="err-avail"></div>
+          </div>
+          <div class="field-group">
+            <label for="reg-pass">Senha</label>
+            <span class="field-hint">Coloque sua senha para entrar no app. Mínimo de 8 caracteres.</span>
+            <input type="password" id="reg-pass" placeholder="Mínimo 8 caracteres" minlength="8">
+            <div class="field-error" id="err-pass"></div>
+          </div>
+          <div class="field-group">
+            <label for="reg-pass-confirm">Confirmar Senha</label>
+            <input type="password" id="reg-pass-confirm" placeholder="Repita sua senha">
+            <div class="field-error" id="err-pass-confirm"></div>
+          </div>
+          <button class="form-submit-btn" onclick="goToStep(1)">Próximo: Dados do Personagem →</button>
+        </div>
+
+        <!-- PASSO 1: Dados do Personagem -->
+        <div id="reg-step-1" class="reg-step" style="display:none">
+          <div class="form-section-title">Dados do Personagem</div>
+          <div class="field-row">
+            <div class="field-group">
+              <label for="reg-char-name">Nome do Personagem</label>
+              <span class="field-hint">Apenas letras.</span>
+              <input type="text" id="reg-char-name" placeholder="Ex: Dante Stratos">
+              <div class="field-error" id="err-char-name"></div>
+            </div>
+            <div class="field-group">
+              <label for="reg-char-age">Idade do Personagem</label>
+              <span class="field-hint">Deve bater com a expectativa de vida da raça.</span>
+              <input type="number" id="reg-char-age" placeholder="Ex: 25" min="1">
+              <div class="field-error" id="err-char-age"></div>
+            </div>
+          </div>
+          <div class="field-group">
+            <label for="reg-char-race">Raça</label>
+            <span class="field-hint">Selecione a raça do seu personagem.</span>
+            <select id="reg-char-race" onchange="onRaceChange()">
+              <option value="">— Escolha uma raça —</option>
+            </select>
+            <div class="race-preview" id="race-preview">
+              <img id="race-preview-img" src="" alt="">
+              <div class="race-preview-info">
+                <div class="race-preview-name" id="race-preview-name"></div>
+                <div class="race-preview-appearance" id="race-preview-appearance"></div>
+              </div>
+            </div>
+            <div class="field-error" id="err-char-race"></div>
+          </div>
+          <div class="field-group">
+            <label>Gênero</label>
+            <div class="radio-group">
+              <label class="radio-pill"><input type="radio" name="gender" value="Masculino"> ♂ Masculino</label>
+              <label class="radio-pill"><input type="radio" name="gender" value="Feminino"> ♀ Feminino</label>
+              <label class="radio-pill"><input type="radio" name="gender" value="Hermafrodita"> ⚥ Hermafrodita</label>
+              <label class="radio-pill"><input type="radio" name="gender" value="Sem gênero"> ✦ Sem gênero</label>
+            </div>
+            <div class="field-error" id="err-gender"></div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label for="reg-height">Altura (em centímetros)</label>
+              <span class="field-hint" id="height-hint">Verificada de acordo com sua raça.</span>
+              <input type="number" id="reg-height" placeholder="Ex: 175" min="1" oninput="onHeightInput()">
+              <div id="height-converted" style="font-family:'EB Garamond',serif;font-style:italic;font-size:0.88rem;color:var(--wood-plank);margin-top:0.3rem;"></div>
+              <div class="field-error" id="err-height"></div>
+            </div>
+            <div class="field-group">
+              <label for="reg-weight">Peso (em quilos)</label>
+              <input type="number" id="reg-weight" placeholder="Ex: 70" min="1" oninput="onWeightInput()">
+              <div class="weight-confirm" id="weight-confirm">
+                <span>⚖️</span><span id="weight-confirm-text"></span>
+              </div>
+              <div class="field-error" id="err-weight"></div>
+            </div>
+          </div>
+          <div class="field-group">
+            <label for="reg-location">Local Atual</label>
+            <select id="reg-location">
+              <option value="">— Escolha sua localização —</option>
+              <option>Balistia</option><option>Terras de Balistia</option>
+              <option>Hogoku</option><option>Fazendas do Reino</option>
+              <option>Masmorra Gigante</option><option>Masmorra do Lago</option>
+              <option>Rakuyo</option><option>Yoseki</option>
+              <option>Império de Umbra</option><option>Terras de Umbra</option>
+              <option>Masmorra Umbral</option><option>Império Gélido Korikiwa</option>
+              <option>Santuário de Hikarium</option><option>Hikariima</option>
+              <option>Sede da Igreja Dourada</option><option>Monte Olimpo</option>
+              <option>Dobunato</option><option>Yami</option>
+              <option>Livinia</option><option>Astera</option>
+            </select>
+            <div class="field-error" id="err-location"></div>
+          </div>
+          <div style="display:flex;gap:1rem;margin-top:1.5rem;">
+            <button class="form-submit-btn" style="background:var(--parchment-aged);color:var(--ink);border-color:var(--wood-plank);flex:0 0 auto;width:auto;padding:0.8rem 1.5rem;" onclick="goToStep(0)">← Voltar</button>
+            <button class="form-submit-btn" style="flex:1;" onclick="goToStep(2)">Próximo: Atributos & Habilidades →</button>
+          </div>
+        </div>
+
+        <!-- PASSO 2: Habilidades, Atributos, História -->
+        <div id="reg-step-2" class="reg-step" style="display:none">
+          <div class="form-section-title">Itens Iniciais</div>
+          <span class="field-hint" style="display:block;margin-bottom:0.8rem;">Seus itens iniciais — opcional, pode editar depois.</span>
+          <div class="field-group"><input type="text" id="reg-item1" placeholder="Item 1 (opcional)"></div>
+          <div class="field-group"><input type="text" id="reg-item2" placeholder="Item 2 (opcional)"></div>
+          <div class="field-group"><input type="text" id="reg-item3" placeholder="Item 3 (opcional)"></div>
+
+          <div class="form-section-title">Habilidade Única</div>
+          <div class="unique-ability-box">
+            <div class="field-group">
+              <label for="reg-ua-title">Título da Habilidade</label>
+              <input type="text" id="reg-ua-title" placeholder="Ex: Chama do Destino">
+            </div>
+            <div class="field-group">
+              <label for="reg-ua-desc">Descrição</label>
+              <textarea id="reg-ua-desc" placeholder="Descreva sua habilidade única em detalhes..."></textarea>
+            </div>
+            <div class="field-row">
+              <div class="field-group">
+                <label>Buffs <span class="admin-only-badge">Admin</span></label>
+                <input class="field-readonly" type="text" value="— a ser definido pelo mestre —" readonly>
+              </div>
+              <div class="field-group">
+                <label>Nerfs <span class="admin-only-badge">Admin</span></label>
+                <input class="field-readonly" type="text" value="— a ser definido pelo mestre —" readonly>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section-title">Habilidades</div>
+          <div class="unique-ability-box">
+            <div class="field-group"><label>Habilidades de Raça <span class="admin-only-badge">Admin</span></label><input class="field-readonly" type="text" value="— atribuídas ao criar o personagem —" readonly></div>
+            <div class="field-group"><label>Habilidades Aprendidas <span class="admin-only-badge">Admin</span></label><input class="field-readonly" type="text" value="— adquiridas durante o RPG —" readonly></div>
+            <div class="field-group" style="margin-bottom:0"><label>Habilidades Simples <span class="admin-only-badge">Admin</span></label><input class="field-readonly" type="text" value="— adquiridas durante o RPG —" readonly></div>
+          </div>
+
+          <div class="form-section-title">Elementos</div>
+          <div class="unique-ability-box">
+            <div class="field-group">
+              <label for="reg-element">Elementos Elementais — Escolha um inicial</label>
+              <select id="reg-element">
+                <option value="">— Escolha seu elemento —</option>
+                <option>🔥 Fogo</option><option>💧 Água</option>
+                <option>🌍 Terra</option><option>🌬️ Vento</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <div class="field-group"><label>Elementos Arcanos <span class="admin-only-badge">Admin</span></label><input class="field-readonly" type="text" value="— desbloqueado futuramente —" readonly></div>
+              <div class="field-group"><label>Elementos Místicos <span class="admin-only-badge">Admin</span></label><input class="field-readonly" type="text" value="— desbloqueado futuramente —" readonly></div>
+            </div>
+          </div>
+
+          <div class="form-section-title">Progressão</div>
+          <div class="unique-ability-box">
+            <div class="field-row">
+              <div class="field-group"><label>Magias <span class="admin-only-badge">Admin</span></label><input class="field-readonly" type="text" value="— ainda não aprendidas —" readonly></div>
+              <div class="field-group"><label>Classes <span class="admin-only-badge">Admin</span></label><input class="field-readonly" type="text" value="— ainda não definidas —" readonly></div>
+            </div>
+            <div class="field-row">
+              <div class="field-group"><label>Perícias <span class="admin-only-badge">Admin</span></label><input class="field-readonly" type="text" value="— ainda não definidas —" readonly></div>
+              <div class="field-group"><label>Level</label><input class="field-readonly" type="text" value="Nível 1 — 00/1.000 XP" readonly></div>
+            </div>
+          </div>
+
+          <div class="form-section-title">Atributos</div>
+          <div class="attr-pool">
+            <div class="attr-pool-header">
+              <span class="attr-pool-label">Distribua 250 pontos</span>
+              <span class="attr-points-remaining" id="attr-remaining">250 restantes</span>
+            </div>
+            <div class="attr-row"><label>⚔ Força</label><button class="attr-btn" onclick="changeAttr('strength',-10)">−</button><input type="number" id="attr-strength" value="0" readonly><button class="attr-btn" onclick="changeAttr('strength',10)">+</button></div>
+            <div class="attr-row"><label>🛡 Resistência</label><button class="attr-btn" onclick="changeAttr('resistance',-10)">−</button><input type="number" id="attr-resistance" value="0" readonly><button class="attr-btn" onclick="changeAttr('resistance',10)">+</button></div>
+            <div class="attr-row"><label>⚡ Velocidade</label><button class="attr-btn" onclick="changeAttr('speed',-10)">−</button><input type="number" id="attr-speed" value="0" readonly><button class="attr-btn" onclick="changeAttr('speed',10)">+</button></div>
+            <div class="attr-row"><label>✨ Magia</label><button class="attr-btn" onclick="changeAttr('magic',-10)">−</button><input type="number" id="attr-magic" value="0" readonly><button class="attr-btn" onclick="changeAttr('magic',10)">+</button></div>
+            <div class="field-error" id="err-attrs" style="margin-top:0.5rem;"></div>
+          </div>
+
+          <div class="form-section-title">História</div>
+          <div class="field-group">
+            <label for="reg-story">Conte a história do seu personagem <em style="font-weight:400;text-transform:none;">(opcional, mas muito importante)</em></label>
+            <span class="field-hint">Se escrever, recomendamos 300 palavras ou mais para enriquecer seu personagem.</span>
+            <textarea id="reg-story" style="min-height:150px;" placeholder="Era uma vez, em terras de Kensword..." oninput="updateWordCount()"></textarea>
+            <div class="word-counter" id="word-counter">0 palavras</div>
+          </div>
+
+          <div class="form-section-title">Linhagem</div>
+          <div class="field-group">
+            <label>Sua Linhagem <span class="admin-only-badge">Admin</span></label>
+            <input class="field-readonly" type="text" value="— a ser revelada pelo mestre —" readonly>
+          </div>
+
+          <div style="display:flex;gap:1rem;margin-top:1.5rem;">
+            <button class="form-submit-btn" style="background:var(--parchment-aged);color:var(--ink);border-color:var(--wood-plank);flex:0 0 auto;width:auto;padding:0.8rem 1.5rem;" onclick="goToStep(1)">← Voltar</button>
+            <button class="form-submit-btn" style="flex:1;" id="register-submit-btn" onclick="handleRegister()">📜 Inscrever Personagem na Guilda</button>
+          </div>
+          <div class="field-error" id="err-register-general" style="margin-top:0.5rem;text-align:center;font-size:0.9rem;"></div>
+        </div>
+
+      </div><!-- /auth-register -->
+
+      <div class="auth-loading" id="auth-loading">
+        <div class="auth-spinner"></div>
+        Consultando os registros da guilda...
+      </div>
+
+    </div><!-- /portal-panel -->
+  </div><!-- /portal-container -->
+</div><!-- /auth-overlay -->
+
+<div class="auth-toast" id="auth-toast"></div>
+
+<!-- ===================================================== -->
+<!-- COMPÊNDIO PRINCIPAL                                   -->
+<!-- ===================================================== -->
+<header>
+  <div class="header-content">
+    <div class="header-emblem">⚔️</div>
+    <h1 class="site-title">Kensword Chronicles</h1>
+    <p class="site-subtitle">Compêndio do Aventureiro — Continente de Kensword</p>
+    <div class="header-divider"><span>✦</span></div>
+  </div>
+</header>
+
+<nav id="main-nav">
+  <button class="nav-tab active" onclick="showTab('history')" id="tab-history"><span class="nav-icon">📜</span>História</button>
+  <button class="nav-tab" onclick="showTab('races')" id="tab-races"><span class="nav-icon">🧬</span>Raças</button>
+  <button class="nav-tab" onclick="showTab('map')" id="tab-map"><span class="nav-icon">🗺️</span>Continentes</button>
+  <button class="nav-tab" onclick="showTab('characters')" id="tab-characters"><span class="nav-icon">🗡️</span>Personagens</button>
+  <button class="nav-tab" onclick="showTab('orgs')" id="tab-orgs"><span class="nav-icon">🏰</span>Organizações</button>
+  <button class="nav-tab" onclick="showTab('monsters')" id="tab-monsters"><span class="nav-icon">👾</span>Monstros</button>
+  <button class="nav-tab" onclick="handleLogout()" id="tab-logout" style="margin-left:auto;border-color:var(--red-wax);color:var(--red-wax);"><span class="nav-icon">🚪</span>Sair</button>
+</nav>
+
+<main>
+  <section id="tab-content-history" class="tab-content active">
+    <div class="parchment-panel">
+      <h2 class="section-title">📜 História Geral</h2>
+      <div class="ornament-divider"><span>✦</span></div>
+      <div class="coming-soon">
+        <div class="cs-icon">📖</div>
+        <h3>Os Pergaminhos Ainda Estão Sendo Escritos</h3>
+        <p>A história do Continente de Kensword será registrada aqui à medida que o RPG avança.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-content-races" class="tab-content">
+    <div class="parchment-panel">
+      <h2 class="section-title">🧬 Raças de Kensword</h2>
+      <div class="ornament-divider"><span>✦</span></div>
+      <div id="monster-note" class="monster-note">
+        <strong>⚠ Nota — Estômago de Aço:</strong> Todos os monstros listados abaixo e Ghouls têm acesso à habilidade <em>Estômago de Aço</em>: comer carnes de monstros não causa enjoo nem contrai maldições.
+      </div>
+      <div class="races-grid" id="races-container"></div>
+    </div>
+  </section>
+
+  <section id="tab-content-map" class="tab-content">
+    <div class="parchment-panel">
+      <h2 class="section-title">🗺️ Continentes &amp; Mapa</h2>
+      <div class="ornament-divider"><span>✦</span></div>
+      <div class="map-container">
+        <img src="Photos/Kensword_Map.jpeg" alt="Mapa do Continente de Kensword — Kensword Chronicles">
+        <p style="font-family:'Cinzel',serif;font-size:0.8rem;color:var(--wood-plank);margin-top:0.8rem;letter-spacing:0.1em;">MAPA OFICIAL DE KENSWORD</p>
+      </div>
+      <div class="coming-soon"><p>Detalhes sobre cada continente e região serão adicionados em breve.</p></div>
+    </div>
+  </section>
+
+  <section id="tab-content-characters" class="tab-content">
+    <div class="parchment-panel">
+      <h2 class="section-title">🗡️ Personagens</h2>
+      <div class="ornament-divider"><span>✦</span></div>
+      <div class="coming-soon">
+        <div class="cs-icon">⚔️</div>
+        <h3>Registro de Aventureiros</h3>
+        <p>Dante Stratos, Leora Steel e outros heróis serão catalogados aqui.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-content-orgs" class="tab-content">
+    <div class="parchment-panel">
+      <h2 class="section-title">🏰 Organizações</h2>
+      <div class="ornament-divider"><span>✦</span></div>
+      <div class="coming-soon">
+        <div class="cs-icon">🏛️</div>
+        <h3>Facções e Guildas</h3>
+        <p>Igreja Dourada, Igreja do Fogo Eterno, Guilda de Aventureiros e outras serão detalhadas aqui.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-content-monsters" class="tab-content">
+    <div class="parchment-panel">
+      <h2 class="section-title">👾 Bestiário</h2>
+      <div class="ornament-divider"><span>✦</span></div>
+      <div class="coming-soon">
+        <div class="cs-icon">🐉</div>
+        <h3>Bestiário de Kensword</h3>
+        <p>Goblins, Kobolds e outras criaturas serão catalogados aqui.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>⚔️ <em>Kensword Chronicles</em> — Compêndio do Aventureiro &nbsp;|&nbsp; Que sua lâmina seja afiada e sua magia, certeira. ⚔️</p>
+</footer>
+
+<script src="races_data.js"></script>
+<script src="firebase-config.js"></script>
+<script src="auth.js"></script>
+<script src="portal.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
