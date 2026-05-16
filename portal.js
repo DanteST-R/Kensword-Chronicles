@@ -100,6 +100,7 @@ function goToStep(step) {
 function validateStep(step) {
   if (step === 0) return validateStep0();
   if (step === 1) return validateStep1();
+  if (step === 2) return validateStep2();
   return true;
 }
 
@@ -123,18 +124,19 @@ function validateStep0() {
 
   const name = document.getElementById('reg-player-name').value.trim();
   if (!name) { showErr('err-player-name', 'Informe seu nome de jogador.'); ok = false; }
+  else if (!/^[A-Za-zÀ-ÖØ-öø-ÿ\s]+$/.test(name)) { showErr('err-player-name', 'Você não pode colocar caracteres especiais ou números!'); ok = false; }
 
   const age = parseInt(document.getElementById('reg-player-age').value);
   if (!age || age < 1 || age > 120) { showErr('err-player-age', 'Informe uma idade válida (1–120).'); ok = false; }
 
   const avail = [...document.querySelectorAll('input[name="avail"]:checked')];
-  if (avail.length === 0) { showErr('err-avail', 'Selecione ao menos um período.'); ok = false; }
+  if (avail.length === 0) { showErr('err-avail', 'Você precisa colocar sua disponibilidade!'); ok = false; }
 
   const pass = document.getElementById('reg-pass').value;
   if (pass.length < 8) { showErr('err-pass', 'A senha deve ter no mínimo 8 caracteres.'); ok = false; }
 
   const confirm = document.getElementById('reg-pass-confirm').value;
-  if (pass !== confirm) { showErr('err-pass-confirm', 'As senhas não coincidem.'); ok = false; }
+  if (pass !== confirm) { showErr('err-pass-confirm', 'A senha não bate!'); ok = false; }
 
   return ok;
 }
@@ -146,7 +148,7 @@ function validateStep1() {
 
   const charName = document.getElementById('reg-char-name').value.trim();
   if (!charName) { showErr('err-char-name', 'Informe o nome do personagem.'); ok = false; }
-  else if (!/^[A-Za-zÀ-ÖØ-öø-ÿ\s]+$/.test(charName)) { showErr('err-char-name', 'O nome deve conter apenas letras.'); ok = false; }
+  else if (!/^[A-Za-zÀ-ÖØ-öø-ÿ\s]+$/.test(charName)) { showErr('err-char-name', 'Você não pode colocar caracteres especiais ou números!'); ok = false; }
 
   const race = document.getElementById('reg-char-race').value;
   if (!race) { showErr('err-char-race', 'Selecione uma raça.'); ok = false; }
@@ -181,6 +183,24 @@ function validateStep1() {
   if (!loc) { showErr('err-location', 'Selecione um local atual.'); ok = false; }
 
   return ok;
+}
+
+function validateStep2() {
+  let ok = true;
+  // O usuário não pediu restrições estritas aqui, mas podemos adicionar se necessário
+  return ok;
+}
+
+function togglePassword(id) {
+  const el = document.getElementById(id);
+  const btn = el.nextElementSibling;
+  if (el.type === 'password') {
+    el.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    el.type = 'password';
+    btn.textContent = '👁️';
+  }
 }
 
 function getRaceLimit(raceName) {
@@ -290,6 +310,8 @@ function collectFormData() {
     item3: document.getElementById('reg-item3').value,
     uniqueAbilityTitle: document.getElementById('reg-ua-title').value,
     uniqueAbilityDesc: document.getElementById('reg-ua-desc').value,
+    uniqueAbilityBuffs: document.getElementById('reg-ua-buffs') ? document.getElementById('reg-ua-buffs').value : '',
+    uniqueAbilityNerfs: document.getElementById('reg-ua-nerfs') ? document.getElementById('reg-ua-nerfs').value : '',
     elementInitial: document.getElementById('reg-element').value,
     attrStrength: ATTRS.strength,
     attrResistance: ATTRS.resistance,
@@ -314,8 +336,9 @@ async function handleRegister() {
   } catch (err) {
     setLoading(false);
     btn.disabled = false;
+    console.warn('⚠️ O erro 400 (Bad Request) que aparece no console acima é normal. O Firebase usa isso para avisar que o registro foi recusado (ex: o nome já existe). Motivo real:', err.code || err.message);
     const msg = translateFirebaseError(err.code || err.message);
-    showErr('err-register-general', '⚠ ' + msg);
+    showErr('err-register-general', '⚠ ' + msg + (err.code ? ' [' + err.code + ']' : ''));
     showToast('Erro ao inscrever personagem.', 'error');
   }
 }
@@ -370,6 +393,7 @@ function translateFirebaseError(code) {
     'auth/invalid-credential': 'Nome ou senha incorretos.',
     'auth/too-many-requests': 'Muitas tentativas. Aguarde e tente novamente.',
     'auth/network-request-failed': 'Erro de conexão. Verifique sua internet.',
+    'auth/configuration-not-found': 'Erro crítico: O login por e-mail/senha não está ativado no seu Firebase Console!',
   };
   return map[code] || 'Erro inesperado. Tente novamente.';
 }
