@@ -4,7 +4,17 @@
 // ================================================================
 
 function _nameToEmail(playerName) {
-  return playerName.trim().toLowerCase().replace(/\s+/g, '.') + '@kensword.rpg';
+  let safeName = playerName
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // remove accents
+    .replace(/[^a-z0-9]/g, '.') // non-alphanumeric to dot
+    .replace(/\.+/g, '.') // multiple dots to single dot
+    .replace(/^\.|\.$/g, ''); // trim dots at start/end
+  
+  if (!safeName) safeName = 'jogador'; // Evita e-mail vazio se o nome for só caracteres especiais
+  return safeName + '@kensword.rpg';
 }
 
 // ── Registro ─────────────────────────────────────────────────────
@@ -68,8 +78,8 @@ function _buildCharacterDocument(uid, f) {
       uniqueAbility: {
         title: f.uniqueAbilityTitle || '',
         description: f.uniqueAbilityDesc || '',
-        buffs: [],
-        nerfs: [],
+        buffs: f.uniqueAbilityBuffs ? [f.uniqueAbilityBuffs] : [],
+        nerfs: f.uniqueAbilityNerfs ? [f.uniqueAbilityNerfs] : [],
       },
       items: [ f.item1 || '', f.item2 || '', f.item3 || '' ],
       abilities: { racial: [], learned: [], simple: [] },
