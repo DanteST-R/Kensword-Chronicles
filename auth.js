@@ -55,8 +55,38 @@ function onSessionChange(callback) {
   });
 }
 
+// ── Personagens Globais ───────────────────────────────────────────
+async function getAllCharacters() {
+  const snap = await _db.collection('characters').get();
+  const chars = {};
+  snap.forEach(doc => chars[doc.id] = doc.data());
+  return chars;
+}
+
 // ── Montar documento ──────────────────────────────────────────────
 function _buildCharacterDocument(uid, f) {
+  let raceName = f.charRace || '';
+  let subraceName = null;
+  if (raceName.includes('|')) {
+    const parts = raceName.split('|');
+    raceName = parts[0];
+    subraceName = parts[1];
+  }
+
+  let racialAbilities = [];
+  if (typeof RACE_DATA !== 'undefined' && RACE_DATA[raceName]) {
+    const rData = RACE_DATA[raceName];
+    if (rData.abilities) {
+      rData.abilities.forEach(ab => racialAbilities.push({ name: ab.name, desc: ab.desc || ab.description || '' }));
+    }
+    if (subraceName && rData.subraces) {
+      const sub = rData.subraces.find(s => s.name === subraceName);
+      if (sub && sub.abilityName) {
+        racialAbilities.push({ name: sub.abilityName, desc: sub.abilityDesc || sub.desc || '' });
+      }
+    }
+  }
+
   return {
     uid,
     createdAt: new Date().toISOString(),
@@ -83,7 +113,7 @@ function _buildCharacterDocument(uid, f) {
         nerfs: f.uniqueAbilityNerfs ? [f.uniqueAbilityNerfs] : [],
       },
       items: [ f.item1 || '', f.item2 || '', f.item3 || '' ],
-      abilities: { racial: [], learned: [], simple: [] },
+      abilities: { racial: racialAbilities, learned: [], simple: [] },
       elements: {
         elemental: f.elementInitial ? [f.elementInitial] : [],
         arcane: [],
