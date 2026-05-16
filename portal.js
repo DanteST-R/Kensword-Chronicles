@@ -233,6 +233,35 @@ function onRaceChange() {
   }
 }
 
+const ELEMENTS_DESC_DATA = {
+  "Fogo": { traits: "Calor • Poder de ataque • Destruição", desc: "Pode destruir, mas que também pode acabar fazendo o usuário se ferir." },
+  "Água": { traits: "Flexibilidade • Suporte • Restauração", desc: "Possui alto potencial restaurador, podendo curar feridas. Golpes ferozes em mãos hábeis." },
+  "Terra": { traits: "Resistente • Ótimo para ferreiros • Construtos", desc: "Cria muralhas inteiras ou grandes rochas para lançar em inimigos." },
+  "Vento": { traits: "Moldável • Nobre • Ágil", desc: "Extremamente útil e nobre. Ventos fortes aniquilam, ventos serenos acalmam." },
+  "Gelo": { traits: "Imponente • Nobre • Brutal", desc: "Poder congelante temerário, possuído principalmente pela Realeza de Korikiwa." },
+  "Planta": { traits: "Sereno • Raro • Suporte", desc: "Traz paz e consolo, curando aliados. Pode criar árvores gigantescas e imponentes." },
+  "Mineral": { traits: "Moldável • Raro • Ofensivo", desc: "Manipulação precisa dos minerais, de vidro a diamantes." },
+  "Relâmpago": { traits: "Super ágil • Ofensivo • Nobre", desc: "Buscado por nobres, mas letal nas mãos de velocistas." },
+  "Luz": { traits: "Ofensivo • Suporte", desc: "Fortes ataques ferventes, excelente suporte. Ilumina regiões escuras." },
+  "Sombra": { traits: "Flexível • Majins", desc: "Prende inimigos, perfura oponentes ou permite viagens através das sombras." },
+  "Dimensional": { traits: "Mobilidade • Utilidades", desc: "Usado para bolsas mágicas e portais de mobilidade." },
+  "Sagrado": { traits: "Suporte • Anti mortos-vivos", desc: "Milagroso. Cura feridas e ilumina o caminho. Aprovado pela igreja." },
+  "Trevas": { traits: "Corruptor • Cruel • Flexível", desc: "Maldade interminável: necromancia, corrupção e pactos." }
+};
+
+function onElementChange() {
+  const val = document.getElementById('reg-element').value;
+  const prev = document.getElementById('element-preview');
+  if (val && ELEMENTS_DESC_DATA[val]) {
+    document.getElementById('el-prev-title').textContent = val;
+    document.getElementById('el-prev-traits').textContent = ELEMENTS_DESC_DATA[val].traits;
+    document.getElementById('el-prev-desc').textContent = ELEMENTS_DESC_DATA[val].desc;
+    prev.style.display = 'block';
+  } else {
+    prev.style.display = 'none';
+  }
+}
+
 function onHeightInput() {
   const val = parseInt(document.getElementById('reg-height').value);
   const el = document.getElementById('height-converted');
