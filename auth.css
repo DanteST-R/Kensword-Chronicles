@@ -568,7 +568,30 @@
   font-size: 0.9rem;
   letter-spacing: 0.1em;
 }
-.auth-loading.active { display: block; }
+.auth-loading.active {
+  display: flex;
+}
+
+.avatar-upload-box {
+  width: 100px;
+  height: 100px;
+  border: 2px dashed var(--wood-plank);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  overflow: hidden;
+  background: rgba(0,0,0,0.05);
+  color: var(--wood-plank);
+  transition: all 0.2s ease;
+}
+.avatar-upload-box:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: rgba(0,0,0,0.1);
+}
 .auth-spinner {
   width: 40px; height: 40px;
   border: 3px solid var(--parchment-aged);
