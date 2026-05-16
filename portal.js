@@ -482,3 +482,79 @@ async function initPortal() {
 }
 
 document.addEventListener('DOMContentLoaded', initPortal);
+
+let ALL_CHARACTERS = {};
+
+async function loadCharactersTab() {
+  const container = document.getElementById('characters-grid');
+  container.innerHTML = '<div class="auth-loading active" style="margin:2rem auto;"><div class="auth-spinner"></div></div>';
+  try {
+    ALL_CHARACTERS = await getAllCharacters();
+    let html = '';
+    const keys = Object.keys(ALL_CHARACTERS);
+    if (keys.length === 0) {
+      container.innerHTML = '<p style="text-align:center; color:var(--wood-plank); font-style:italic;">Nenhum personagem registrado ainda.</p>';
+      return;
+    }
+    keys.forEach(uid => {
+      const char = ALL_CHARACTERS[uid].character || {};
+      const name = char.name || 'Desconhecido';
+      const avatar = char.avatar || 'Photos/placeholder-avatar.png';
+      html += `<div class="character-card" onclick="openCharacterSheet('')">
+        <img src="" alt="">
+        <div class="char-card-name"></div>
+      </div>`;
+    });
+    container.innerHTML = html;
+  } catch (err) {
+    console.warn(err);
+    container.innerHTML = '<p style="text-align:center; color:var(--red-wax);">Erro ao carregar personagens.</p>';
+  }
+}
+
+function openCharacterSheet(uid) {
+  const data = ALL_CHARACTERS[uid];
+  if (!data) return;
+  const char = data.character || {};
+  const racialHtml = (char.abilities?.racial || []).map(r => `<li style="margin-bottom:0.5rem;"><strong>:</strong> </li>`).join('');
+  const uniqueHtml = char.uniqueAbility?.title ? `<strong></strong><br>` : 'Nenhuma';
+  const classHtml = (char.classes || []).join(', ') || 'Nenhuma';
+  const spellHtml = (char.spells || []).join(', ') || 'Nenhuma';
+
+  const html = `<h2 style="font-family:'Cinzel',serif; text-align:center; color:var(--ink); margin-bottom:1.5rem; border-bottom:1px solid var(--wood-plank); padding-bottom:0.5rem;"></h2>
+    <div style="display:flex; gap:1.5rem; margin-bottom:1.5rem; flex-wrap:wrap; justify-content:center;">
+      <img src="" style="width:180px; height:180px; object-fit:cover; border-radius:8px; border:2px solid var(--wood-plank); box-shadow:0 4px 6px rgba(0,0,0,0.3);">
+      <div style="flex:1; min-width:200px; display:flex; flex-direction:column; justify-content:center;">
+        <p style="margin-bottom:0.5rem;"><strong>Raça:</strong> </p>
+        <p style="margin-bottom:0.5rem;"><strong>Idade:</strong>  anos</p>
+        <p style="margin-bottom:0.5rem;"><strong>Gênero:</strong> </p>
+        <p style="margin-bottom:0.5rem;"><strong>Linhagem:</strong> </p>
+      </div>
+    </div>
+    <div style="margin-bottom:1.5rem;">
+      <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-bottom:0.5rem;">Habilidades Raciais</h3>
+      <ul style="padding-left:1.2rem;"></ul>
+    </div>
+    <div style="margin-bottom:1.5rem;">
+      <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-bottom:0.5rem;">Habilidade Única</h3>
+      <p></p>
+    </div>
+    <div style="margin-bottom:1.5rem;">
+      <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-bottom:0.5rem;">Classes</h3>
+      <p></p>
+    </div>
+    <div style="margin-bottom:1.5rem;">
+      <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-bottom:0.5rem;">Magias (3 Principais)</h3>
+      <p></p>
+    </div>
+    <div style="margin-bottom:1.5rem;">
+      <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-bottom:0.5rem;">História</h3>
+      <p style="white-space:pre-wrap; line-height:1.6;"></p>
+    </div>`;
+  document.getElementById('char-sheet-body').innerHTML = html;
+  document.getElementById('char-sheet-modal').style.display = 'flex';
+}
+
+function closeCharacterSheet() {
+  document.getElementById('char-sheet-modal').style.display = 'none';
+}
