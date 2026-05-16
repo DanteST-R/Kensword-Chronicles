@@ -68,7 +68,7 @@ const RACES_DATA = [
     emoji: "⛏️",
     name: "Anão",
     creator: "Venom",
-    image: "Photos/Dwarf.jpeg",
+    image: "Photos/Dwarf.jpg",
     appearance: "Aparência normalmente humana, tende a ter entre 1,20 a 1,50 metros. Costumam viver 600 anos.",
     description: "Uma variação dos humanos que mede de 1,20 até 1,50 metro na fase adulta. Mais fraco em magia, mas portador da habilidade da lendária forja. Desenvolvida com muito treinamento, são capazes de criar armas durante o combate e forjar as melhores armaduras.",
     abilities: [
@@ -221,7 +221,7 @@ const RACES_DATA = [
     subraces: [
       {
         name: "🧛 Vampiro Real",
-        image: "Photos/Vampire.jpeg",
+        image: "Photos/Vampire.jpg",
         appearance: "Aparência pálida, pele fria, corpo belo e esbelto. Costumam viver uma vida eterna.",
         desc: "Nascidos de puro sangue ou da infecção de um virgem. São mais intelectuais e formidáveis, atuando disfarçados na sociedade como barões ou senhores de terra. Têm desprezo por praticamente tudo, inclusive por outros vampiros.",
         abilityName: "Benefício do Sangue",
