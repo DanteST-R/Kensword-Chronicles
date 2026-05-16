@@ -1,19 +1,19 @@
-// ================================================================
-// KENSWORD CHRONICLES — Portal JS
-// Lógica do formulário de login/registro (usa Firebase via auth.js)
+﻿// ================================================================
+// KENSWORD CHRONICLES â€” Portal JS
+// LÃ³gica do formulÃ¡rio de login/registro (usa Firebase via auth.js)
 // ================================================================
 
-// ── Limites de raça para validação ──────────────────────────────
+// â”€â”€ Limites de raÃ§a para validaÃ§Ã£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const RACE_LIMITS = {
   "Humano":       { minAge: 1, maxAge: 300,  minH: 100, maxH: 300 },
   "Alto Elfo":    { minAge: 1, maxAge: 1000, minH: 140, maxH: 220 },
   "Drow (Elfo Negro)": { minAge: 1, maxAge: 1200, minH: 140, maxH: 220 },
   "Demi-Humano":  { minAge: 1, maxAge: 400,  minH: 100, maxH: 250 },
   "Gigante":      { minAge: 1, maxAge: 700,  minH: 800, maxH: 1000 },
-  "Anão":         { minAge: 1, maxAge: 600,  minH: 120, maxH: 150 },
-  "Demônio":      { minAge: 1, maxAge: 1000, minH: 100, maxH: 300 },
+  "AnÃ£o":         { minAge: 1, maxAge: 600,  minH: 120, maxH: 150 },
+  "DemÃ´nio":      { minAge: 1, maxAge: 1000, minH: 100, maxH: 300 },
   "Succubus / Incubus": { minAge: 1, maxAge: 800, minH: 140, maxH: 220 },
-  "Valquíria":    { minAge: 1, maxAge: 99999,minH: 140, maxH: 230 },
+  "ValquÃ­ria":    { minAge: 1, maxAge: 99999,minH: 140, maxH: 230 },
   "Fada":         { minAge: 1, maxAge: 500,  minH: 30,  maxH: 50  },
   "Pixie":        { minAge: 1, maxAge: 500,  minH: 20,  maxH: 100 },
   "Metamorfo":    { minAge: 1, maxAge: 500,  minH: 100, maxH: 250 },
@@ -23,12 +23,12 @@ const RACE_LIMITS = {
   "Drakobold":    { minAge: 1, maxAge: 100,  minH: 80,  maxH: 160 },
   "Kouris":       { minAge: 1, maxAge: 20,   minH: 30,  maxH: 200 },
   "Floraune":     { minAge: 1, maxAge: 80,   minH: 140, maxH: 220 },
-  "Espírito":     { minAge: 1, maxAge: 99999,minH: 1,   maxH: 300 },
+  "EspÃ­rito":     { minAge: 1, maxAge: 99999,minH: 1,   maxH: 300 },
   "Abissal":      { minAge: 1, maxAge: 500,  minH: 100, maxH: 400 },
   "Yokai":        { minAge: 1, maxAge: 99999,minH: 100, maxH: 250 },
 };
 
-// Mapa de raças para exibição (com sub-raças achatadas)
+// Mapa de raÃ§as para exibiÃ§Ã£o (com sub-raÃ§as achatadas)
 let RACE_OPTIONS = [];
 
 function buildRaceOptions() {
@@ -63,7 +63,7 @@ function buildRaceOptions() {
   });
 }
 
-// ── Navegação entre telas ────────────────────────────────────────
+// â”€â”€ NavegaÃ§Ã£o entre telas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function showAuthForm(form) {
   document.getElementById('auth-choice').style.display = 'none';
   document.getElementById('auth-login').classList.remove('active');
@@ -78,7 +78,7 @@ function showAuthChoice() {
   document.getElementById('auth-register').classList.remove('active');
 }
 
-// ── Passos do registro ───────────────────────────────────────────
+// â”€â”€ Passos do registro â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let currentStep = 0;
 
 function goToStep(step) {
@@ -96,7 +96,7 @@ function goToStep(step) {
   document.getElementById('auth-overlay').scrollTop = 0;
 }
 
-// ── Validação por passo ──────────────────────────────────────────
+// â”€â”€ ValidaÃ§Ã£o por passo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function validateStep(step) {
   if (step === 0) return validateStep0();
   if (step === 1) return validateStep1();
@@ -124,19 +124,19 @@ function validateStep0() {
 
   const name = document.getElementById('reg-player-name').value.trim();
   if (!name) { showErr('err-player-name', 'Informe seu nome de jogador.'); ok = false; }
-  else if (!/^[A-Za-zÀ-ÖØ-öø-ÿ\s]+$/.test(name)) { showErr('err-player-name', 'Você não pode colocar caracteres especiais ou números!'); ok = false; }
+  else if (!/^[A-Za-zÃ€-Ã–Ã˜-Ã¶Ã¸-Ã¿\s]+$/.test(name)) { showErr('err-player-name', 'VocÃª nÃ£o pode colocar caracteres especiais ou nÃºmeros!'); ok = false; }
 
   const age = parseInt(document.getElementById('reg-player-age').value);
-  if (!age || age < 1 || age > 120) { showErr('err-player-age', 'Informe uma idade válida (1–120).'); ok = false; }
+  if (!age || age < 1 || age > 120) { showErr('err-player-age', 'Informe uma idade vÃ¡lida (1â€“120).'); ok = false; }
 
   const avail = [...document.querySelectorAll('input[name="avail"]:checked')];
-  if (avail.length === 0) { showErr('err-avail', 'Você precisa colocar sua disponibilidade!'); ok = false; }
+  if (avail.length === 0) { showErr('err-avail', 'VocÃª precisa colocar sua disponibilidade!'); ok = false; }
 
   const pass = document.getElementById('reg-pass').value;
-  if (pass.length < 8) { showErr('err-pass', 'A senha deve ter no mínimo 8 caracteres.'); ok = false; }
+  if (pass.length < 8) { showErr('err-pass', 'A senha deve ter no mÃ­nimo 8 caracteres.'); ok = false; }
 
   const confirm = document.getElementById('reg-pass-confirm').value;
-  if (pass !== confirm) { showErr('err-pass-confirm', 'A senha não bate!'); ok = false; }
+  if (pass !== confirm) { showErr('err-pass-confirm', 'A senha nÃ£o bate!'); ok = false; }
 
   return ok;
 }
@@ -148,30 +148,30 @@ function validateStep1() {
 
   const charName = document.getElementById('reg-char-name').value.trim();
   if (!charName) { showErr('err-char-name', 'Informe o nome do personagem.'); ok = false; }
-  else if (!/^[A-Za-zÀ-ÖØ-öø-ÿ\s]+$/.test(charName)) { showErr('err-char-name', 'Você não pode colocar caracteres especiais ou números!'); ok = false; }
+  else if (!/^[A-Za-zÃ€-Ã–Ã˜-Ã¶Ã¸-Ã¿\s]+$/.test(charName)) { showErr('err-char-name', 'VocÃª nÃ£o pode colocar caracteres especiais ou nÃºmeros!'); ok = false; }
 
   const race = document.getElementById('reg-char-race').value;
-  if (!race) { showErr('err-char-race', 'Selecione uma raça.'); ok = false; }
+  if (!race) { showErr('err-char-race', 'Selecione uma raÃ§a.'); ok = false; }
 
   const charAge = parseInt(document.getElementById('reg-char-age').value);
-  if (!charAge || charAge < 1) { showErr('err-char-age', 'Informe uma idade válida.'); ok = false; }
+  if (!charAge || charAge < 1) { showErr('err-char-age', 'Informe uma idade vÃ¡lida.'); ok = false; }
   else {
     const parentRace = getRaceLimit(race);
     if (parentRace && charAge > parentRace.maxAge) {
-      showErr('err-char-age', `Esta raça vive no máximo ${parentRace.maxAge === 99999 ? 'uma vida eterna' : parentRace.maxAge + ' anos'}.`);
+      showErr('err-char-age', `Esta raÃ§a vive no mÃ¡ximo ${parentRace.maxAge === 99999 ? 'uma vida eterna' : parentRace.maxAge + ' anos'}.`);
       ok = false;
     }
   }
 
   const gender = document.querySelector('input[name="gender"]:checked');
-  if (!gender) { showErr('err-gender', 'Selecione um gênero.'); ok = false; }
+  if (!gender) { showErr('err-gender', 'Selecione um gÃªnero.'); ok = false; }
 
   const height = parseInt(document.getElementById('reg-height').value);
-  if (!height || height < 1) { showErr('err-height', 'Informe a altura em centímetros.'); ok = false; }
+  if (!height || height < 1) { showErr('err-height', 'Informe a altura em centÃ­metros.'); ok = false; }
   else {
     const lim = getRaceLimit(race);
     if (lim && (height < lim.minH || height > lim.maxH)) {
-      showErr('err-height', `Para esta raça, a altura deve ser entre ${lim.minH} cm e ${lim.maxH} cm.`);
+      showErr('err-height', `Para esta raÃ§a, a altura deve ser entre ${lim.minH} cm e ${lim.maxH} cm.`);
       ok = false;
     }
   }
@@ -187,7 +187,7 @@ function validateStep1() {
 
 function validateStep2() {
   let ok = true;
-  // O usuário não pediu restrições estritas aqui, mas podemos adicionar se necessário
+  // O usuÃ¡rio nÃ£o pediu restriÃ§Ãµes estritas aqui, mas podemos adicionar se necessÃ¡rio
   return ok;
 }
 
@@ -196,10 +196,10 @@ function togglePassword(id) {
   const btn = el.nextElementSibling;
   if (el.type === 'password') {
     el.type = 'text';
-    btn.textContent = '🙈';
+    btn.textContent = 'ðŸ™ˆ';
   } else {
     el.type = 'password';
-    btn.textContent = '👁️';
+    btn.textContent = 'ðŸ‘ï¸';
   }
 }
 
@@ -210,7 +210,7 @@ function getRaceLimit(raceName) {
   return null;
 }
 
-// ── Interações do formulário ──────────────────────────────────────
+// â”€â”€ InteraÃ§Ãµes do formulÃ¡rio â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function onRaceChange() {
   const val = document.getElementById('reg-char-race').value;
   const opt = RACE_OPTIONS.find(o => o.value === val);
@@ -226,7 +226,7 @@ function onRaceChange() {
     if (lim) {
       const maxStr = lim.maxAge === 99999 ? 'eterna' : lim.maxAge + ' anos';
       document.getElementById('height-hint').textContent =
-        `Altura: ${lim.minH}–${lim.maxH} cm | Expectativa de vida: ${maxStr}`;
+        `Altura: ${lim.minH}â€“${lim.maxH} cm | Expectativa de vida: ${maxStr}`;
     }
   } else {
     preview.classList.remove('active');
@@ -234,19 +234,19 @@ function onRaceChange() {
 }
 
 const ELEMENTS_DESC_DATA = {
-  "Fogo": { traits: "Calor • Poder de ataque • Destruição", desc: "Pode destruir, mas que também pode acabar fazendo o usuário se ferir." },
-  "Água": { traits: "Flexibilidade • Suporte • Restauração", desc: "Possui alto potencial restaurador, podendo curar feridas. Golpes ferozes em mãos hábeis." },
-  "Terra": { traits: "Resistente • Ótimo para ferreiros • Construtos", desc: "Cria muralhas inteiras ou grandes rochas para lançar em inimigos." },
-  "Vento": { traits: "Moldável • Nobre • Ágil", desc: "Extremamente útil e nobre. Ventos fortes aniquilam, ventos serenos acalmam." },
-  "Gelo": { traits: "Imponente • Nobre • Brutal", desc: "Poder congelante temerário, possuído principalmente pela Realeza de Korikiwa." },
-  "Planta": { traits: "Sereno • Raro • Suporte", desc: "Traz paz e consolo, curando aliados. Pode criar árvores gigantescas e imponentes." },
-  "Mineral": { traits: "Moldável • Raro • Ofensivo", desc: "Manipulação precisa dos minerais, de vidro a diamantes." },
-  "Relâmpago": { traits: "Super ágil • Ofensivo • Nobre", desc: "Buscado por nobres, mas letal nas mãos de velocistas." },
-  "Luz": { traits: "Ofensivo • Suporte", desc: "Fortes ataques ferventes, excelente suporte. Ilumina regiões escuras." },
-  "Sombra": { traits: "Flexível • Majins", desc: "Prende inimigos, perfura oponentes ou permite viagens através das sombras." },
-  "Dimensional": { traits: "Mobilidade • Utilidades", desc: "Usado para bolsas mágicas e portais de mobilidade." },
-  "Sagrado": { traits: "Suporte • Anti mortos-vivos", desc: "Milagroso. Cura feridas e ilumina o caminho. Aprovado pela igreja." },
-  "Trevas": { traits: "Corruptor • Cruel • Flexível", desc: "Maldade interminável: necromancia, corrupção e pactos." }
+  "Fogo": { traits: "Calor â€¢ Poder de ataque â€¢ DestruiÃ§Ã£o", desc: "Pode destruir, mas que tambÃ©m pode acabar fazendo o usuÃ¡rio se ferir." },
+  "Ãgua": { traits: "Flexibilidade â€¢ Suporte â€¢ RestauraÃ§Ã£o", desc: "Possui alto potencial restaurador, podendo curar feridas. Golpes ferozes em mÃ£os hÃ¡beis." },
+  "Terra": { traits: "Resistente â€¢ Ã“timo para ferreiros â€¢ Construtos", desc: "Cria muralhas inteiras ou grandes rochas para lanÃ§ar em inimigos." },
+  "Vento": { traits: "MoldÃ¡vel â€¢ Nobre â€¢ Ãgil", desc: "Extremamente Ãºtil e nobre. Ventos fortes aniquilam, ventos serenos acalmam." },
+  "Gelo": { traits: "Imponente â€¢ Nobre â€¢ Brutal", desc: "Poder congelante temerÃ¡rio, possuÃ­do principalmente pela Realeza de Korikiwa." },
+  "Planta": { traits: "Sereno â€¢ Raro â€¢ Suporte", desc: "Traz paz e consolo, curando aliados. Pode criar Ã¡rvores gigantescas e imponentes." },
+  "Mineral": { traits: "MoldÃ¡vel â€¢ Raro â€¢ Ofensivo", desc: "ManipulaÃ§Ã£o precisa dos minerais, de vidro a diamantes." },
+  "RelÃ¢mpago": { traits: "Super Ã¡gil â€¢ Ofensivo â€¢ Nobre", desc: "Buscado por nobres, mas letal nas mÃ£os de velocistas." },
+  "Luz": { traits: "Ofensivo â€¢ Suporte", desc: "Fortes ataques ferventes, excelente suporte. Ilumina regiÃµes escuras." },
+  "Sombra": { traits: "FlexÃ­vel â€¢ Majins", desc: "Prende inimigos, perfura oponentes ou permite viagens atravÃ©s das sombras." },
+  "Dimensional": { traits: "Mobilidade â€¢ Utilidades", desc: "Usado para bolsas mÃ¡gicas e portais de mobilidade." },
+  "Sagrado": { traits: "Suporte â€¢ Anti mortos-vivos", desc: "Milagroso. Cura feridas e ilumina o caminho. Aprovado pela igreja." },
+  "Trevas": { traits: "Corruptor â€¢ Cruel â€¢ FlexÃ­vel", desc: "Maldade interminÃ¡vel: necromancia, corrupÃ§Ã£o e pactos." }
 };
 
 function onElementChange() {
@@ -265,7 +265,7 @@ function onElementChange() {
 function onHeightInput() {
   const val = parseInt(document.getElementById('reg-height').value);
   const el = document.getElementById('height-converted');
-  if (val > 0) el.textContent = `→ ${(val / 100).toFixed(2).replace('.', ',')} metros`;
+  if (val > 0) el.textContent = `â†’ ${(val / 100).toFixed(2).replace('.', ',')} metros`;
   else el.textContent = '';
 }
 
@@ -277,7 +277,7 @@ function onAvatarSelected(event) {
   reader.onload = function(e) {
     const img = new Image();
     img.onload = function() {
-      // Redimensionar para no máximo 400x400
+      // Redimensionar para no mÃ¡ximo 400x400
       const canvas = document.createElement('canvas');
       const MAX_SIZE = 400;
       let width = img.width;
@@ -294,7 +294,7 @@ function onAvatarSelected(event) {
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, width, height);
       
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.7); // Compressão leve
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.7); // CompressÃ£o leve
       document.getElementById('reg-char-avatar-base64').value = dataUrl;
       
       const preview = document.getElementById('avatar-preview');
@@ -312,14 +312,14 @@ function onWeightInput() {
   const box = document.getElementById('weight-confirm');
   const txt = document.getElementById('weight-confirm-text');
   if (val > 0) {
-    txt.textContent = `Você vai ter ${val} Quilos. Você tem certeza?`;
+    txt.textContent = `VocÃª vai ter ${val} Quilos. VocÃª tem certeza?`;
     box.classList.add('active');
   } else {
     box.classList.remove('active');
   }
 }
 
-// ── Atributos ─────────────────────────────────────────────────────
+// â”€â”€ Atributos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const ATTRS = { strength: 0, resistance: 0, speed: 0, magic: 0 };
 const TOTAL_POINTS = 250;
 
@@ -341,7 +341,7 @@ function updateAttrDisplay() {
   el.className = 'attr-points-remaining' + (rem === 0 ? ' full' : '');
 }
 
-// ── Contador de palavras ──────────────────────────────────────────
+// â”€â”€ Contador de palavras â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function updateWordCount() {
   const text = document.getElementById('reg-story').value.trim();
   const words = text ? text.split(/\s+/).length : 0;
@@ -350,7 +350,7 @@ function updateWordCount() {
   el.className = 'word-counter' + (words === 0 ? '' : words < 300 ? ' warn' : ' ok');
 }
 
-// ── Toast ─────────────────────────────────────────────────────────
+// â”€â”€ Toast â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function showToast(msg, type = '') {
   const t = document.getElementById('auth-toast');
   t.textContent = msg;
@@ -358,7 +358,7 @@ function showToast(msg, type = '') {
   setTimeout(() => t.className = 'auth-toast', 3500);
 }
 
-// ── Coleta dados do formulário ────────────────────────────────────
+// â”€â”€ Coleta dados do formulÃ¡rio â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function collectFormData() {
   return {
     playerName: document.getElementById('reg-player-name').value.trim(),
@@ -389,7 +389,7 @@ function collectFormData() {
   };
 }
 
-// ── Ações de Login e Registro ─────────────────────────────────────
+// â”€â”€ AÃ§Ãµes de Login e Registro â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function handleRegister() {
   clearErr('err-register-general');
   const btn = document.getElementById('register-submit-btn');
@@ -399,14 +399,14 @@ async function handleRegister() {
     setLoading(true);
     await registerCharacter(data);
     setLoading(false);
-    showToast('✅ Personagem inscrito na guilda!', 'success');
+    showToast('âœ… Personagem inscrito na guilda!', 'success');
     setTimeout(() => hidePortal(), 1200);
   } catch (err) {
     setLoading(false);
     btn.disabled = false;
-    console.warn('⚠️ O erro 400 (Bad Request) que aparece no console acima é normal. O Firebase usa isso para avisar que o registro foi recusado (ex: o nome já existe). Motivo real:', err.code || err.message);
+    console.warn('âš ï¸ O erro 400 (Bad Request) que aparece no console acima Ã© normal. O Firebase usa isso para avisar que o registro foi recusado (ex: o nome jÃ¡ existe). Motivo real:', err.code || err.message);
     const msg = translateFirebaseError(err.code || err.message);
-    showErr('err-register-general', '⚠ ' + msg + (err.code ? ' [' + err.code + ']' : ''));
+    showErr('err-register-general', 'âš  ' + msg + (err.code ? ' [' + err.code + ']' : ''));
     showToast('Erro ao inscrever personagem.', 'error');
   }
 }
@@ -423,14 +423,14 @@ async function handleLogin() {
     setLoading(true);
     await loginCharacter(name, pass);
     setLoading(false);
-    showToast('✅ Bem-vindo de volta, aventureiro!', 'success');
+    showToast('âœ… Bem-vindo de volta, aventureiro!', 'success');
     setTimeout(() => hidePortal(), 1200);
   } catch (err) {
     setLoading(false);
     btn.disabled = false;
-    console.warn('⚠️ Erro durante o login:', err);
+    console.warn('âš ï¸ Erro durante o login:', err);
     const msg = translateFirebaseError(err.code || err.message);
-    showErr('login-general-err', '⚠ ' + msg + (err.code ? ' [' + err.code + ']' : ''));
+    showErr('login-general-err', 'âš  ' + msg + (err.code ? ' [' + err.code + ']' : ''));
   }
 }
 
@@ -439,7 +439,7 @@ async function handleLogout() {
   showPortal();
 }
 
-// ── Controle do overlay ───────────────────────────────────────────
+// â”€â”€ Controle do overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function hidePortal() {
   document.getElementById('auth-overlay').classList.add('hidden');
 }
@@ -451,23 +451,23 @@ function setLoading(on) {
   document.getElementById('auth-loading').classList.toggle('active', on);
 }
 
-// ── Tradução de erros Firebase ────────────────────────────────────
+// â”€â”€ TraduÃ§Ã£o de erros Firebase â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function translateFirebaseError(code) {
   const map = {
-    'auth/email-already-in-use': 'Este nome de jogador já está cadastrado.',
-    'auth/invalid-email': 'Nome de jogador inválido.',
+    'auth/email-already-in-use': 'Este nome de jogador jÃ¡ estÃ¡ cadastrado.',
+    'auth/invalid-email': 'Nome de jogador invÃ¡lido.',
     'auth/weak-password': 'Senha muito fraca. Use ao menos 8 caracteres.',
-    'auth/user-not-found': 'Jogador não encontrado. Verifique o nome.',
+    'auth/user-not-found': 'Jogador nÃ£o encontrado. Verifique o nome.',
     'auth/wrong-password': 'Senha incorreta.',
     'auth/invalid-credential': 'Nome ou senha incorretos.',
     'auth/too-many-requests': 'Muitas tentativas. Aguarde e tente novamente.',
-    'auth/network-request-failed': 'Erro de conexão. Verifique sua internet.',
-    'auth/configuration-not-found': 'Erro crítico: O login por e-mail/senha não está ativado no seu Firebase Console!',
+    'auth/network-request-failed': 'Erro de conexÃ£o. Verifique sua internet.',
+    'auth/configuration-not-found': 'Erro crÃ­tico: O login por e-mail/senha nÃ£o estÃ¡ ativado no seu Firebase Console!',
   };
   return map[code] || 'Erro inesperado. Tente novamente.';
 }
 
-// ── Inicialização ─────────────────────────────────────────────────
+// â”€â”€ InicializaÃ§Ã£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function initPortal() {
   buildRaceOptions();
   try {
@@ -476,7 +476,7 @@ async function initPortal() {
       else showPortal();
     });
   } catch (e) {
-    console.warn('Firebase não configurado:', e);
+    console.warn('Firebase nÃ£o configurado:', e);
     showPortal();
   }
 }
@@ -498,11 +498,13 @@ async function loadCharactersTab() {
     }
     keys.forEach(uid => {
       const char = ALL_CHARACTERS[uid].character || {};
+    keys.forEach(uid => {
+      const char = ALL_CHARACTERS[uid].character || {};
       const name = char.name || 'Desconhecido';
-      const avatar = char.avatar || 'Photos/placeholder-avatar.png';
-      html += `<div class="character-card" onclick="openCharacterSheet('')">
-        <img src="" alt="">
-        <div class="char-card-name"></div>
+      const avatar = char.avatar || 'Photos/demihuman.webp';
+      html += `<div class="character-card" onclick="openCharacterSheet('${uid}')">
+        <img src="${avatar}" alt="${name}">
+        <div class="char-card-name">${name}</div>
       </div>`;
     });
     container.innerHTML = html;
@@ -516,40 +518,40 @@ function openCharacterSheet(uid) {
   const data = ALL_CHARACTERS[uid];
   if (!data) return;
   const char = data.character || {};
-  const racialHtml = (char.abilities?.racial || []).map(r => `<li style="margin-bottom:0.5rem;"><strong>:</strong> </li>`).join('');
-  const uniqueHtml = char.uniqueAbility?.title ? `<strong></strong><br>` : 'Nenhuma';
+  const racialHtml = (char.abilities?.racial || []).map(r => `<li style="margin-bottom:0.5rem;"><strong>${r.name}:</strong> ${r.desc}</li>`).join('');
+  const uniqueHtml = char.uniqueAbility?.title ? `<strong>${char.uniqueAbility.title}</strong><br>${char.uniqueAbility.description}` : 'Nenhuma';
   const classHtml = (char.classes || []).join(', ') || 'Nenhuma';
   const spellHtml = (char.spells || []).join(', ') || 'Nenhuma';
 
-  const html = `<h2 style="font-family:'Cinzel',serif; text-align:center; color:var(--ink); margin-bottom:1.5rem; border-bottom:1px solid var(--wood-plank); padding-bottom:0.5rem;"></h2>
+  const html = `<h2 style="font-family:'Cinzel',serif; text-align:center; color:var(--ink); margin-bottom:1.5rem; border-bottom:1px solid var(--wood-plank); padding-bottom:0.5rem;">${char.name}</h2>
     <div style="display:flex; gap:1.5rem; margin-bottom:1.5rem; flex-wrap:wrap; justify-content:center;">
-      <img src="" style="width:180px; height:180px; object-fit:cover; border-radius:8px; border:2px solid var(--wood-plank); box-shadow:0 4px 6px rgba(0,0,0,0.3);">
+      <img src="${char.avatar || 'Photos/demihuman.webp'}" style="width:180px; height:180px; object-fit:cover; border-radius:8px; border:2px solid var(--wood-plank); box-shadow:0 4px 6px rgba(0,0,0,0.3);">
       <div style="flex:1; min-width:200px; display:flex; flex-direction:column; justify-content:center;">
-        <p style="margin-bottom:0.5rem;"><strong>Ra�a:</strong> </p>
-        <p style="margin-bottom:0.5rem;"><strong>Idade:</strong>  anos</p>
-        <p style="margin-bottom:0.5rem;"><strong>G�nero:</strong> </p>
-        <p style="margin-bottom:0.5rem;"><strong>Linhagem:</strong> </p>
+        <p style="margin-bottom:0.5rem;"><strong>Raça:</strong> ${char.race || 'N/A'}</p>
+        <p style="margin-bottom:0.5rem;"><strong>Idade:</strong> ${char.age || 'N/A'} anos</p>
+        <p style="margin-bottom:0.5rem;"><strong>Gênero:</strong> ${char.gender || 'N/A'}</p>
+        <p style="margin-bottom:0.5rem;"><strong>Linhagem:</strong> ${char.lineage || '—'}</p>
       </div>
     </div>
     <div style="margin-bottom:1.5rem;">
       <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-bottom:0.5rem;">Habilidades Raciais</h3>
-      <ul style="padding-left:1.2rem;"></ul>
+      <ul style="padding-left:1.2rem;">${racialHtml || 'Nenhuma'}</ul>
     </div>
     <div style="margin-bottom:1.5rem;">
-      <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-bottom:0.5rem;">Habilidade �nica</h3>
-      <p></p>
+      <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-bottom:0.5rem;">Habilidade Única</h3>
+      <p>${uniqueHtml}</p>
     </div>
     <div style="margin-bottom:1.5rem;">
       <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-bottom:0.5rem;">Classes</h3>
-      <p></p>
+      <p>${classHtml}</p>
     </div>
     <div style="margin-bottom:1.5rem;">
       <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-bottom:0.5rem;">Magias (3 Principais)</h3>
-      <p></p>
+      <p>${spellHtml}</p>
     </div>
     <div style="margin-bottom:1.5rem;">
-      <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-bottom:0.5rem;">Hist�ria</h3>
-      <p style="white-space:pre-wrap; line-height:1.6;"></p>
+      <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-bottom:0.5rem;">História</h3>
+      <p style="white-space:pre-wrap; line-height:1.6;">${char.story || 'História não informada pelo administrador.'}</p>
     </div>`;
   document.getElementById('char-sheet-body').innerHTML = html;
   document.getElementById('char-sheet-modal').style.display = 'flex';
