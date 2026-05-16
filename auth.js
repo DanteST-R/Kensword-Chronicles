@@ -73,6 +73,7 @@ function _buildCharacterDocument(uid, f) {
       height: parseInt(f.charHeight),
       weight: parseInt(f.charWeight),
       location: f.charLocation,
+      avatar: f.charAvatar || '', // Base64 da imagem
       story: f.charStory || '',
       lineage: '— (a ser definido pelo administrador)',
       uniqueAbility: {
