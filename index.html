@@ -127,18 +127,29 @@
         <!-- PASSO 1: Dados do Personagem -->
         <div id="reg-step-1" class="reg-step" style="display:none">
           <div class="form-section-title">Dados do Personagem</div>
-          <div class="field-row">
-            <div class="field-group">
-              <label for="reg-char-name">Nome do Personagem</label>
-              <span class="field-hint">Apenas letras.</span>
-              <input type="text" id="reg-char-name" placeholder="Ex: Herói Principal">
-              <div class="field-error" id="err-char-name"></div>
+          <div style="display:flex; gap:1.5rem; flex-wrap:wrap;">
+            <div style="flex:1; min-width:200px;">
+              <div class="field-group">
+                <label for="reg-char-name">Nome do Personagem</label>
+                <span class="field-hint">Apenas letras.</span>
+                <input type="text" id="reg-char-name" placeholder="Ex: Herói Principal">
+                <div class="field-error" id="err-char-name"></div>
+              </div>
+              <div class="field-group" style="margin-bottom:0;">
+                <label for="reg-char-age">Idade do Personagem</label>
+                <span class="field-hint">Deve bater com a expectativa de vida da raça.</span>
+                <input type="number" id="reg-char-age" placeholder="Ex: 25" min="1">
+                <div class="field-error" id="err-char-age"></div>
+              </div>
             </div>
-            <div class="field-group">
-              <label for="reg-char-age">Idade do Personagem</label>
-              <span class="field-hint">Deve bater com a expectativa de vida da raça.</span>
-              <input type="number" id="reg-char-age" placeholder="Ex: 25" min="1">
-              <div class="field-error" id="err-char-age"></div>
+            <div style="display:flex; flex-direction:column; align-items:center; margin-bottom:1rem;">
+              <label style="font-family:'Cinzel',serif; font-size:0.95rem; color:var(--ink); margin-bottom:0.4rem;">Aparência (Foto)</label>
+              <div class="avatar-upload-box" onclick="document.getElementById('reg-char-avatar').click()">
+                <img id="avatar-preview" src="" alt="Avatar" style="width:100%; height:100%; object-fit:cover; display:none;">
+                <div id="avatar-placeholder-text" style="font-size:0.85rem; line-height:1.4;">📷<br>Importar</div>
+              </div>
+              <input type="file" id="reg-char-avatar" accept="image/*" style="display:none;" onchange="onAvatarSelected(event)">
+              <input type="hidden" id="reg-char-avatar-base64">
             </div>
           </div>
           <div class="field-group">
