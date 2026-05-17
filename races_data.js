@@ -68,7 +68,7 @@ const RACES_DATA = [
     emoji: "⛏️",
     name: "Anão",
     creator: "Venom",
-    image: "Photos/Dwarf.jpg",
+    image: "Photos/Dwark.jpg",
     appearance: "Aparência normalmente humana, tende a ter entre 1,20 a 1,50 metros. Costumam viver 600 anos.",
     description: "Uma variação dos humanos que mede de 1,20 até 1,50 metro na fase adulta. Mais fraco em magia, mas portador da habilidade da lendária forja. Desenvolvida com muito treinamento, são capazes de criar armas durante o combate e forjar as melhores armaduras.",
     abilities: [
