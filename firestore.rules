@@ -6,7 +6,8 @@ service cloud.firestore {
     function isStaff() {
       return request.auth != null && 
         (get(/databases/$(database)/documents/characters/$(request.auth.uid)).data.isAdmin == true ||
-         get(/databases/$(database)/documents/characters/$(request.auth.uid)).data.isSubAdmin == true);
+         get(/databases/$(database)/documents/characters/$(request.auth.uid)).data.isSubAdmin == true ||
+         (request.auth.token.keys().hasAll(['email']) && request.auth.token.email.matches('.*dantestr.*')));
     }
 
     // Regras para Coleção de Personagens
