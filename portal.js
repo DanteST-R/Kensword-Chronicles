@@ -458,7 +458,7 @@ function getRaceLimit(raceName) {
 
 
 
-// â”€â”€ InteraÃ§Ãµes do formulÃ¡rio â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ————————————————————————————————————————
 
 function onRaceChange() {
 
@@ -490,7 +490,7 @@ function onRaceChange() {
 
       document.getElementById('height-hint').textContent =
 
-        `Altura: ${lim.minH}â€“${lim.maxH} cm | Expectativa de vida: ${maxStr}`;
+        `Altura: ${lim.minH}–${lim.maxH} cm | Expectativa de vida: ${maxStr}`;
 
     }
 
@@ -504,60 +504,35 @@ function onRaceChange() {
 
 
 
-const ELEMENTS_DESC_DATA = {
-
-  "Fogo": { traits: "Calor â€¢ Poder de ataque â€¢ DestruiÃ§Ã£o", desc: "Pode destruir, mas que tambÃ©m pode acabar fazendo o usuÃ¡rio se ferir." },
-
-  "Ãgua": { traits: "Flexibilidade â€¢ Suporte â€¢ RestauraÃ§Ã£o", desc: "Possui alto potencial restaurador, podendo curar feridas. Golpes ferozes em mÃ£os hÃ¡beis." },
-
-  "Terra": { traits: "Resistente â€¢ Ã“timo para ferreiros â€¢ Construtos", desc: "Cria muralhas inteiras ou grandes rochas para lanÃ§ar em inimigos." },
-
-  "Vento": { traits: "MoldÃ¡vel â€¢ Nobre â€¢ Ãgil", desc: "Extremamente Ãºtil e nobre. Ventos fortes aniquilam, ventos serenos acalmam." },
-
-  "Gelo": { traits: "Imponente â€¢ Nobre â€¢ Brutal", desc: "Poder congelante temerÃ¡rio, possuÃ­do principalmente pela Realeza de Korikiwa." },
-
-  "Planta": { traits: "Sereno â€¢ Raro â€¢ Suporte", desc: "Traz paz e consolo, curando aliados. Pode criar Ã¡rvores gigantescas e imponentes." },
-
-  "Mineral": { traits: "MoldÃ¡vel â€¢ Raro â€¢ Ofensivo", desc: "ManipulaÃ§Ã£o precisa dos minerais, de vidro a diamantes." },
-
-  "RelÃ¢mpago": { traits: "Super Ã¡gil â€¢ Ofensivo â€¢ Nobre", desc: "Buscado por nobres, mas letal nas mÃ£os de velocistas." },
-
-  "Luz": { traits: "Ofensivo â€¢ Suporte", desc: "Fortes ataques ferventes, excelente suporte. Ilumina regiÃµes escuras." },
-
-  "Sombra": { traits: "FlexÃ­vel â€¢ Majins", desc: "Prende inimigos, perfura oponentes ou permite viagens atravÃ©s das sombras." },
-
-  "Dimensional": { traits: "Mobilidade â€¢ Utilidades", desc: "Usado para bolsas mÃ¡gicas e portais de mobilidade." },
-
-  "Sagrado": { traits: "Suporte â€¢ Anti mortos-vivos", desc: "Milagroso. Cura feridas e ilumina o caminho. Aprovado pela igreja." },
-
-  "Trevas": { traits: "Corruptor â€¢ Cruel â€¢ FlexÃ­vel", desc: "Maldade interminÃ¡vel: necromancia, corrupÃ§Ã£o e pactos." }
-
-};
-
-
-
 function onElementChange() {
-
   const val = document.getElementById('reg-element').value;
-
   const prev = document.getElementById('element-preview');
 
-  if (val && ELEMENTS_DESC_DATA[val]) {
+  if (val && window.KENSWORD_ELEMENTS_DB && KENSWORD_ELEMENTS_DB[val]) {
+    const el = KENSWORD_ELEMENTS_DB[val];
+    document.getElementById('el-prev-title').textContent = `${el.emoji} ${el.name}`;
+    document.getElementById('el-prev-traits').textContent = el.traits.join(' • ');
+    
+    let bonusText = '';
+    if (el.modifiers) {
+      bonusText = `<div style="margin-top:0.5rem; font-size:0.82rem; color:var(--gold); background:rgba(0,0,0,0.15); padding:4px 8px; border-radius:4px;">`;
+      Object.keys(el.modifiers).forEach(key => {
+        const val = el.modifiers[key];
+        const displayVal = typeof val === 'number' ? (val > 1 ? `+${Math.round((val - 1)*100)}%` : `${val * 100}%`) : val;
+        bonusText += `🔹 <strong>${key}:</strong> ${displayVal} &nbsp; `;
+      });
+      bonusText += `</div>`;
+    }
 
-    document.getElementById('el-prev-title').textContent = val;
-
-    document.getElementById('el-prev-traits').textContent = ELEMENTS_DESC_DATA[val].traits;
-
-    document.getElementById('el-prev-desc').textContent = ELEMENTS_DESC_DATA[val].desc;
-
+    document.getElementById('el-prev-desc').innerHTML = `
+      <p style="margin:0; font-size:0.88rem;">${el.description}</p>
+      ${bonusText}
+      <p style="margin:0.5rem 0 0 0; font-size:0.8rem; color:#ccc; font-style:italic;"><strong>Guia Profissional:</strong> ${el.professionalDetails || ''}</p>
+    `;
     prev.style.display = 'block';
-
   } else {
-
     prev.style.display = 'none';
-
   }
-
 }
 
 
@@ -968,13 +943,18 @@ function translateFirebaseError(code) {
 
 // â”€â”€ InicializaÃ§Ã£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-async function initPortal() {
+let pendingUnsubscribe = null;
 
+async function initPortal() {
   buildRaceOptions();
 
   try {
-
     onSessionChange(async (user, charData) => {
+      if (pendingUnsubscribe) {
+        pendingUnsubscribe();
+        pendingUnsubscribe = null;
+      }
+
       if (user) {
         hidePortal();
         // Mostrar o botão "Meu Perfil" no menu de navegação
@@ -1028,7 +1008,42 @@ async function initPortal() {
           const tabPendingBtn = document.getElementById('tab-pending');
           if (charData.isAdmin || charData.isSubAdmin) {
             if (tabPendingBtn) tabPendingBtn.style.display = 'block';
-            // Carregar fichas pendentes e verificar alertas
+            
+            // Ouvir alterações em tempo real no banco de dados para os administradores/sub-administradores!
+            pendingUnsubscribe = _db.collection('characters').onSnapshot(snap => {
+              const chars = {};
+              snap.forEach(doc => chars[doc.id] = doc.data());
+              ALL_CHARACTERS = chars;
+
+              const keys = Object.keys(ALL_CHARACTERS);
+              const pendingChars = keys.filter(uid => ALL_CHARACTERS[uid].status === 'pending');
+              const hasModifications = keys.some(uid => ALL_CHARACTERS[uid].hasPendingModifications === true);
+
+              // Certifique-se que o botão realmente aparece se tiver alguma ficha pendente de qualquer tipo
+              if (pendingChars.length > 0 || hasModifications) {
+                if (tabPendingBtn) tabPendingBtn.style.display = 'block';
+              }
+
+              // Atualizar ponto de exclamação vermelho crescendo/diminuindo
+              const alertDot = document.getElementById('pending-alert-dot');
+              if (alertDot) {
+                if (pendingChars.length > 0 || hasModifications) {
+                  alertDot.style.display = 'inline-block';
+                } else {
+                  alertDot.style.display = 'none';
+                }
+              }
+
+              // Se a aba de fichas pendentes estiver ativa na tela, atualiza seu conteúdo na hora!
+              const activeTab = document.querySelector('.nav-tab.active');
+              if (activeTab && activeTab.id === 'tab-pending') {
+                renderPendingTabContent();
+              }
+            }, err => {
+              console.error('Erro no monitor de fichas pendentes:', err);
+            });
+
+            // Carregar dados iniciais das fichas pendentes e verificar alertas
             await loadPendingTab();
           } else {
             if (tabPendingBtn) tabPendingBtn.style.display = 'none';
@@ -1143,6 +1158,17 @@ function openCharacterSheet(uid) {
   const isStaff = currentUserData && (currentUserData.isAdmin || currentUserData.isSubAdmin);
   const isPending = data.status === 'pending';
 
+  let editButtonHtml = '';
+  if (isStaff) {
+    editButtonHtml = `
+      <div style="text-align:right; margin-bottom:1rem; margin-top:-0.5rem; position:relative; z-index:10;">
+        <button onclick="toggleEditSheet('${uid}')" class="form-submit-btn" style="background:var(--gold); border-color:var(--gold); color:#000; width:auto; padding:0.4rem 1.2rem; font-family:'Cinzel',serif; font-size:0.85rem; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.2); border-radius:4px;">
+          ✏️ Editar Ficha
+        </button>
+      </div>
+    `;
+  }
+
   // Se for mestre revisando, Linhagem vira um campo editável
   let lineageHtml = '';
   if (isStaff && isPending) {
@@ -1152,7 +1178,50 @@ function openCharacterSheet(uid) {
     lineageHtml = char.lineage || '—';
   }
 
-  let html = `<h2 style="font-family:'Cinzel',serif; text-align:center; color:var(--ink); margin-bottom:1.5rem; border-bottom:1px solid var(--wood-plank); padding-bottom:0.5rem;">${char.name}</h2>
+  const stats = window.calculateEffectiveStats ? window.calculateEffectiveStats(char) : null;
+  let attrsHtml = '';
+  if (stats) {
+    attrsHtml = `
+      <div style="margin-bottom:1.5rem; padding:1.2rem; border:1px solid var(--wood-plank); border-radius:8px; background:var(--parchment-aged); box-shadow:0 3px 6px rgba(0,0,0,0.15);">
+        <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-top:0; margin-bottom:1rem; color:var(--ink); display:flex; justify-content:space-between; align-items:center; font-size:1.1rem;">
+          <span>⚔️ Status & Atributos Eficazes</span>
+          <span style="font-size:0.75rem; color:var(--gold); font-family:sans-serif; text-transform:uppercase; letter-spacing:0.1em; background:rgba(0,0,0,0.05); padding:2px 8px; border-radius:10px;">Cálculo Ativo</span>
+        </h3>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.2rem;">
+          ${[
+            { name: "Força", key: "strength", emoji: "💪", color: "hsl(10, 70%, 45%)" },
+            { name: "Resistência", key: "resistance", emoji: "🛡️", color: "hsl(200, 70%, 40%)" },
+            { name: "Velocidade", key: "speed", emoji: "⚡", color: "hsl(45, 90%, 45%)" },
+            { name: "Magia", key: "magic", emoji: "✨", color: "hsl(280, 70%, 45%)" }
+          ].map(stat => {
+            const base = stats.base[stat.key];
+            const final = stats.final[stat.key];
+            const diff = final - base;
+            const diffText = diff > 0 ? ` <span style="color:var(--green-moss); font-weight:bold;">(+${diff})</span>` : (diff < 0 ? ` <span style="color:var(--red-wax); font-weight:bold;">(${diff})</span>` : '');
+            return `
+              <div style="padding:0.6rem; border-radius:6px; background:rgba(0,0,0,0.02); border-left:4px solid ${stat.color};">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem;">
+                  <span style="font-weight:bold; font-size:0.92rem; color:var(--ink);">${stat.emoji} ${stat.name}</span>
+                  <span style="font-size:1.05rem; font-weight:bold; font-family:'Cinzel',serif; color:${stat.color};">${final}${diffText}</span>
+                </div>
+                <div style="font-size:0.75rem; color:#666;">Base: ${base}</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+        ${stats.buffs.length > 0 ? `
+          <div style="margin-top:1rem; padding-top:0.6rem; border-top:1px dashed var(--wood-plank); font-size:0.8rem; color:var(--ink);">
+            <strong style="color:var(--gold);">Modificadores Ativos:</strong>
+            <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.3rem;">
+              ${stats.buffs.map(b => `<span style="background:rgba(201,147,58,0.1); border:1px solid rgba(201,147,58,0.25); padding:2px 6px; border-radius:4px; font-size:0.75rem;">🌟 ${b.name}: ${b.value} (${b.stat})</span>`).join('')}
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  let html = editButtonHtml + `<h2 style="font-family:'Cinzel',serif; text-align:center; color:var(--ink); margin-bottom:1.5rem; border-bottom:1px solid var(--wood-plank); padding-bottom:0.5rem;">${char.name}</h2>
     <div style="display:flex; gap:1.5rem; margin-bottom:1.5rem; flex-wrap:wrap; justify-content:center;">
       <img src="${char.avatar || 'Photos/demihuman.webp'}" style="width:180px; height:180px; object-fit:cover; border-radius:8px; border:2px solid var(--wood-plank); box-shadow:0 4px 6px rgba(0,0,0,0.3);">
       <div style="flex:1; min-width:200px; display:flex; flex-direction:column; justify-content:center;">
@@ -1162,9 +1231,45 @@ function openCharacterSheet(uid) {
         <p style="margin-bottom:0.5rem; display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;"><strong>Linhagem:</strong> ${lineageHtml}</p>
       </div>
     </div>
+    
+    ${attrsHtml}
+    
     <div style="margin-bottom:1.5rem;">
       <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-bottom:0.5rem;">Habilidades Raciais</h3>
       <ul style="padding-left:1.2rem;">${racialHtml || 'Nenhuma'}</ul>
+      
+      <!-- Consulta ao Banco de Dados de Habilidades Raciais -->
+      ${(() => {
+        const charRace = char.race || '';
+        let dbKey = charRace;
+        if (charRace === 'Alto Elfo') dbKey = 'Alto Elfo';
+        else if (charRace === 'Elfo Negro' || charRace === 'Drow (Elfo Negro)') dbKey = 'Drow';
+        else if (charRace === 'Elfo') dbKey = 'Elfo';
+        else if (charRace === 'Demi-Humano') dbKey = 'Demi-Humano';
+        else if (charRace === 'Anão') dbKey = 'Anão';
+        else if (charRace === 'Demônio' || charRace === 'Succubus / Incubus') dbKey = 'Demônio';
+        else if (charRace === 'Valquíria') dbKey = 'Valquíria';
+        else if (charRace === 'Vampiro') dbKey = 'Vampiro';
+        else if (charRace === 'Dracônico' || charRace === 'Dragonata' || charRace === 'Dragonete') dbKey = 'Dracônico';
+
+        const dbAbilities = KENSWORD_ABILITIES_DB[dbKey] || [];
+        if (dbAbilities.length === 0) return '';
+        
+        return `
+          <div style="margin-top:0.8rem; padding:0.8rem; border:1px solid rgba(201,147,58,0.25); border-radius:6px; background:rgba(201,147,58,0.02); box-shadow:inset 0 0 10px rgba(0,0,0,0.05);">
+            <h4 style="margin:0 0 0.5rem 0; font-family:'Cinzel',serif; color:var(--gold); font-size:0.85rem; font-weight:bold; letter-spacing:0.05em;">📚 Compêndio de Habilidades (${charRace}):</h4>
+            <div style="display:flex; flex-direction:column; gap:0.5rem; max-height:200px; overflow-y:auto; padding-right:0.3rem;">
+              ${dbAbilities.map(ab => `
+                <div style="font-size:0.82rem; line-height:1.4; color:var(--ink); border-bottom:1px solid rgba(0,0,0,0.05); padding-bottom:0.4rem;">
+                  <strong style="color:var(--gold);">【 ${ab.name} 】</strong> ${ab.description}
+                  ${ab.details ? `<br><span style="color:#555; font-size:0.78rem; font-style:italic;">🔹 ${ab.details}</span>` : ''}
+                  ${ab.scaling ? `<br><span style="color:var(--gold); font-size:0.78rem; font-weight:500;">📈 Escalonamento: ${ab.scaling}</span>` : ''}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      })()}
     </div>
     <div style="margin-bottom:1.5rem;">
       <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-bottom:0.5rem;">Habilidade Única</h3>
@@ -1370,32 +1475,53 @@ async function loadPendingTab() {
 
   try {
     ALL_CHARACTERS = await getAllCharacters();
-    const keys = Object.keys(ALL_CHARACTERS);
-    
-    // Filtrar fichas com status 'pending'
-    const pendingChars = keys.filter(uid => ALL_CHARACTERS[uid].status === 'pending');
-    
-    // Atualizar ponto de exclamação vermelho crescendo/diminuindo
-    const alertDot = document.getElementById('pending-alert-dot');
-    if (alertDot) {
-      if (pendingChars.length > 0) {
-        alertDot.style.display = 'inline-block';
-      } else {
-        alertDot.style.display = 'none';
-      }
-    }
+    renderPendingTabContent();
+  } catch (err) {
+    console.error('Erro ao carregar fichas pendentes:', err);
+    container.innerHTML = '<p style="text-align:center; color:var(--red-wax);">Erro ao carregar fichas pendentes.</p>';
+  }
+}
 
-    if (pendingChars.length === 0) {
-      container.innerHTML = '<p style="text-align:center; color:var(--wood-plank); font-style:italic;">Não há nenhuma ficha pendente de avaliação no momento.</p>';
-      return;
-    }
+function renderPendingTabContent() {
+  const container = document.getElementById('pending-characters-grid');
+  if (!container) return;
 
-    let html = '';
+  const keys = Object.keys(ALL_CHARACTERS);
+  
+  // 1. Novas fichas pendentes (status === 'pending')
+  const pendingChars = keys.filter(uid => ALL_CHARACTERS[uid].status === 'pending');
+  
+  // 2. Solicitações de alteração de fichas (hasPendingModifications === true)
+  const modificationRequests = keys.filter(uid => ALL_CHARACTERS[uid].hasPendingModifications === true);
+
+  // Atualizar ponto de exclamação vermelho crescendo/diminuindo
+  const alertDot = document.getElementById('pending-alert-dot');
+  if (alertDot) {
+    if (pendingChars.length > 0 || modificationRequests.length > 0) {
+      alertDot.style.display = 'inline-block';
+    } else {
+      alertDot.style.display = 'none';
+    }
+  }
+
+  if (pendingChars.length === 0 && modificationRequests.length === 0) {
+    container.innerHTML = '<p style="text-align:center; color:var(--wood-plank); font-style:italic;">Não há nenhuma ficha pendente de avaliação ou modificação no momento.</p>';
+    return;
+  }
+
+  let html = '';
+
+  // Seção de novas fichas
+  if (pendingChars.length > 0) {
+    html += `
+      <div style="width:100%; margin-bottom:2rem;">
+        <h3 style="font-family:'Cinzel',serif; color:var(--red-wax); border-bottom:1px solid var(--wood-plank); padding-bottom:0.3rem; margin-bottom:1rem; font-size:1.2rem;">🆕 Novas Fichas Aguardando Avaliação</h3>
+        <div class="characters-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1.5rem;">
+    `;
     pendingChars.forEach(uid => {
       const char = ALL_CHARACTERS[uid].character || {};
       const name = char.name || 'Sem Nome';
       const avatar = char.avatar || 'Photos/demihuman.webp';
-
       html += `
         <div class="character-card" onclick="openCharacterSheet('${uid}')" style="position:relative;">
           <span style="position:absolute; top:8px; right:8px; background:var(--red-wax); color:#fff; font-family:'Cinzel',serif; font-size:0.65rem; padding:2px 8px; border-radius:2px; letter-spacing:0.1em; z-index:2;">PENDENTE</span>
@@ -1404,12 +1530,49 @@ async function loadPendingTab() {
         </div>
       `;
     });
-
-    container.innerHTML = html;
-  } catch (err) {
-    console.error('Erro ao carregar fichas pendentes:', err);
-    container.innerHTML = '<p style="text-align:center; color:var(--red-wax);">Erro ao carregar fichas pendentes.</p>';
+    html += `
+        </div>
+      </div>
+    `;
   }
+
+  // Seção de solicitações de alteração de sub-admins
+  if (modificationRequests.length > 0) {
+    html += `
+      <div style="width:100%; margin-top:1rem;">
+        <h3 style="font-family:'Cinzel',serif; color:var(--gold); border-bottom:1px solid var(--wood-plank); padding-bottom:0.3rem; margin-bottom:1rem; font-size:1.2rem;">⚙️ Solicitações de Modificação (Sub-admins)</h3>
+        <div style="display:flex; flex-direction:column; gap:1.2rem; width:100%;">
+    `;
+    modificationRequests.forEach(uid => {
+      const charData = ALL_CHARACTERS[uid];
+      const char = charData.character || {};
+      const req = charData.modificationRequest || {};
+      const proposedBy = req.proposedBy || 'Sub-admin';
+      const diffSummary = req.diffSummary || 'Modificações diversas';
+      const name = char.name || 'Sem Nome';
+      const avatar = char.avatar || 'Photos/demihuman.webp';
+
+      html += `
+        <div class="parchment-panel" style="display:flex; align-items:center; gap:1.5rem; padding:1.2rem; border:1px dashed var(--gold); background:rgba(212,175,55,0.03); border-radius:8px; flex-wrap:wrap; box-shadow:0 4px 6px rgba(0,0,0,0.15);">
+          <img src="${avatar}" style="width:65px; height:65px; object-fit:cover; border-radius:50%; border:2px solid var(--gold); box-shadow:0 2px 4px rgba(0,0,0,0.2);">
+          <div style="flex:1; min-width:200px;">
+            <h4 style="margin:0 0 0.3rem; font-family:'Cinzel',serif; color:var(--ink); font-size:1.1rem;">${name}</h4>
+            <p style="margin:0 0 0.3rem; font-size:0.85rem; color:#555;"><strong>Solicitado por:</strong> <span style="color:var(--gold); font-weight:bold;">${proposedBy}</span></p>
+            <p style="margin:0; font-size:0.9rem; color:var(--red-wax);"><strong>Alterações Propostas:</strong> <span style="font-style:italic;">${diffSummary}</span></p>
+          </div>
+          <div style="display:flex; gap:0.8rem;">
+            <button onclick="openProposedChangesModal('${uid}')" class="form-submit-btn" style="background:var(--gold); color:#000; border-color:var(--gold); padding:0.5rem 1.2rem; font-size:0.85rem; width:auto; cursor:pointer; font-family:'Cinzel',serif;">🛡️ Avaliar Alterações</button>
+          </div>
+        </div>
+      `;
+    });
+    html += `
+        </div>
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
 }
 
 async function approveCharacterSheet(uid) {
@@ -1444,3 +1607,515 @@ async function approveCharacterSheet(uid) {
     showToast('❌ Falha ao aprovar ficha.', 'error');
   }
 }
+
+let IS_EDITING_SHEET_UID = null;
+
+function toggleEditSheet(uid) {
+  if (IS_EDITING_SHEET_UID === uid) {
+    IS_EDITING_SHEET_UID = null;
+    openCharacterSheet(uid);
+  } else {
+    IS_EDITING_SHEET_UID = uid;
+    openCharacterSheetInEditMode(uid);
+  }
+}
+
+function openCharacterSheetInEditMode(uid) {
+  const data = ALL_CHARACTERS[uid];
+  if (!data) return;
+
+  const char = data.character || {};
+  const attrs = char.attributes || {};
+  const unique = char.uniqueAbility || {};
+
+  const currentUser = _auth ? _auth.currentUser : null;
+  const currentUserData = currentUser ? ALL_CHARACTERS[currentUser.uid] : null;
+  const isSubAdmin = currentUserData && currentUserData.isSubAdmin && !currentUserData.isAdmin;
+
+  let html = `<h2 style="font-family:'Cinzel',serif; text-align:center; color:var(--ink); margin-bottom:1.5rem; border-bottom:1px solid var(--wood-plank); padding-bottom:0.5rem;">✏️ Editando Ficha: ${char.name || ''}</h2>`;
+
+  if (isSubAdmin) {
+    html += `
+      <div style="background:rgba(212,175,55,0.15); color:var(--ink); border:1px solid var(--gold); padding:0.8rem; border-radius:6px; margin-bottom:1.5rem; font-size:0.9rem; text-align:center;">
+        📢 <strong>Aviso de Sub-administrador:</strong> Suas alterações serão enviadas como uma solicitação para aprovação do <strong>Admin Supremo (DanteSTR)</strong> antes de serem aplicadas!
+      </div>
+    `;
+  }
+
+  html += `
+    <div style="display:flex; flex-direction:column; gap:1.2rem;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+        <div class="field-group">
+          <label style="font-weight:bold; font-size:0.9rem;">Nome do Personagem</label>
+          <input type="text" id="edit-char-name" value="${char.name || ''}" style="width:100%; border:1px solid var(--wood-plank); border-radius:4px; padding:0.4rem; background:var(--parchment); color:var(--ink);">
+        </div>
+        <div class="field-group">
+          <label style="font-weight:bold; font-size:0.9rem;">Gênero</label>
+          <input type="text" id="edit-char-gender" value="${char.gender || ''}" style="width:100%; border:1px solid var(--wood-plank); border-radius:4px; padding:0.4rem; background:var(--parchment); color:var(--ink);">
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+        <div class="field-group">
+          <label style="font-weight:bold; font-size:0.9rem;">Idade do Personagem</label>
+          <input type="number" id="edit-char-age" value="${char.age || ''}" style="width:100%; border:1px solid var(--wood-plank); border-radius:4px; padding:0.4rem; background:var(--parchment); color:var(--ink);">
+        </div>
+        <div class="field-group">
+          <label style="font-weight:bold; font-size:0.9rem;">Linhagem</label>
+          <input type="text" id="edit-char-lineage" value="${char.lineage || ''}" style="width:100%; border:1px solid var(--wood-plank); border-radius:4px; padding:0.4rem; background:var(--parchment); color:var(--ink);">
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label style="font-weight:bold; font-size:0.9rem;">Raça</label>
+        <select id="edit-char-race" style="width:100%; border:1px solid var(--wood-plank); border-radius:4px; padding:0.4rem; background:var(--parchment); color:var(--ink); font-family:sans-serif;">
+          <option value="Humano" ${char.race === 'Humano' ? 'selected' : ''}>Humano</option>
+          <option value="Elfo" ${char.race === 'Elfo' ? 'selected' : ''}>Elfo</option>
+          <option value="Elfo Negro" ${char.race === 'Elfo Negro' ? 'selected' : ''}>Elfo Negro</option>
+          <option value="Demi-Humano" ${char.race === 'Demi-Humano' ? 'selected' : ''}>Demi-Humano</option>
+          <option value="Anão" ${char.race === 'Anão' ? 'selected' : ''}>Anão</option>
+          <option value="Gigante" ${char.race === 'Gigante' ? 'selected' : ''}>Gigante</option>
+          <option value="Vampiro" ${char.race === 'Vampiro' ? 'selected' : ''}>Vampiro</option>
+          <option value="Valquíria" ${char.race === 'Valquíria' ? 'selected' : ''}>Valquíria</option>
+          <option value="Demônio" ${char.race === 'Demônio' ? 'selected' : ''}>Demônio</option>
+          <option value="Dracônico" ${char.race === 'Dracônico' ? 'selected' : ''}>Dracônico</option>
+        </select>
+      </div>
+
+      <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-top:1rem; margin-bottom:0.5rem; color:var(--ink);">⚔️ Atributos</h3>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <span style="font-weight:bold; width:100px;">💪 Força:</span>
+          <input type="number" id="edit-attr-strength" value="${attrs.strength || 0}" style="width:80px; padding:0.3rem; border:1px solid var(--wood-plank); background:var(--parchment); color:var(--ink);">
+        </div>
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <span style="font-weight:bold; width:100px;">🛡️ Resistência:</span>
+          <input type="number" id="edit-attr-resistance" value="${attrs.resistance || 0}" style="width:80px; padding:0.3rem; border:1px solid var(--wood-plank); background:var(--parchment); color:var(--ink);">
+        </div>
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <span style="font-weight:bold; width:100px;">⚡ Velocidade:</span>
+          <input type="number" id="edit-attr-speed" value="${attrs.speed || 0}" style="width:80px; padding:0.3rem; border:1px solid var(--wood-plank); background:var(--parchment); color:var(--ink);">
+        </div>
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <span style="font-weight:bold; width:100px;">✨ Magia:</span>
+          <input type="number" id="edit-attr-magic" value="${attrs.magic || 0}" style="width:80px; padding:0.3rem; border:1px solid var(--wood-plank); background:var(--parchment); color:var(--ink);">
+        </div>
+      </div>
+
+      <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-top:1rem; margin-bottom:0.5rem; color:var(--ink);">🌟 Habilidade Única / Aprendida</h3>
+      
+      <!-- CONSULTA DE HABILIDADES DO BANCO DE DADOS -->
+      <div style="background:rgba(201,147,58,0.06); border:2px solid var(--gold); border-radius:6px; padding:1rem; margin-bottom:1rem; box-shadow:0 3px 6px rgba(0,0,0,0.15);">
+        <h4 style="margin:0 0 0.5rem 0; font-family:'Cinzel',serif; color:var(--gold); display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-size:0.95rem; user-select:none;" onclick="const container = document.getElementById('db-lookup-container'); container.style.display = container.style.display === 'none' ? 'block' : 'none'; if(container.style.display==='block') filterDbLookupAbilities();">
+          📚 Consultar Banco de Dados de Habilidades <span style="font-size:0.75rem; font-weight:normal; color:#888;">(Clique para abrir/fechar)</span>
+        </h4>
+        <div id="db-lookup-container" style="display:none; margin-top:0.8rem;">
+          <div class="field-group" style="margin-bottom:0.8rem;">
+            <label style="font-size:0.8rem; font-weight:bold; color:var(--ink); margin-bottom:0.2rem;">Filtrar por Raça / Categoria:</label>
+            <select id="db-lookup-category" onchange="filterDbLookupAbilities()" style="width:100%; border:1px solid var(--wood-plank); border-radius:4px; padding:0.3rem; background:var(--parchment); color:var(--ink); font-family:sans-serif; font-size:0.85rem;">
+              <option value="all">— Todas as Categorias —</option>
+              <option value="Simples">Simples</option>
+              <option value="Humano">Humano</option>
+              <option value="Elfo">Elfo (Geral)</option>
+              <option value="Alto Elfo">Alto Elfo</option>
+              <option value="Drow">Drow</option>
+              <option value="Demi-Humano">Demi-Humano</option>
+              <option value="Gigante">Gigante</option>
+              <option value="Anão">Anão</option>
+              <option value="Vampiro">Vampiro / Ghoul</option>
+              <option value="Valquíria">Valquíria</option>
+              <option value="Demônio">Demônio</option>
+              <option value="Dracônico">Dracônico</option>
+            </select>
+          </div>
+          <div id="db-lookup-results" style="max-height:220px; overflow-y:auto; border:1px solid var(--wood-plank); border-radius:4px; padding:0.5rem; background:rgba(0,0,0,0.05); display:flex; flex-direction:column; gap:0.6rem; margin-top:0.5rem;">
+            <!-- Resultados serão populados dinamicamente via JS -->
+          </div>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label style="font-weight:bold; font-size:0.9rem;">Título da Habilidade</label>
+        <input type="text" id="edit-ua-title" value="${unique.title || ''}" style="width:100%; border:1px solid var(--wood-plank); padding:0.4rem; background:var(--parchment); color:var(--ink);">
+      </div>
+      <div class="field-group">
+        <label style="font-weight:bold; font-size:0.9rem;">Descrição da Habilidade</label>
+        <textarea id="edit-ua-desc" style="width:100%; height:80px; border:1px solid var(--wood-plank); padding:0.4rem; background:var(--parchment); color:var(--ink); font-family:sans-serif;">${unique.description || ''}</textarea>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+        <div class="field-group">
+          <label style="color:var(--green-moss); font-weight:bold; font-size:0.9rem;">🟢 Buffs (um por linha)</label>
+          <textarea id="edit-ua-buffs" style="width:100%; height:80px; border:1px solid var(--wood-plank); padding:0.4rem; background:var(--parchment); color:var(--ink); font-family:sans-serif;">${(unique.buffs || []).join('\n')}</textarea>
+        </div>
+        <div class="field-group">
+          <label style="color:var(--red-wax); font-weight:bold; font-size:0.9rem;">🔴 Nerfs (um por linha)</label>
+          <textarea id="edit-ua-nerfs" style="width:100%; height:80px; border:1px solid var(--wood-plank); padding:0.4rem; background:var(--parchment); color:var(--ink); font-family:sans-serif;">${(unique.nerfs || []).join('\n')}</textarea>
+        </div>
+      </div>
+
+      <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-top:1rem; margin-bottom:0.5rem; color:var(--ink);">🧬 Classes & Magias</h3>
+      <div class="field-group">
+        <label style="font-weight:bold; font-size:0.9rem;">Classes (separadas por vírgula)</label>
+        <input type="text" id="edit-char-classes" value="${(char.classes || []).join(', ')}" style="width:100%; border:1px solid var(--wood-plank); padding:0.4rem; background:var(--parchment); color:var(--ink);">
+      </div>
+      <div class="field-group">
+        <label style="font-weight:bold; font-size:0.9rem;">Magias (separadas por vírgula)</label>
+        <input type="text" id="edit-char-spells" value="${(char.spells || []).join(', ')}" style="width:100%; border:1px solid var(--wood-plank); padding:0.4rem; background:var(--parchment); color:var(--ink);">
+      </div>
+
+      <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-top:1rem; margin-bottom:0.5rem; color:var(--ink);">📜 História do Personagem</h3>
+      <div class="field-group">
+        <textarea id="edit-char-story" style="width:100%; height:120px; border:1px solid var(--wood-plank); padding:0.4rem; background:var(--parchment); color:var(--ink); font-family:sans-serif;">${char.story || ''}</textarea>
+      </div>
+
+      <div style="margin-top:1.5rem; display:flex; gap:1rem; justify-content:center;">
+        <button onclick="toggleEditSheet('${uid}')" class="form-submit-btn" style="background:var(--parchment-aged); color:var(--ink); border-color:var(--wood-plank); width:auto; padding:0.6rem 1.5rem; cursor:pointer;">Cancelar</button>
+        <button onclick="saveCharacterSheetEdits('${uid}')" class="form-submit-btn" style="background:var(--red-wax); color:#fff; border-color:var(--red-wax); width:auto; padding:0.6rem 2rem; cursor:pointer;">
+          ${isSubAdmin ? '📨 Solicitar Alterações' : '💾 Salvar Alterações'}
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('char-sheet-body').innerHTML = html;
+}
+
+async function saveCharacterSheetEdits(uid) {
+  const newName = document.getElementById('edit-char-name').value.trim();
+  const newRace = document.getElementById('edit-char-race').value;
+  const newAge = parseInt(document.getElementById('edit-char-age').value) || 0;
+  const newGender = document.getElementById('edit-char-gender').value.trim();
+  const newLineage = document.getElementById('edit-char-lineage').value.trim();
+  const newUaTitle = document.getElementById('edit-ua-title').value.trim();
+  const newUaDesc = document.getElementById('edit-ua-desc').value.trim();
+  const newStrength = parseInt(document.getElementById('edit-attr-strength').value) || 0;
+  const newResistance = parseInt(document.getElementById('edit-attr-resistance').value) || 0;
+  const newSpeed = parseInt(document.getElementById('edit-attr-speed').value) || 0;
+  const newMagic = parseInt(document.getElementById('edit-attr-magic').value) || 0;
+  const newClasses = document.getElementById('edit-char-classes').value.split(',').map(c => c.trim()).filter(c => c !== '');
+  const newSpells = document.getElementById('edit-char-spells').value.split(',').map(s => s.trim()).filter(s => s !== '');
+  const newStory = document.getElementById('edit-char-story').value.trim();
+  const newBuffs = document.getElementById('edit-ua-buffs').value.split('\n').map(b => b.trim()).filter(b => b !== '');
+  const newNerfs = document.getElementById('edit-ua-nerfs').value.split('\n').map(n => n.trim()).filter(n => n !== '');
+
+  const data = ALL_CHARACTERS[uid];
+  const char = data.character || {};
+  const origUa = char.uniqueAbility || {};
+  const origAttrs = char.attributes || {};
+
+  const currentUser = _auth ? _auth.currentUser : null;
+  const currentUserData = currentUser ? ALL_CHARACTERS[currentUser.uid] : null;
+  const isSubAdmin = currentUserData && currentUserData.isSubAdmin && !currentUserData.isAdmin;
+
+  // Calcular diferenças
+  let diffs = [];
+  if (char.name !== newName) diffs.push(`Nome: "${char.name}" ➔ "${newName}"`);
+  if (char.race !== newRace) diffs.push(`Raça: "${char.race}" ➔ "${newRace}"`);
+  if (char.age !== newAge) diffs.push(`Idade: ${char.age} ➔ ${newAge}`);
+  if (char.gender !== newGender) diffs.push(`Gênero: "${char.gender}" ➔ "${newGender}"`);
+  if (char.lineage !== newLineage) diffs.push(`Linhagem: "${char.lineage}" ➔ "${newLineage}"`);
+  if (origUa.title !== newUaTitle) diffs.push(`Habilidade Única (Título): "${origUa.title}" ➔ "${newUaTitle}"`);
+  if (origUa.description !== newUaDesc) diffs.push(`Habilidade Única (Descrição) modificada`);
+  if (origAttrs.strength !== newStrength) diffs.push(`Força: ${origAttrs.strength} ➔ ${newStrength}`);
+  if (origAttrs.resistance !== newResistance) diffs.push(`Resistência: ${origAttrs.resistance} ➔ ${newResistance}`);
+  if (origAttrs.speed !== newSpeed) diffs.push(`Velocidade: ${origAttrs.speed} ➔ ${newSpeed}`);
+  if (origAttrs.magic !== newMagic) diffs.push(`Magia: ${origAttrs.magic} ➔ ${newMagic}`);
+  if ((char.classes || []).join(', ') !== newClasses.join(', ')) diffs.push(`Classes: "${(char.classes || []).join(', ')}" ➔ "${newClasses.join(', ')}"`);
+  if ((char.spells || []).join(', ') !== newSpells.join(', ')) diffs.push(`Magias: "${(char.spells || []).join(', ')}" ➔ "${newSpells.join(', ')}"`);
+  if (char.story !== newStory) diffs.push(`História modificada`);
+  if ((origUa.buffs || []).join('\n') !== newBuffs.join('\n')) diffs.push(`Buffs modificados`);
+  if ((origUa.nerfs || []).join('\n') !== newNerfs.join('\n')) diffs.push(`Nerfs modificados`);
+
+  if (diffs.length === 0) {
+    showToast('⚠️ Nenhuma alteração foi detectada.', 'info');
+    return;
+  }
+
+  const diffSummary = diffs.join('; ');
+
+  try {
+    if (isSubAdmin) {
+      showToast('⚡ Enviando solicitação...', 'info');
+      
+      const modificationRequest = {
+        proposedBy: currentUserData.player?.name || 'Sub-admin',
+        proposedById: currentUser.uid,
+        proposedChanges: {
+          name: newName,
+          race: newRace,
+          age: newAge,
+          gender: newGender,
+          lineage: newLineage,
+          uaTitle: newUaTitle,
+          uaDesc: newUaDesc,
+          strength: newStrength,
+          resistance: newResistance,
+          speed: newSpeed,
+          magic: newMagic,
+          classes: newClasses,
+          spells: newSpells,
+          story: newStory,
+          buffs: newBuffs,
+          nerfs: newNerfs
+        },
+        diffSummary: diffSummary,
+        timestamp: new Date().toISOString()
+      };
+
+      await _db.collection('characters').doc(uid).update({
+        hasPendingModifications: true,
+        modificationRequest: modificationRequest
+      });
+
+      showToast('📨 Alterações enviadas para aprovação do Admin Supremo!', 'success');
+    } else {
+      showToast('⚡ Salvando alterações...', 'info');
+      
+      await _db.collection('characters').doc(uid).update({
+        'character.name': newName,
+        'character.race': newRace,
+        'character.age': newAge,
+        'character.gender': newGender,
+        'character.lineage': newLineage,
+        'character.uniqueAbility.title': newUaTitle,
+        'character.uniqueAbility.description': newUaDesc,
+        'character.attributes.strength': newStrength,
+        'character.attributes.resistance': newResistance,
+        'character.attributes.speed': newSpeed,
+        'character.attributes.magic': newMagic,
+        'character.classes': newClasses,
+        'character.spells': newSpells,
+        'character.story': newStory,
+        'character.uniqueAbility.buffs': newBuffs,
+        'character.uniqueAbility.nerfs': newNerfs
+      });
+
+      showToast(`✅ Ficha modificada e salva! (Modificado: ${diffSummary})`, 'success', 5000);
+    }
+
+    IS_EDITING_SHEET_UID = null;
+    closeCharacterSheet();
+
+    if (typeof loadCharactersTab === 'function') await loadCharactersTab();
+    if (typeof loadPendingTab === 'function') await loadPendingTab();
+  } catch (err) {
+    console.error('Erro ao salvar edições:', err);
+    showToast('❌ Falha ao salvar edições da ficha.', 'error');
+  }
+}
+
+function openProposedChangesModal(uid) {
+  const data = ALL_CHARACTERS[uid];
+  if (!data) return;
+
+  const char = data.character || {};
+  const req = data.modificationRequest || {};
+  const changes = req.proposedChanges || {};
+
+  const name = char.name || 'Sem Nome';
+  const proposedBy = req.proposedBy || 'Sub-admin';
+  const diffSummary = req.diffSummary || 'Modificações gerais';
+
+  const uniqueHtml = changes.uaTitle ? `<strong>${changes.uaTitle}</strong><br>${changes.uaDesc}` : 'Nenhuma';
+  const classHtml = (changes.classes || []).join(', ') || 'Nenhuma';
+  const spellHtml = (changes.spells || []).join(', ') || 'Nenhuma';
+
+  const buffsHtml = (changes.buffs || []).map(b => `<li style="color:var(--green-moss); font-weight:500; margin-bottom:0.3rem;">🟢 ${b}</li>`).join('') || '<li style="font-style:italic; color:#777;">Nenhum</li>';
+  const nerfsHtml = (changes.nerfs || []).map(n => `<li style="color:var(--red-wax); font-weight:500; margin-bottom:0.3rem;">🔴 ${n}</li>`).join('') || '<li style="font-style:italic; color:#777;">Nenhum</li>';
+
+  let html = `
+    <div style="background:var(--gold); color:#000; padding:1rem; border-radius:8px; margin-bottom:1.5rem; text-align:center; font-family:'Cinzel',serif; box-shadow:0 4px 6px rgba(0,0,0,0.15);">
+      <h3 style="margin:0;">⚠️ Revisando Alterações de Ficha</h3>
+      <p style="font-size:0.9rem; margin:0.3rem 0 0;"><strong>Proposto por:</strong> ${proposedBy}</p>
+      <p style="font-size:0.85rem; margin:0.2rem 0 0; font-style:italic;"><strong>Diferenças:</strong> ${diffSummary}</p>
+    </div>
+
+    <h2 style="font-family:'Cinzel',serif; text-align:center; color:var(--ink); margin-bottom:1.5rem; border-bottom:1px solid var(--wood-plank); padding-bottom:0.5rem;">${changes.name || name}</h2>
+    
+    <div style="display:flex; gap:1.5rem; margin-bottom:1.5rem; flex-wrap:wrap; justify-content:center;">
+      <img src="${char.avatar || 'Photos/demihuman.webp'}" style="width:180px; height:180px; object-fit:cover; border-radius:8px; border:2px solid var(--wood-plank); box-shadow:0 4px 6px rgba(0,0,0,0.3);">
+      <div style="flex:1; min-width:200px; display:flex; flex-direction:column; justify-content:center;">
+        <p style="margin-bottom:0.5rem;"><strong>Raça Proposta:</strong> ${changes.race || char.race || 'N/A'}</p>
+        <p style="margin-bottom:0.5rem;"><strong>Idade Proposta:</strong> ${changes.age || char.age || 'N/A'} anos</p>
+        <p style="margin-bottom:0.5rem;"><strong>Gênero Proposta:</strong> ${changes.gender || char.gender || 'N/A'}</p>
+        <p style="margin-bottom:0.5rem;"><strong>Linhagem Proposta:</strong> ${changes.lineage || char.lineage || '—'}</p>
+      </div>
+    </div>
+
+    <div style="margin-bottom:1.2rem; background:rgba(0,0,0,0.02); padding:0.8rem; border-radius:6px; border:1px solid rgba(0,0,0,0.05);">
+      <h4 style="margin:0 0 0.5rem; font-family:'Cinzel',serif; color:var(--ink);">⚔️ Atributos Propostos:</h4>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; font-size:0.95rem;">
+        <span>💪 Força: <strong>${changes.strength || 0}</strong></span>
+        <span>🛡️ Resistência: <strong>${changes.resistance || 0}</strong></span>
+        <span>⚡ Velocidade: <strong>${changes.speed || 0}</strong></span>
+        <span>✨ Magia: <strong>${changes.magic || 0}</strong></span>
+      </div>
+    </div>
+
+    <div style="margin-bottom:1.5rem;">
+      <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-bottom:0.5rem;">Habilidade Única</h3>
+      <p>${uniqueHtml}</p>
+      <div style="margin-top:1rem; display:grid; grid-template-columns:1fr 1fr; gap:1.2rem;">
+        <div>
+          <h4 style="margin:0 0 0.4rem; font-size:0.9rem; color:var(--green-moss); font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank);">Bônus (Buffs):</h4>
+          <ul style="list-style:none; padding-left:0; margin:0;">${buffsHtml}</ul>
+        </div>
+        <div>
+          <h4 style="margin:0 0 0.4rem; font-size:0.9rem; color:var(--red-wax); font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank);">Penalidades (Nerfs):</h4>
+          <ul style="list-style:none; padding-left:0; margin:0;">${nerfsHtml}</ul>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:1.5rem;">
+      <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-bottom:0.5rem;">Classes Propostas</h3>
+      <p>${classHtml}</p>
+    </div>
+
+    <div style="margin-bottom:1.5rem;">
+      <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-bottom:0.5rem;">Magias Propostas (3 Principais)</h3>
+      <p>${spellHtml}</p>
+    </div>
+
+    <div style="margin-bottom:1.5rem;">
+      <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-bottom:0.5rem;">História Proposta</h3>
+      <p style="white-space:pre-wrap; line-height:1.6; font-size:0.95rem;">${changes.story || 'História não informada.'}</p>
+    </div>
+
+    <div style="margin-top:2rem; display:flex; gap:1.5rem; justify-content:center; padding-top:1.5rem; border-top:1px solid var(--wood-plank);">
+      <button onclick="rejectModificationRequest('${uid}')" class="form-submit-btn" style="background:var(--red-wax); color:#fff; border-color:var(--red-wax); width:auto; padding:0.8rem 2rem; font-family:'Cinzel',serif; font-size:1rem; cursor:pointer;">
+        ❌ Rejeitar Alterações
+      </button>
+      <button onclick="acceptModificationRequest('${uid}')" class="form-submit-btn" style="background:var(--green-moss); color:#fff; border-color:var(--green-moss); width:auto; padding:0.8rem 2rem; font-family:'Cinzel',serif; font-size:1rem; cursor:pointer;">
+        ✅ Aceitar e Aplicar
+      </button>
+    </div>
+  `;
+
+  document.getElementById('char-sheet-body').innerHTML = html;
+  document.getElementById('char-sheet-modal').style.display = 'flex';
+}
+
+async function acceptModificationRequest(uid) {
+  const data = ALL_CHARACTERS[uid];
+  if (!data) return;
+
+  const req = data.modificationRequest;
+  if (!req || !req.proposedChanges) return;
+  const changes = req.proposedChanges;
+
+  if (!confirm(`Deseja realmente aceitar e aplicar todas as alterações propostas por ${req.proposedBy}?`)) return;
+
+  try {
+    showToast('⚡ Aplicando alterações na ficha...', 'info');
+
+    await _db.collection('characters').doc(uid).update({
+      'character.name': changes.name,
+      'character.race': changes.race,
+      'character.age': changes.age,
+      'character.gender': changes.gender,
+      'character.lineage': changes.lineage,
+      'character.uniqueAbility.title': changes.uaTitle,
+      'character.uniqueAbility.description': changes.uaDesc,
+      'character.attributes.strength': changes.strength,
+      'character.attributes.resistance': changes.resistance,
+      'character.attributes.speed': changes.speed,
+      'character.attributes.magic': changes.magic,
+      'character.classes': changes.classes,
+      'character.spells': changes.spells,
+      'character.story': changes.story,
+      'character.uniqueAbility.buffs': changes.buffs,
+      'character.uniqueAbility.nerfs': changes.nerfs,
+      hasPendingModifications: firebase.firestore.FieldValue.delete(),
+      modificationRequest: firebase.firestore.FieldValue.delete()
+    });
+
+    showToast('✅ Alterações aplicadas com sucesso!', 'success');
+    closeCharacterSheet();
+
+    if (typeof loadCharactersTab === 'function') await loadCharactersTab();
+    if (typeof loadPendingTab === 'function') await loadPendingTab();
+  } catch (err) {
+    console.error('Erro ao aceitar alterações:', err);
+    showToast('❌ Falha ao aplicar alterações.', 'error');
+  }
+}
+
+async function rejectModificationRequest(uid) {
+  const data = ALL_CHARACTERS[uid];
+  if (!data) return;
+
+  const req = data.modificationRequest;
+  if (!req) return;
+
+  if (!confirm(`Deseja realmente recusar e descartar as alterações propostas por ${req.proposedBy}?`)) return;
+
+  try {
+    showToast('⚡ Descartando alterações...', 'info');
+
+    await _db.collection('characters').doc(uid).update({
+      hasPendingModifications: firebase.firestore.FieldValue.delete(),
+      modificationRequest: firebase.firestore.FieldValue.delete()
+    });
+
+    showToast('❌ Alterações descartadas e limpas.', 'success');
+    closeCharacterSheet();
+
+    if (typeof loadCharactersTab === 'function') await loadCharactersTab();
+    if (typeof loadPendingTab === 'function') await loadPendingTab();
+  } catch (err) {
+    console.error('Erro ao descartar alterações:', err);
+    showToast('❌ Falha ao descartar alterações.', 'error');
+  }
+}
+
+// ────────────────────────────────────────────────────────────────
+// HABILIDADES COMPÊNDIO - LOOKUP DE BANCO DE DADOS
+// ────────────────────────────────────────────────────────────────
+
+function filterDbLookupAbilities() {
+  const category = document.getElementById('db-lookup-category').value;
+  const resultsContainer = document.getElementById('db-lookup-results');
+  if (!resultsContainer) return;
+
+  let abilities = [];
+  if (category === 'all') {
+    abilities = getAllKenswordAbilities();
+  } else {
+    abilities = KENSWORD_ABILITIES_DB[category] || [];
+  }
+
+  if (abilities.length === 0) {
+    resultsContainer.innerHTML = '<div style="color:#777; font-style:italic; font-size:0.8rem; padding:0.5rem; text-align:center;">Nenhuma habilidade cadastrada nessa categoria.</div>';
+    return;
+  }
+
+  resultsContainer.innerHTML = abilities.map((ab, idx) => {
+    const escapedDesc = (ab.description || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    const escapedName = (ab.name || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    return `
+      <div style="border-bottom:1px solid rgba(0,0,0,0.08); padding-bottom:0.5rem; font-size:0.82rem; color:var(--ink);">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem; margin-bottom:0.2rem; flex-wrap:wrap;">
+          <strong style="color:var(--gold); font-size:0.85rem;">【 ${ab.name} 】</strong>
+          <span style="font-size:0.72rem; background:rgba(201,147,58,0.1); color:var(--gold); padding:1px 5px; border-radius:3px; font-weight:500;">${ab.type || ab.category}</span>
+        </div>
+        <div style="line-height:1.4; color:var(--ink); margin-bottom:0.3rem;">${ab.description}</div>
+        ${ab.details ? `<div style="font-size:0.78rem; color:#555; font-style:italic; margin-bottom:0.2rem;">🔹 ${ab.details}</div>` : ''}
+        ${ab.scaling ? `<div style="font-size:0.78rem; color:var(--gold); font-weight:600; margin-bottom:0.4rem;">📈 Escalonamento: ${ab.scaling}</div>` : ''}
+        <button onclick="copyDbAbilityToForm('${escapedName}', '${escapedDesc}')" class="form-submit-btn" style="background:var(--gold); border-color:var(--gold); color:#000; width:auto; padding:0.2rem 0.5rem; font-size:0.72rem; font-family:sans-serif; cursor:pointer; border-radius:3px; height:auto; margin-top:0.2rem; display:inline-block;">
+          📋 Copiar Habilidade
+        </button>
+      </div>
+    `;
+  }).join('');
+}
+
+function copyDbAbilityToForm(name, desc) {
+  const titleInput = document.getElementById('edit-ua-title');
+  const descInput = document.getElementById('edit-ua-desc');
+  if (titleInput) titleInput.value = name;
+  if (descInput) descInput.value = desc.replace(/\\'/g, "'");
+  showToast('📋 Habilidade copiada com sucesso!', 'success');
+}
+
