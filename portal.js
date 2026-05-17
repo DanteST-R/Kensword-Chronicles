@@ -1216,7 +1216,7 @@ function openCharacterSheet(uid) {
     `;
   }
 
-  if (currentUser && currentUser.uid === uid) {
+  if (isStaff || (currentUser && currentUser.uid === uid)) {
     hasActions = true;
     editButtonHtml += `
       <button onclick="deleteCharacterSheet('${uid}')" class="form-submit-btn" style="background:var(--red-wax); border-color:var(--red-wax); color:#fff; width:auto; padding:0.4rem 1.2rem; font-family:'Cinzel',serif; font-size:0.85rem; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.2); border-radius:4px; margin-top:0;">
@@ -1285,7 +1285,7 @@ function openCharacterSheet(uid) {
 
   let html = editButtonHtml + `<h2 style="font-family:'Cinzel',serif; text-align:center; color:var(--ink); margin-bottom:1.5rem; border-bottom:1px solid var(--wood-plank); padding-bottom:0.5rem;">${char.name}</h2>
     <div style="display:flex; gap:1.5rem; margin-bottom:1.5rem; flex-wrap:wrap; justify-content:center;">
-      <img src="${char.avatar || 'Photos/demihuman.webp'}" style="width:180px; height:180px; object-fit:cover; border-radius:8px; border:2px solid var(--wood-plank); box-shadow:0 4px 6px rgba(0,0,0,0.3);">
+      <img src="${char.avatar || 'Photos/demihuman.webp'}" style="width:180px; height:180px; object-fit:cover; object-position:top; image-rendering:-webkit-optimize-contrast; filter:brightness(1.02) contrast(1.03) saturate(1.02); border-radius:8px; border:2px solid var(--wood-plank); box-shadow:0 4px 6px rgba(0,0,0,0.3);">
       <div style="flex:1; min-width:200px; display:flex; flex-direction:column; justify-content:center;">
         <p style="margin-bottom:0.5rem;"><strong>Raça:</strong> ${char.race || 'N/A'}</p>
         <p style="margin-bottom:0.5rem;"><strong>Idade:</strong> ${char.age || 'N/A'} anos</p>
@@ -2107,7 +2107,7 @@ function openProposedChangesModal(uid) {
     <h2 style="font-family:'Cinzel',serif; text-align:center; color:var(--ink); margin-bottom:1.5rem; border-bottom:1px solid var(--wood-plank); padding-bottom:0.5rem;">${changes.name || name}</h2>
     
     <div style="display:flex; gap:1.5rem; margin-bottom:1.5rem; flex-wrap:wrap; justify-content:center;">
-      <img src="${char.avatar || 'Photos/demihuman.webp'}" style="width:180px; height:180px; object-fit:cover; border-radius:8px; border:2px solid var(--wood-plank); box-shadow:0 4px 6px rgba(0,0,0,0.3);">
+      <img src="${char.avatar || 'Photos/demihuman.webp'}" style="width:180px; height:180px; object-fit:cover; object-position:top; image-rendering:-webkit-optimize-contrast; filter:brightness(1.02) contrast(1.03) saturate(1.02); border-radius:8px; border:2px solid var(--wood-plank); box-shadow:0 4px 6px rgba(0,0,0,0.3);">
       <div style="flex:1; min-width:200px; display:flex; flex-direction:column; justify-content:center;">
         <p style="margin-bottom:0.5rem;"><strong>Raça Proposta:</strong> ${changes.race || char.race || 'N/A'}</p>
         <p style="margin-bottom:0.5rem;"><strong>Idade Proposta:</strong> ${changes.age || char.age || 'N/A'} anos</p>
@@ -2765,12 +2765,20 @@ async function deleteCharacterSheet(uid) {
   if (!_auth || !_auth.currentUser) return;
   const user = _auth.currentUser;
   
-  if (user.uid !== uid) {
+  const currentUserData = ALL_CHARACTERS[user.uid];
+  const isStaff = currentUserData && (currentUserData.isAdmin || currentUserData.isSubAdmin);
+
+  if (user.uid !== uid && !isStaff) {
     showToast('⚠️ Operação não permitida.', 'error');
     return;
   }
 
-  if (!confirm("⚠️ ATENÇÃO: Tem certeza que deseja excluir permanentemente o seu personagem?\nIsso apagará todos os dados da sua ficha (História, Linhagem, Habilidades, Atributos, etc.).\nEsta ação NÃO pode ser desfeita! Suas informações de login e conta de jogador continuarão existindo normalmente.")) return;
+  const isSelf = user.uid === uid;
+  const confirmMsg = isSelf 
+    ? "⚠️ ATENÇÃO: Tem certeza que deseja excluir permanentemente o seu personagem?\nIsso apagará todos os dados da sua ficha (História, Linhagem, Habilidades, Atributos, etc.).\nEsta ação NÃO pode ser desfeita! Suas informações de login e conta de jogador continuarão existindo normalmente."
+    : `⚠️ ATENÇÃO: Como Administrador, você está prestes a excluir permanentemente o personagem de outro jogador.\nEsta ação NÃO pode ser desfeita! A conta de jogador do usuário continuará existindo normalmente para que ele possa criar outro personagem.`;
+
+  if (!confirm(confirmMsg)) return;
 
   try {
     showToast('🔮 Excluindo personagem...', 'info');
@@ -2789,6 +2797,10 @@ async function deleteCharacterSheet(uid) {
 
     // Recarregar os dados locais
     ALL_CHARACTERS = await getAllCharacters();
+
+    // Recarregar abas de controle se for admin
+    if (typeof loadCharactersTab === 'function') await loadCharactersTab();
+    if (typeof loadPendingTab === 'function') await loadPendingTab();
     
     // Atualizar UI
     if (typeof loadLearnAbilitiesTab === 'function') loadLearnAbilitiesTab();
@@ -2925,7 +2937,7 @@ async function loadProfileSubtabData(tabName) {
         html += `
           <div class="character-card" onclick="openCharacterSheet('${uid}')" style="position:relative; max-width:130px; margin:0 auto;">
             <span style="position:absolute; top:4px; right:4px; background:var(--red-wax); color:#fff; font-family:'Cinzel',serif; font-size:0.55rem; padding:1px 4px; border-radius:2px; z-index:2;">NOVA</span>
-            <img src="${avatar}" alt="${name}" style="width:100%; aspect-ratio:1/1; object-fit:cover;">
+            <img src="${avatar}" alt="${name}" style="width:100%; aspect-ratio:1/1; object-fit:cover; object-position:top; image-rendering:-webkit-optimize-contrast; filter:brightness(1.02) contrast(1.03) saturate(1.02);">
             <div class="char-card-name" style="padding:0.4rem; font-size:0.85rem;">${name}</div>
           </div>
         `;
@@ -2939,7 +2951,7 @@ async function loadProfileSubtabData(tabName) {
         html += `
           <div class="character-card" onclick="openProposedChangesModal('${uid}')" style="position:relative; max-width:130px; margin:0 auto; border:2px dashed var(--gold);">
             <span style="position:absolute; top:4px; right:4px; background:var(--gold); color:#000; font-family:'Cinzel',serif; font-size:0.55rem; padding:1px 4px; border-radius:2px; z-index:2; font-weight:bold;">AJUSTE</span>
-            <img src="${avatar}" alt="${name}" style="width:100%; aspect-ratio:1/1; object-fit:cover;">
+            <img src="${avatar}" alt="${name}" style="width:100%; aspect-ratio:1/1; object-fit:cover; object-position:top; image-rendering:-webkit-optimize-contrast; filter:brightness(1.02) contrast(1.03) saturate(1.02);">
             <div class="char-card-name" style="padding:0.4rem; font-size:0.85rem; color:var(--gold);">${name}</div>
           </div>
         `;
@@ -2958,7 +2970,7 @@ async function loadProfileSubtabData(tabName) {
           html += `
             <div class="character-card" onclick="resolveAbilityRequestFromProfile('${uid}', '${escapedName}')" style="position:relative; max-width:130px; margin:0 auto; border:2px dashed #4a90e2;">
               <span style="position:absolute; top:4px; right:4px; background:#4a90e2; color:#fff; font-family:'Cinzel',serif; font-size:0.55rem; padding:1px 4px; border-radius:2px; z-index:2;">HABIL.</span>
-              <img src="${avatar}" alt="${name}" style="width:100%; aspect-ratio:1/1; object-fit:cover;">
+              <img src="${avatar}" alt="${name}" style="width:100%; aspect-ratio:1/1; object-fit:cover; object-position:top; image-rendering:-webkit-optimize-contrast; filter:brightness(1.02) contrast(1.03) saturate(1.02);">
               <div class="char-card-name" style="padding:0.4rem; font-size:0.85rem; color:#4a90e2;">${name}</div>
             </div>
           `;

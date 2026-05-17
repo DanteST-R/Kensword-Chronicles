@@ -441,6 +441,11 @@ main {
   object-fit: cover;
   object-position: top; /* Foca na parte superior/rosto */
   display: block;
+  image-rendering: -webkit-optimize-contrast; /* Imagem extremamente nítida no Chrome/Edge/Safari/Opera */
+  image-rendering: crisp-edges; /* Mantém as bordas limpas */
+  filter: brightness(1.02) contrast(1.04) saturate(1.02); /* Melhora o contraste de tons escuros/artes sombrias */
+  transform: translateZ(0); /* Força aceleração por hardware para evitar desfoque */
+  backface-visibility: hidden;
 }
 .main-race-image {
   border-bottom: 2px solid var(--gold);
