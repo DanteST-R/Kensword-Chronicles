@@ -9,6 +9,12 @@ function showTab(name) {
   if (name === 'characters' && typeof loadCharactersTab === 'function') {
     loadCharactersTab();
   }
+  if (name === 'npcs' && typeof loadNpcsTab === 'function') {
+    loadNpcsTab();
+  }
+  if (name === 'pending' && typeof loadPendingTab === 'function') {
+    loadPendingTab();
+  }
 }
 
 // Build race cards
@@ -112,5 +118,5 @@ buildRaces();
 
 // Active tab from URL hash
 const hash = window.location.hash.replace('#', '');
-const validTabs = ['history','races','map','characters','orgs','monsters'];
+const validTabs = ['history','races','elements','map','characters','npcs','orgs','monsters','profile','pending'];
 if (validTabs.includes(hash)) showTab(hash);
