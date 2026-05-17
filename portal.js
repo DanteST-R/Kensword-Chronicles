@@ -1004,6 +1004,11 @@ async function initPortal() {
             `;
           }
 
+          // Carregar notificações do servidor
+          if (typeof loadServerNotifications === 'function') {
+            loadServerNotifications();
+          }
+
           // ADMINISTRADOR OU SUB-ADMINISTRADOR: Aba Fichas Pendentes
           const tabPendingBtn = document.getElementById('tab-pending');
           if (charData.isAdmin || charData.isSubAdmin) {
@@ -1018,16 +1023,20 @@ async function initPortal() {
               const keys = Object.keys(ALL_CHARACTERS);
               const pendingChars = keys.filter(uid => ALL_CHARACTERS[uid].status === 'pending');
               const hasModifications = keys.some(uid => ALL_CHARACTERS[uid].hasPendingModifications === true);
+              const hasPendingAbilities = keys.some(uid => {
+                const pList = ALL_CHARACTERS[uid].pendingAbilities || [];
+                return pList.some(r => r.status === 'pending');
+              });
 
-              // Certifique-se que o botão realmente aparece se tiver alguma ficha pendente de qualquer tipo
-              if (pendingChars.length > 0 || hasModifications) {
+              // Certifique-se que o botão realmente aparece se tiver alguma ficha/habilidade pendente
+              if (pendingChars.length > 0 || hasModifications || hasPendingAbilities) {
                 if (tabPendingBtn) tabPendingBtn.style.display = 'block';
               }
 
               // Atualizar ponto de exclamação vermelho crescendo/diminuindo
               const alertDot = document.getElementById('pending-alert-dot');
               if (alertDot) {
-                if (pendingChars.length > 0 || hasModifications) {
+                if (pendingChars.length > 0 || hasModifications || hasPendingAbilities) {
                   alertDot.style.display = 'inline-block';
                 } else {
                   alertDot.style.display = 'none';
@@ -1494,18 +1503,24 @@ function renderPendingTabContent() {
   // 2. Solicitações de alteração de fichas (hasPendingModifications === true)
   const modificationRequests = keys.filter(uid => ALL_CHARACTERS[uid].hasPendingModifications === true);
 
+  // 3. Solicitações de habilidades pendentes (com status 'pending')
+  const pendingAbilityRequests = keys.filter(uid => {
+    const pList = ALL_CHARACTERS[uid].pendingAbilities || [];
+    return pList.some(r => r.status === 'pending');
+  });
+
   // Atualizar ponto de exclamação vermelho crescendo/diminuindo
   const alertDot = document.getElementById('pending-alert-dot');
   if (alertDot) {
-    if (pendingChars.length > 0 || modificationRequests.length > 0) {
+    if (pendingChars.length > 0 || modificationRequests.length > 0 || pendingAbilityRequests.length > 0) {
       alertDot.style.display = 'inline-block';
     } else {
       alertDot.style.display = 'none';
     }
   }
 
-  if (pendingChars.length === 0 && modificationRequests.length === 0) {
-    container.innerHTML = '<p style="text-align:center; color:var(--wood-plank); font-style:italic;">Não há nenhuma ficha pendente de avaliação ou modificação no momento.</p>';
+  if (pendingChars.length === 0 && modificationRequests.length === 0 && pendingAbilityRequests.length === 0) {
+    container.innerHTML = '<p style="text-align:center; color:var(--wood-plank); font-style:italic;">Não há nenhuma ficha ou habilidade pendente de avaliação no momento.</p>';
     return;
   }
 
@@ -1539,7 +1554,7 @@ function renderPendingTabContent() {
   // Seção de solicitações de alteração de sub-admins
   if (modificationRequests.length > 0) {
     html += `
-      <div style="width:100%; margin-top:1rem;">
+      <div style="width:100%; margin-top:1rem; margin-bottom:2rem;">
         <h3 style="font-family:'Cinzel',serif; color:var(--gold); border-bottom:1px solid var(--wood-plank); padding-bottom:0.3rem; margin-bottom:1rem; font-size:1.2rem;">⚙️ Solicitações de Modificação (Sub-admins)</h3>
         <div style="display:flex; flex-direction:column; gap:1.2rem; width:100%;">
     `;
@@ -1565,6 +1580,47 @@ function renderPendingTabContent() {
           </div>
         </div>
       `;
+    });
+    html += `
+        </div>
+      </div>
+    `;
+  }
+
+  // Seção de solicitações de habilidades pendentes
+  if (pendingAbilityRequests.length > 0) {
+    html += `
+      <div style="width:100%; margin-top:1rem;">
+        <h3 style="font-family:'Cinzel',serif; color:#4a90e2; border-bottom:1px solid var(--wood-plank); padding-bottom:0.3rem; margin-bottom:1rem; font-size:1.2rem;">🛡️ Solicitações de Habilidades Pendentes</h3>
+        <div style="display:flex; flex-direction:column; gap:1.2rem; width:100%;">
+    `;
+    pendingAbilityRequests.forEach(uid => {
+      const charData = ALL_CHARACTERS[uid];
+      const char = charData.character || {};
+      const pendingList = charData.pendingAbilities || [];
+      const name = char.name || 'Sem Nome';
+      const avatar = char.avatar || 'Photos/demihuman.webp';
+
+      pendingList.forEach((req, index) => {
+        if (req.status !== 'pending') return;
+        
+        const escapedName = req.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        
+        html += `
+          <div class="parchment-panel" style="display:flex; align-items:center; gap:1.5rem; padding:1.2rem; border:1px dashed #4a90e2; background:rgba(74,144,226,0.03); border-radius:8px; flex-wrap:wrap; box-shadow:0 4px 6px rgba(0,0,0,0.15);">
+            <img src="${avatar}" style="width:65px; height:65px; object-fit:cover; border-radius:50%; border:2px solid #4a90e2; box-shadow:0 2px 4px rgba(0,0,0,0.2);">
+            <div style="flex:1; min-width:200px;">
+              <h4 style="margin:0 0 0.3rem; font-family:'Cinzel',serif; color:var(--ink); font-size:1.1rem;">${name}</h4>
+              <p style="margin:0 0 0.3rem; font-size:0.95rem; color:var(--gold);"><strong>Habilidade Solicitada:</strong> <span style="font-weight:bold;">【 ${req.name} 】</span></p>
+              <p style="margin:0; font-size:0.85rem; color:#555;"><strong>Tipo:</strong> ${req.type || 'Habilidade'} &nbsp;•&nbsp; <strong>Data:</strong> ${new Date(req.requestedAt).toLocaleDateString('pt-BR')}</p>
+            </div>
+            <div style="display:flex; gap:0.8rem;">
+              <button onclick="resolveAbilityRequest('${uid}', '${escapedName}', true)" class="form-submit-btn" style="background:#2ecc71; color:#fff; border-color:#2ecc71; padding:0.5rem 1.2rem; font-size:0.85rem; width:auto; cursor:pointer; font-family:'Cinzel',serif;">✔️ Aprovar</button>
+              <button onclick="resolveAbilityRequest('${uid}', '${escapedName}', false)" class="form-submit-btn" style="background:#e74c3c; color:#fff; border-color:#e74c3c; padding:0.5rem 1.2rem; font-size:0.85rem; width:auto; cursor:pointer; font-family:'Cinzel',serif;">❌ Rejeitar</button>
+            </div>
+          </div>
+        `;
+      });
     });
     html += `
         </div>
@@ -2117,5 +2173,412 @@ function copyDbAbilityToForm(name, desc) {
   if (titleInput) titleInput.value = name;
   if (descInput) descInput.value = desc.replace(/\\'/g, "'");
   showToast('📋 Habilidade copiada com sucesso!', 'success');
+}
+
+// ────────────────────────────────────────────────────────────────
+// SISTEMA DE HABILIDADES PARA APRENDER & NOTIFICAÇÕES (DANTESTR)
+// ────────────────────────────────────────────────────────────────
+
+async function loadLearnAbilitiesTab() {
+  const container = document.getElementById('learn-abilities-container');
+  if (!container) return;
+
+  if (!_auth || !_auth.currentUser) {
+    container.innerHTML = `
+      <div class="coming-soon">
+        <div class="cs-icon">🔒</div>
+        <h3>Portal Restrito</h3>
+        <p>Você precisa estar logado com seu personagem para visualizar e solicitar novas habilidades.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = '<div class="auth-loading active" style="margin:2rem auto;"><div class="auth-spinner"></div></div>';
+
+  try {
+    // Carregar personagens atualizados
+    ALL_CHARACTERS = await getAllCharacters();
+    const currentUser = _auth.currentUser;
+    const charData = ALL_CHARACTERS[currentUser.uid];
+
+    if (!charData || !charData.character || charData.status !== 'approved') {
+      container.innerHTML = `
+        <div class="coming-soon">
+          <div class="cs-icon">⏳</div>
+          <h3>Ficha Pendente ou Inexistente</h3>
+          <p>Você precisa ter uma ficha de personagem criada e APROVADA pelos administradores para poder aprender novas habilidades.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const char = charData.character;
+    const learned = [];
+
+    // Obter habilidades já aprendidas
+    if (char.abilities && char.abilities.racial) {
+      if (Array.isArray(char.abilities.racial)) {
+        learned.push(...char.abilities.racial);
+      } else {
+        learned.push(char.abilities.racial);
+      }
+    }
+    if (char.uniqueAbility && char.uniqueAbility.title) {
+      learned.push(char.uniqueAbility.title);
+    }
+
+    // Filtragem inteligente de categorias permitidas
+    const allowedCategories = ["Simples"];
+    if (char.race) allowedCategories.push(char.race);
+    
+    // Linhagem / Sub-raça
+    if (char.lineage && char.lineage !== '—' && !char.lineage.includes('a ser definido')) {
+      allowedCategories.push(char.lineage);
+      // Mapear variações para buscar nos bancos corretos
+      if (char.lineage.includes('Drow')) allowedCategories.push('Drow');
+      if (char.lineage.includes('Alto Elfo')) allowedCategories.push('Alto Elfo');
+      if (char.lineage.includes('Anão da Montanha')) allowedCategories.push('Anão da Montanha');
+      if (char.lineage.includes('Anão da Caverna')) allowedCategories.push('Anão da Caverna');
+      if (char.lineage.includes('Vampiro Real')) allowedCategories.push('Vampiro Real');
+      if (char.lineage.includes('Vampiro Impuro')) allowedCategories.push('Vampiro Impuro');
+      if (char.lineage.includes('Ghoul')) allowedCategories.push('Ghoul da Noite');
+      if (char.lineage.includes('Demônio Natural')) allowedCategories.push('Demônio Natural');
+      if (char.lineage.includes('Succubus')) allowedCategories.push('Succubus / Incubus');
+      if (char.lineage.includes('Dragonato')) allowedCategories.push('Dragonato');
+      if (char.lineage.includes('Dragonete')) allowedCategories.push('Dragonete');
+      if (char.lineage.includes('Metamorfo Ferino')) allowedCategories.push('Metamorfo Ferino (Comum)');
+      if (char.lineage.includes('Metamorfo Mítico')) allowedCategories.push('Metamorfo Mítico (Raro)');
+      if (char.lineage.includes('Metamorfo Primordial')) allowedCategories.push('Metamorfo Primordial (Raro)');
+      if (char.lineage.includes('Kitsune')) allowedCategories.push('Kitsune / Bakeneko / Tanuki');
+      if (char.lineage.includes('Tengu')) allowedCategories.push('Tengu');
+      if (char.lineage.includes('Kappa')) allowedCategories.push('Kappa');
+      if (char.lineage.includes('Oni')) allowedCategories.push('Oni');
+    }
+
+    // Normalizador de texto para busca
+    const hasAbility = (name) => {
+      const normName = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      return learned.some(ab => ab.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(normName));
+    };
+
+    // Desbloqueios por habilidade
+    if (hasAbility("Alinhamento heroico") || hasAbility("Alinhamento heróico")) {
+      allowedCategories.push("Valquíria");
+    }
+    if (hasAbility("Alinhamento maligno")) {
+      allowedCategories.push("Demônio");
+      allowedCategories.push("Demônio Natural");
+      allowedCategories.push("Succubus / Incubus");
+    }
+    if (hasAbility("Sede por Evolução") || hasAbility("Sede por Evolucao")) {
+      allowedCategories.push("Anão");
+      allowedCategories.push("Anão da Montanha");
+      allowedCategories.push("Anão da Caverna");
+      allowedCategories.push("Elfo");
+      allowedCategories.push("Alto Elfo");
+      allowedCategories.push("Drow");
+      allowedCategories.push("Demi-Humano");
+      allowedCategories.push("Gigante");
+    }
+
+    // Coletar todas as habilidades disponíveis com base nas categorias permitidas
+    let availableAbilities = [];
+    if (window.KENSWORD_ABILITIES_DB) {
+      Object.keys(KENSWORD_ABILITIES_DB).forEach(cat => {
+        if (allowedCategories.includes(cat)) {
+          const list = KENSWORD_ABILITIES_DB[cat] || [];
+          list.forEach(ab => {
+            // Evitar duplicados
+            if (!availableAbilities.some(x => x.name === ab.name)) {
+              availableAbilities.push(ab);
+            }
+          });
+        }
+      });
+    }
+
+    if (availableAbilities.length === 0) {
+      container.innerHTML = `
+        <p style="text-align:center; color:var(--wood-plank); font-style:italic;">Nenhuma habilidade elegível encontrada para sua raça/linhagem.</p>
+      `;
+      return;
+    }
+
+    // Listagem agrupada por Categoria/Origem
+    let html = '';
+    
+    // Lista de solicitações ativas/pendentes
+    const activeRequests = charData.pendingAbilities || [];
+
+    html += `
+      <div style="background:var(--parchment-aged); border:1px solid var(--gold); border-radius:8px; padding:1.2rem; margin-bottom:1.5rem; color:var(--ink);">
+        <h3 style="font-family:'Cinzel',serif; margin-top:0; color:var(--gold); font-size:1.15rem;">📊 Resumo do Aventureiro</h3>
+        <p style="margin:0 0 0.5rem;"><strong>Raça / Linhagem:</strong> ${char.race} ${char.lineage && char.lineage !== '—' ? `(${char.lineage})` : ''}</p>
+        <p style="margin:0 0 0.5rem;"><strong>Habilidades Dominadas:</strong> ${learned.length > 0 ? learned.map(n => `<span style="display:inline-block; background:rgba(0,0,0,0.05); border:1px solid var(--wood-plank); padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:bold; margin-right:0.4rem; margin-bottom:0.4rem; color:var(--ink);">${n}</span>`).join('') : '<span style="font-style:italic; color:#888;">Nenhuma</span>'}</p>
+        <p style="margin:0;"><strong>Categorias Disponíveis para Estudo:</strong> ${allowedCategories.map(c => `<span style="font-size:0.75rem; background:rgba(201,147,58,0.15); color:var(--gold); padding:2px 6px; border-radius:3px; font-weight:bold; margin-right:0.4rem; display:inline-block;">${c}</span>`).join('')}</p>
+      </div>
+    `;
+
+    // Filtros por Categoria para o jogador
+    html += `
+      <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.2rem; width:100%;">
+    `;
+
+    availableAbilities.forEach(ab => {
+      const isAlreadyLearned = learned.some(n => n.toLowerCase().trim() === ab.name.toLowerCase().trim());
+      const isPending = activeRequests.some(r => r.name.toLowerCase().trim() === ab.name.toLowerCase().trim() && r.status === 'pending');
+      
+      let buttonHtml = '';
+      if (isAlreadyLearned) {
+        buttonHtml = `<button class="form-submit-btn" style="background:#555; border-color:#555; color:#aaa; font-size:0.8rem; padding:0.4rem 1rem; width:auto; cursor:not-allowed;" disabled>✔️ Dominada</button>`;
+      } else if (isPending) {
+        buttonHtml = `<button class="form-submit-btn" style="background:rgba(212,175,55,0.2); border-color:var(--gold); color:var(--gold); font-size:0.8rem; padding:0.4rem 1rem; width:auto; cursor:not-allowed;" disabled>⏳ Aguardando Aprovação</button>`;
+      } else {
+        const escapedName = (ab.name || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        const escapedType = (ab.type || ab.category || 'Simples').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        buttonHtml = `<button onclick="requestAbility('${escapedName}', '${escapedType}')" class="form-submit-btn" style="background:var(--red-wax); border-color:var(--red-wax); color:#fff; font-size:0.8rem; padding:0.4rem 1rem; width:auto; cursor:pointer;">🛡️ Aprender Habilidade</button>`;
+      }
+
+      html += `
+        <div class="race-card" style="margin:0; min-height:auto; display:flex; flex-direction:column; justify-content:space-between; border-color:${isAlreadyLearned ? 'var(--wood-plank)' : (isPending ? 'var(--gold)' : '#5c7bb0')}; opacity:${isAlreadyLearned ? 0.75 : 1};">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem; margin-bottom:0.4rem; flex-wrap:wrap; width:100%;">
+              <strong style="color:var(--gold); font-size:0.95rem; font-family:'Cinzel',serif;">【 ${ab.name} 】</strong>
+              <span style="font-size:0.68rem; background:rgba(201,147,58,0.15); color:var(--gold); padding:2px 6px; border-radius:3px; font-weight:bold; margin-left:auto;">${ab.category || ab.type || 'Simples'}</span>
+            </div>
+            <div style="font-size:0.85rem; color:var(--ink); line-height:1.4; margin-bottom:0.6rem;">${ab.description}</div>
+            ${ab.details ? `<div style="font-size:0.8rem; color:#666; font-style:italic; margin-bottom:0.4rem; line-height:1.3;">🔹 ${ab.details}</div>` : ''}
+            ${ab.scaling ? `<div style="font-size:0.8rem; color:var(--gold); font-weight:bold; margin-bottom:0.6rem;">📈 Escalonamento: ${ab.scaling}</div>` : ''}
+          </div>
+          <div style="text-align:right; border-top:1px solid rgba(0,0,0,0.06); padding-top:0.6rem; margin-top:0.6rem;">
+            ${buttonHtml}
+          </div>
+        </div>
+      `;
+    });
+
+    html += `
+      </div>
+    `;
+
+    container.innerHTML = html;
+
+  } catch (err) {
+    console.error('Erro ao carregar aba de Habilidades:', err);
+    container.innerHTML = '<p style="text-align:center; color:var(--red-wax);">Erro ao carregar informações de Habilidades.</p>';
+  }
+}
+
+async function requestAbility(abilityName, abilityType) {
+  if (!_auth || !_auth.currentUser) return;
+  if (!confirm(`Deseja realmente solicitar o aprendizado da habilidade 【 ${abilityName} 】?`)) return;
+
+  try {
+    const user = _auth.currentUser;
+    const charData = ALL_CHARACTERS[user.uid] || {};
+    const pendingList = charData.pendingAbilities || [];
+
+    // Adicionar novo pedido
+    const newRequest = {
+      name: abilityName,
+      type: abilityType,
+      status: 'pending',
+      requestedAt: new Date().toISOString()
+    };
+
+    pendingList.push(newRequest);
+
+    await _db.collection('characters').doc(user.uid).update({
+      pendingAbilities: pendingList
+    });
+
+    showToast(`🛡️ Solicitação de 【 ${abilityName} 】 enviada com sucesso!`, 'success');
+    loadLearnAbilitiesTab();
+
+  } catch (err) {
+    console.error('Erro ao solicitar habilidade:', err);
+    showToast('Erro ao enviar solicitação da habilidade.', 'error');
+  }
+}
+
+async function resolveAbilityRequest(uid, abilityName, approved) {
+  const action = approved ? 'aprovar' : 'rejeitar';
+  if (!confirm(`Deseja realmente ${action} o aprendizado desta habilidade para este jogador?`)) return;
+
+  try {
+    const adminUser = _auth.currentUser;
+    const adminData = ALL_CHARACTERS[adminUser.uid] || {};
+    const isSubAdmin = adminData.isSubAdmin && !adminData.isAdmin;
+
+    const charData = ALL_CHARACTERS[uid] || {};
+    const char = charData.character || {};
+    let pendingList = charData.pendingAbilities || [];
+    let learnedList = char.abilities?.racial || [];
+
+    if (typeof learnedList === 'string') {
+      learnedList = [learnedList];
+    }
+
+    // Localizar a requisição correspondente
+    const reqIndex = pendingList.findIndex(r => r.name.toLowerCase().trim() === abilityName.toLowerCase().trim());
+    if (reqIndex === -1) {
+      showToast('Solicitação de habilidade não encontrada.', 'error');
+      return;
+    }
+
+    const currentReq = pendingList[reqIndex];
+    pendingList.splice(reqIndex, 1); // Remover da lista pendente
+
+    let notifications = charData.notifications || [];
+    let serverAlerts = charData.serverAlerts || [];
+
+    if (approved) {
+      // 1. Adicionar habilidade à ficha do jogador
+      if (!learnedList.includes(abilityName)) {
+        learnedList.push(abilityName);
+      }
+
+      // Atualizar o objeto character no banco
+      if (!char.abilities) char.abilities = {};
+      char.abilities.racial = learnedList;
+
+      // 2. Fluxo de aprovação inteligente
+      if (isSubAdmin) {
+        // Aprovado por Sub-admin: Notifica no canal geral do servidor!
+        const logMsg = `Ei, o Sub-administrador ${adminData.player?.name || 'Sub-admin'} aprovou uma nova habilidade (【 ${abilityName} 】) para ${char.name || 'um aventureiro'}!`;
+        serverAlerts.push({
+          text: logMsg,
+          timestamp: Date.now(),
+          author: adminData.player?.name || 'Sub-admin'
+        });
+        
+        notifications.push({
+          text: `Sua habilidade 【 ${abilityName} 】 foi APROVADA pelo Sub-administrador ${adminData.player?.name || 'Sub-admin'}!`,
+          timestamp: Date.now(),
+          type: 'success'
+        });
+
+        await _db.collection('characters').doc(uid).update({
+          'character.abilities.racial': learnedList,
+          pendingAbilities: pendingList,
+          notifications: notifications,
+          serverAlerts: serverAlerts
+        });
+      } else {
+        // Aprovado por Admin: Passa direto!
+        notifications.push({
+          text: `Sua habilidade 【 ${abilityName} 】 foi APROVADA pelo Administrador Supremo!`,
+          timestamp: Date.now(),
+          type: 'success'
+        });
+
+        await _db.collection('characters').doc(uid).update({
+          'character.abilities.racial': learnedList,
+          pendingAbilities: pendingList,
+          notifications: notifications
+        });
+      }
+
+      showToast(`Habilidade 【 ${abilityName} 】 aprovada com sucesso!`, 'success');
+    } else {
+      // Rejeitada: Envia notificação privada ao jogador
+      notifications.push({
+        text: `Sua solicitação de habilidade 【 ${abilityName} 】 foi REJEITADA pelos administradores.`,
+        timestamp: Date.now(),
+        type: 'error'
+      });
+
+      await _db.collection('characters').doc(uid).update({
+        pendingAbilities: pendingList,
+        notifications: notifications
+      });
+
+      showToast(`Habilidade 【 ${abilityName} 】 rejeitada com sucesso!`, 'success');
+    }
+
+    // Recarregar os painéis
+    if (typeof loadPendingTab === 'function') loadPendingTab();
+    if (typeof loadLearnAbilitiesTab === 'function') loadLearnAbilitiesTab();
+    if (typeof loadServerNotifications === 'function') loadServerNotifications();
+
+  } catch (err) {
+    console.error('Erro ao resolver habilidade:', err);
+    showToast('Erro ao resolver solicitação de habilidade.', 'error');
+  }
+}
+
+// 3. Carregar e Renderizar Caixa de Entrada / Mensagens do Servidor (Descentralizado)
+async function loadServerNotifications() {
+  const box = document.getElementById('server-notifications-box');
+  if (!box) return;
+
+  try {
+    // 1. Coleta todas as notificações públicas de todas as fichas enviadas no RPG
+    const allChars = await getAllCharacters();
+    const alerts = [];
+
+    // Obter também as notificações pessoais do usuário ativo
+    const currentUser = _auth.currentUser;
+    const personalNotifications = currentUser && allChars[currentUser.uid] ? (allChars[currentUser.uid].notifications || []) : [];
+
+    Object.values(allChars).forEach(charData => {
+      const list = charData.serverAlerts || [];
+      list.forEach(alert => {
+        alerts.push({
+          text: alert.text,
+          timestamp: alert.timestamp || Date.now(),
+          type: 'server'
+        });
+      });
+    });
+
+    // Anexar notificações privadas
+    personalNotifications.forEach(pn => {
+      alerts.push({
+        text: `📌 [Pessoal] ${pn.text}`,
+        timestamp: pn.timestamp || Date.now(),
+        type: pn.type || 'info'
+      });
+    });
+
+    // Ordenar do mais novo para o mais antigo
+    alerts.sort((a, b) => b.timestamp - a.timestamp);
+
+    if (alerts.length === 0) {
+      box.innerHTML = `<p style="font-style:italic; font-size:0.9rem; color:#666; text-align:center; margin:0;">Nenhuma notificação do servidor no momento.</p>`;
+      return;
+    }
+
+    box.innerHTML = alerts.map(a => {
+      let icon = '📢';
+      let borderStyle = 'border-left: 4px solid var(--gold);';
+      let bg = 'rgba(212,175,55,0.04)';
+      
+      if (a.text.includes('[Pessoal]')) {
+        icon = '✉️';
+        borderStyle = 'border-left: 4px solid #4a90e2;';
+        bg = 'rgba(74,144,226,0.04)';
+      }
+      if (a.text.includes('REJEITADA')) {
+        icon = '❌';
+        borderStyle = 'border-left: 4px solid var(--red-wax);';
+        bg = 'rgba(231,76,60,0.04)';
+      }
+
+      return `
+        <div style="background:${bg}; padding:0.6rem; border-radius:4px; font-size:0.85rem; color:var(--ink); ${borderStyle} display:flex; gap:0.5rem; align-items:center; margin-bottom:0.2rem; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+          <span>${icon}</span>
+          <div style="flex:1;">
+            <div style="line-height:1.4;">${a.text}</div>
+            <div style="font-size:0.7rem; color:#666; margin-top:0.2rem;">${new Date(a.timestamp).toLocaleString('pt-BR')}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+  } catch (err) {
+    console.error('Erro ao ler mensagens do servidor:', err);
+  }
 }
 

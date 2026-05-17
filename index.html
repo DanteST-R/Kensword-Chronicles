@@ -381,6 +381,7 @@
 <nav id="main-nav">
     <button class="nav-tab active" onclick="showTab('history')" id="tab-history"><span class="nav-icon">📜</span>História</button>
     <button class="nav-tab" onclick="showTab('races')" id="tab-races"><span class="nav-icon">🧬</span>Raças</button>
+    <button class="nav-tab" onclick="showTab('learn-abilities')" id="tab-learn-abilities"><span class="nav-icon">🛡️</span>Habilidades</button>
     <button class="nav-tab" onclick="showTab('elements')" id="tab-elements"><span class="nav-icon">✨</span>Elementos</button>
     <button class="nav-tab" onclick="showTab('map')" id="tab-map"><span class="nav-icon">🗺️</span>Localizações</button>
     <button class="nav-tab" onclick="showTab('characters')" id="tab-characters"><span class="nav-icon">🧑‍🤝‍🧑</span>Personagens</button>
@@ -414,6 +415,19 @@
         <strong>⚠ Nota — Estômago de Aço:</strong> Todos os monstros listados abaixo e Ghouls têm acesso à habilidade <em>Estômago de Aço</em>: comer carnes de monstros não causa enjoo nem contrai maldições.
       </div>
       <div class="races-grid" id="races-container"></div>
+    </div>
+  </section>
+
+  <section id="tab-content-learn-abilities" class="tab-content">
+    <div class="parchment-panel">
+      <h2 class="section-title">🛡️ Habilidades para Aprender</h2>
+      <div class="ornament-divider"><span>✦</span></div>
+      <p style="text-align: center; font-style: italic; color: var(--ink); margin-bottom: 1.5rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+        Consulte as técnicas e habilidades comuns ou da sua raça/linhagem que você está apto a dominar no RPG e solicite aprovação dos mestres!
+      </p>
+      <div id="learn-abilities-container" style="display: flex; flex-direction: column; gap: 1.5rem; max-width: 900px; margin: 0 auto;">
+        <!-- Injetado dinamicamente via portal.js -->
+      </div>
     </div>
   </section>
 
@@ -525,6 +539,11 @@
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem; border:1px solid var(--wood-plank); border-radius:8px; background:var(--parchment-aged);">
                     <div style="font-size:1.2rem;"><strong>0</strong> treinos realizados</div>
                     <button class="form-submit-btn" style="width:auto; padding:0.5rem 1rem; margin-top:0; font-size:0.9rem;">Treinar Personagem</button>
+                </div>
+
+                <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); padding-bottom:0.5rem; margin-top:1.5rem; display:flex; align-items:center; gap:0.5rem;">📬 Notícias e Caixa do Servidor</h3>
+                <div id="server-notifications-box" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--wood-plank); border-radius: 8px; padding: 1rem; background: var(--parchment-aged); display:flex; flex-direction:column; gap:0.6rem; box-shadow: inset 0 2px 5px rgba(0,0,0,0.15);">
+                    <p style="font-style:italic; font-size:0.9rem; color:#666; text-align:center; margin:0;">Nenhuma notificação do servidor no momento.</p>
                 </div>
             </div>
         </div>
