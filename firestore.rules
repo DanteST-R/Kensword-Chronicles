@@ -1,9 +1,42 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // Helper: verifica se o usuário autenticado é Admin ou Sub-Admin
+    function isStaff() {
+      return request.auth != null && 
+        (get(/databases/$(database)/documents/characters/$(request.auth.uid)).data.isAdmin == true ||
+         get(/databases/$(database)/documents/characters/$(request.auth.uid)).data.isSubAdmin == true);
+    }
+
+    // Regras para Coleção de Personagens
     match /characters/{uid} {
-      allow read, update: if request.auth != null && request.auth.uid == uid;
-      allow create: if request.auth != null;
+      // Leitura livre para membros logados verem o grupo
+      allow read: if request.auth != null;
+      
+      // Criação de ficha: jogador comum só cria como "pending". Apenas Admin cria aprovado de imediato.
+      allow create: if request.auth != null && 
+                    (request.resource.data.status == 'pending' || 
+                     request.resource.data.isAdmin == true);
+
+      // Atualização: Staff pode alterar tudo (incluindo status). 
+      // O próprio dono da ficha pode editar, mas NÃO pode alterar seu status ou se auto-promover a staff.
+      allow update: if request.auth != null && (
+        isStaff() || 
+        (request.auth.uid == uid && 
+         request.resource.data.status == resource.data.status &&
+         request.resource.data.isAdmin == resource.data.isAdmin &&
+         request.resource.data.isSubAdmin == resource.data.isSubAdmin)
+      );
+
+      // Deleção: Apenas Staff ou o próprio dono da ficha
+      allow delete: if request.auth != null && (isStaff() || request.auth.uid == uid);
+    }
+
+    // Regras para Coleção de Notícias/Comunicados
+    match /news/{newsId} {
+      allow read: if request.auth != null;
+      allow write: if isStaff();
     }
   }
 }

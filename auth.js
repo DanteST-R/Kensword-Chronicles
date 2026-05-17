@@ -74,15 +74,17 @@ function _buildCharacterDocument(uid, f) {
   }
 
   let racialAbilities = [];
-  if (typeof RACE_DATA !== 'undefined' && RACE_DATA[raceName]) {
-    const rData = RACE_DATA[raceName];
-    if (rData.abilities) {
-      rData.abilities.forEach(ab => racialAbilities.push({ name: ab.name, desc: ab.desc || ab.description || '' }));
-    }
-    if (subraceName && rData.subraces) {
-      const sub = rData.subraces.find(s => s.name === subraceName);
-      if (sub && sub.abilityName) {
-        racialAbilities.push({ name: sub.abilityName, desc: sub.abilityDesc || sub.desc || '' });
+  if (typeof RACES_DATA !== 'undefined') {
+    const rData = RACES_DATA.find(r => r.name === raceName);
+    if (rData) {
+      if (rData.abilities) {
+        rData.abilities.forEach(ab => racialAbilities.push({ name: ab.name, desc: ab.desc || ab.description || '' }));
+      }
+      if (subraceName && rData.subraces) {
+        const sub = rData.subraces.find(s => s.name.includes(subraceName) || subraceName.includes(s.name));
+        if (sub && sub.abilityName) {
+          racialAbilities.push({ name: sub.abilityName, desc: sub.abilityDesc || sub.desc || '' });
+        }
       }
     }
   }

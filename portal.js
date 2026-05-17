@@ -1022,6 +1022,16 @@ async function initPortal() {
             loadServerNotifications();
           }
 
+          // Inicializar sub-abas do perfil
+          if (typeof initProfileSubtabs === 'function') {
+            initProfileSubtabs(charData.isAdmin || charData.isSubAdmin);
+          }
+
+          // Executar migração temporária de banco de dados
+          if (typeof runDatabaseMigration === 'function') {
+            runDatabaseMigration();
+          }
+
           // ADMINISTRADOR OU SUB-ADMINISTRADOR: Aba Fichas Pendentes
           const tabPendingBtn = document.getElementById('tab-pending');
           if (charData.isAdmin || charData.isSubAdmin) {
@@ -1060,6 +1070,20 @@ async function initPortal() {
               const activeTab = document.querySelector('.nav-tab.active');
               if (activeTab && activeTab.id === 'tab-pending') {
                 renderPendingTabContent();
+              }
+
+              // Se a sub-aba de fichas pendentes do perfil estiver ativa ou se for carregada, atualiza também!
+              if (typeof currentProfileSubtab !== 'undefined' && currentProfileSubtab === 'pending') {
+                loadProfileSubtabData('pending');
+              } else {
+                const subtabAlert = document.getElementById('subtab-pending-alert');
+                if (subtabAlert) {
+                  if (pendingChars.length > 0 || hasModifications || hasPendingAbilities) {
+                    subtabAlert.style.display = 'inline-block';
+                  } else {
+                    subtabAlert.style.display = 'none';
+                  }
+                }
               }
             }, err => {
               console.error('Erro no monitor de fichas pendentes:', err);
@@ -1674,11 +1698,70 @@ async function approveCharacterSheet(uid) {
 
   try {
     showToast('⚡ Aprovando ficha...', 'info');
+    
+    // Obter dados do personagem para notificação
+    const charData = ALL_CHARACTERS[uid] || {};
+    const player = charData.player || {};
+    const char = charData.character || {};
+    const playerName = player.name || 'Jogador';
+    const charName = char.name || 'Personagem';
+    
+    const notifications = charData.notifications || [];
+    notifications.push({
+      text: `${playerName}, seu personagem '${charName}' foi aprovado com sucesso, já pode jogar!`,
+      timestamp: Date.now(),
+      type: 'success'
+    });
+
+    // Adicionar log público do servidor (serverAlerts)
+    let serverAlerts = charData.serverAlerts || [];
+    serverAlerts.push({
+      text: `O aventureiro ${charName} (Jogador: ${playerName}) foi aprovado na guilda pelo Administrador!`,
+      timestamp: Date.now(),
+      author: 'Sistema'
+    });
+
+    // Calcular habilidades iniciais de raça e sub-raça
+    let raceName = char.race || '';
+    let subraceName = null;
+    if (raceName.includes('|')) {
+      const parts = raceName.split('|');
+      raceName = parts[0].trim();
+      subraceName = parts[1].trim();
+    }
+
+    let racialAbilities = [];
+    if (typeof RACES_DATA !== 'undefined') {
+      const rData = RACES_DATA.find(r => r.name === raceName);
+      if (rData) {
+        if (rData.abilities) {
+          rData.abilities.forEach(ab => {
+            racialAbilities.push({
+              name: ab.name,
+              desc: ab.desc || ab.description || ''
+            });
+          });
+        }
+        if (subraceName && rData.subraces) {
+          const sub = rData.subraces.find(s => s.name.includes(subraceName) || subraceName.includes(s.name));
+          if (sub && sub.abilityName) {
+            racialAbilities.push({
+              name: sub.abilityName,
+              desc: sub.abilityDesc || sub.desc || ''
+            });
+          }
+        }
+      }
+    }
+
     await _db.collection('characters').doc(uid).update({
       status: 'approved',
       'character.lineage': lineage || '— (a ser definido pelo administrador)',
       'character.uniqueAbility.buffs': buffs,
-      'character.uniqueAbility.nerfs': nerfs
+      'character.uniqueAbility.nerfs': nerfs,
+      'character.abilities.racial': racialAbilities,
+      notifications: notifications,
+      serverAlerts: serverAlerts
     });
 
     showToast('✅ Ficha aprovada com sucesso!', 'success');
@@ -1687,6 +1770,11 @@ async function approveCharacterSheet(uid) {
     // Recarregar os dados das abas
     if (typeof loadCharactersTab === 'function') await loadCharactersTab();
     if (typeof loadPendingTab === 'function') await loadPendingTab();
+
+    // Se a aba do perfil estiver ativa, atualiza
+    if (typeof currentProfileSubtab !== 'undefined' && currentProfileSubtab) {
+      loadProfileSubtabData(currentProfileSubtab);
+    }
   } catch (err) {
     console.error('Erro ao aprovar ficha:', err);
     showToast('❌ Falha ao aprovar ficha.', 'error');
@@ -2538,76 +2626,13 @@ async function resolveAbilityRequest(uid, abilityName, approved) {
 }
 
 // 3. Carregar e Renderizar Caixa de Entrada / Mensagens do Servidor (Descentralizado)
+// 3. Carregar e Renderizar Caixa de Entrada / Mensagens do Servidor (Descentralizado)
 async function loadServerNotifications() {
-  const box = document.getElementById('server-notifications-box');
-  if (!box) return;
-
-  try {
-    // 1. Coleta todas as notificações públicas de todas as fichas enviadas no RPG
-    const allChars = await getAllCharacters();
-    const alerts = [];
-
-    // Obter também as notificações pessoais do usuário ativo
-    const currentUser = _auth.currentUser;
-    const personalNotifications = currentUser && allChars[currentUser.uid] ? (allChars[currentUser.uid].notifications || []) : [];
-
-    Object.values(allChars).forEach(charData => {
-      const list = charData.serverAlerts || [];
-      list.forEach(alert => {
-        alerts.push({
-          text: alert.text,
-          timestamp: alert.timestamp || Date.now(),
-          type: 'server'
-        });
-      });
-    });
-
-    // Anexar notificações privadas
-    personalNotifications.forEach(pn => {
-      alerts.push({
-        text: `📌 [Pessoal] ${pn.text}`,
-        timestamp: pn.timestamp || Date.now(),
-        type: pn.type || 'info'
-      });
-    });
-
-    // Ordenar do mais novo para o mais antigo
-    alerts.sort((a, b) => b.timestamp - a.timestamp);
-
-    if (alerts.length === 0) {
-      box.innerHTML = `<p style="font-style:italic; font-size:0.9rem; color:#666; text-align:center; margin:0;">Nenhuma notificação do servidor no momento.</p>`;
-      return;
-    }
-
-    box.innerHTML = alerts.map(a => {
-      let icon = '📢';
-      let borderStyle = 'border-left: 4px solid var(--gold);';
-      let bg = 'rgba(212,175,55,0.04)';
-      
-      if (a.text.includes('[Pessoal]')) {
-        icon = '✉️';
-        borderStyle = 'border-left: 4px solid #4a90e2;';
-        bg = 'rgba(74,144,226,0.04)';
-      }
-      if (a.text.includes('REJEITADA')) {
-        icon = '❌';
-        borderStyle = 'border-left: 4px solid var(--red-wax);';
-        bg = 'rgba(231,76,60,0.04)';
-      }
-
-      return `
-        <div style="background:${bg}; padding:0.6rem; border-radius:4px; font-size:0.85rem; color:var(--ink); ${borderStyle} display:flex; gap:0.5rem; align-items:center; margin-bottom:0.2rem; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-          <span>${icon}</span>
-          <div style="flex:1;">
-            <div style="line-height:1.4;">${a.text}</div>
-            <div style="font-size:0.7rem; color:#666; margin-top:0.2rem;">${new Date(a.timestamp).toLocaleString('pt-BR')}</div>
-          </div>
-        </div>
-      `;
-    }).join('');
-
-  } catch (err) {
-    console.error('Erro ao ler mensagens do servidor:', err);
+  if (typeof currentProfileSubtab !== 'undefined' && currentProfileSubtab) {
+    loadProfileSubtabData(currentProfileSubtab);
+  } else {
+    loadProfileSubtabData('noticias');
+    loadProfileSubtabData('mensagens');
   }
 }
 
@@ -2783,6 +2808,431 @@ async function deleteCharacterSheet(uid) {
   } catch (err) {
     console.error('Erro ao excluir personagem:', err);
     showToast('Erro ao excluir personagem.', 'error');
+  }
+}
+
+// ================================================================
+// LÓGICA DE SUB-ABAS DO MEU PERFIL (ADMIN & PLAYER)
+// ================================================================
+let currentProfileSubtab = '';
+
+function initProfileSubtabs(isStaff) {
+  const nav = document.getElementById('profile-subtabs-nav');
+  if (!nav) return;
+
+  if (isStaff) {
+    // Admin & Sub-admin: Fichas Pendentes, Notícias (Logs), Mensagens
+    nav.innerHTML = `
+      <button class="profile-subtab-btn" id="subtab-btn-pending" onclick="showProfileSubtab('pending')">
+        📋 Fichas Pendentes <span id="subtab-pending-alert" class="pending-alert" style="display:none; margin-left:4px; font-size:0.9rem;">!</span>
+      </button>
+      <button class="profile-subtab-btn" id="subtab-btn-noticias" onclick="showProfileSubtab('noticias')">
+        🛡️ Logs do Servidor
+      </button>
+      <button class="profile-subtab-btn" id="subtab-btn-mensagens" onclick="showProfileSubtab('mensagens')">
+        📬 Mensagens
+      </button>
+    `;
+    // Exibe o painel de criação de notícia apenas para mestres
+    const newsCreator = document.getElementById('admin-news-creator');
+    if (newsCreator) newsCreator.style.display = 'block';
+
+    if (!currentProfileSubtab || (currentProfileSubtab === 'noticias' && !isStaff)) {
+      showProfileSubtab('pending');
+    } else {
+      showProfileSubtab(currentProfileSubtab);
+    }
+  } else {
+    // Player: Mensagens, Notícias
+    nav.innerHTML = `
+      <button class="profile-subtab-btn" id="subtab-btn-mensagens" onclick="showProfileSubtab('mensagens')">
+        📬 Mensagens
+      </button>
+      <button class="profile-subtab-btn" id="subtab-btn-noticias" onclick="showProfileSubtab('noticias')">
+        📢 Notícias
+      </button>
+    `;
+    // Esconde o painel de criação de notícia para players
+    const newsCreator = document.getElementById('admin-news-creator');
+    if (newsCreator) newsCreator.style.display = 'none';
+
+    if (!currentProfileSubtab || currentProfileSubtab === 'pending') {
+      showProfileSubtab('mensagens');
+    } else {
+      showProfileSubtab(currentProfileSubtab);
+    }
+  }
+}
+
+function showProfileSubtab(tabName) {
+  currentProfileSubtab = tabName;
+
+  // Toggle active class on buttons
+  document.querySelectorAll('.profile-subtab-btn').forEach(btn => btn.classList.remove('active'));
+  const activeBtn = document.getElementById('subtab-btn-' + tabName);
+  if (activeBtn) activeBtn.classList.add('active');
+
+  // Toggle display of content divs
+  document.querySelectorAll('.profile-subtab-content').forEach(div => div.style.display = 'none');
+  const activeDiv = document.getElementById('profile-subtab-' + tabName);
+  if (activeDiv) activeDiv.style.display = 'block';
+
+  // Load data for this tab
+  loadProfileSubtabData(tabName);
+}
+
+async function loadProfileSubtabData(tabName) {
+  const currentUser = _auth.currentUser;
+  if (!currentUser) return;
+
+  if (tabName === 'pending') {
+    const container = document.getElementById('profile-pending-fichas-container');
+    if (!container) return;
+
+    container.innerHTML = '<div class="auth-loading active" style="margin:2rem auto;"><div class="auth-spinner"></div></div>';
+
+    try {
+      ALL_CHARACTERS = await getAllCharacters();
+      const keys = Object.keys(ALL_CHARACTERS);
+      const pendingChars = keys.filter(uid => ALL_CHARACTERS[uid].status === 'pending');
+      const modificationRequests = keys.filter(uid => ALL_CHARACTERS[uid].hasPendingModifications === true);
+      const pendingAbilityRequests = keys.filter(uid => {
+        const pList = ALL_CHARACTERS[uid].pendingAbilities || [];
+        return pList.some(r => r.status === 'pending');
+      });
+
+      // Update subtab alert dot
+      const subtabAlert = document.getElementById('subtab-pending-alert');
+      if (subtabAlert) {
+        if (pendingChars.length > 0 || modificationRequests.length > 0 || pendingAbilityRequests.length > 0) {
+          subtabAlert.style.display = 'inline-block';
+        } else {
+          subtabAlert.style.display = 'none';
+        }
+      }
+
+      if (pendingChars.length === 0 && modificationRequests.length === 0 && pendingAbilityRequests.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:var(--wood-plank); font-style:italic; grid-column: 1 / -1; margin: 1rem 0;">Não há nenhuma ficha ou habilidade pendente no momento.</p>';
+        return;
+      }
+
+      let html = '';
+      
+      pendingChars.forEach(uid => {
+        const char = ALL_CHARACTERS[uid].character || {};
+        const name = char.name || 'Sem Nome';
+        const avatar = char.avatar || 'Photos/demihuman.webp';
+        html += `
+          <div class="character-card" onclick="openCharacterSheet('${uid}')" style="position:relative; max-width:130px; margin:0 auto;">
+            <span style="position:absolute; top:4px; right:4px; background:var(--red-wax); color:#fff; font-family:'Cinzel',serif; font-size:0.55rem; padding:1px 4px; border-radius:2px; z-index:2;">NOVA</span>
+            <img src="${avatar}" alt="${name}" style="width:100%; aspect-ratio:1/1; object-fit:cover;">
+            <div class="char-card-name" style="padding:0.4rem; font-size:0.85rem;">${name}</div>
+          </div>
+        `;
+      });
+
+      modificationRequests.forEach(uid => {
+        const charData = ALL_CHARACTERS[uid];
+        const char = charData.character || {};
+        const name = char.name || 'Sem Nome';
+        const avatar = char.avatar || 'Photos/demihuman.webp';
+        html += `
+          <div class="character-card" onclick="openProposedChangesModal('${uid}')" style="position:relative; max-width:130px; margin:0 auto; border:2px dashed var(--gold);">
+            <span style="position:absolute; top:4px; right:4px; background:var(--gold); color:#000; font-family:'Cinzel',serif; font-size:0.55rem; padding:1px 4px; border-radius:2px; z-index:2; font-weight:bold;">AJUSTE</span>
+            <img src="${avatar}" alt="${name}" style="width:100%; aspect-ratio:1/1; object-fit:cover;">
+            <div class="char-card-name" style="padding:0.4rem; font-size:0.85rem; color:var(--gold);">${name}</div>
+          </div>
+        `;
+      });
+
+      pendingAbilityRequests.forEach(uid => {
+        const charData = ALL_CHARACTERS[uid];
+        const char = charData.character || {};
+        const name = char.name || 'Sem Nome';
+        const avatar = char.avatar || 'Photos/demihuman.webp';
+        const pendingList = charData.pendingAbilities || [];
+
+        pendingList.forEach(req => {
+          if (req.status !== 'pending') return;
+          const escapedName = req.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+          html += `
+            <div class="character-card" onclick="resolveAbilityRequestFromProfile('${uid}', '${escapedName}')" style="position:relative; max-width:130px; margin:0 auto; border:2px dashed #4a90e2;">
+              <span style="position:absolute; top:4px; right:4px; background:#4a90e2; color:#fff; font-family:'Cinzel',serif; font-size:0.55rem; padding:1px 4px; border-radius:2px; z-index:2;">HABIL.</span>
+              <img src="${avatar}" alt="${name}" style="width:100%; aspect-ratio:1/1; object-fit:cover;">
+              <div class="char-card-name" style="padding:0.4rem; font-size:0.85rem; color:#4a90e2;">${name}</div>
+            </div>
+          `;
+        });
+      });
+
+      container.innerHTML = html;
+    } catch (err) {
+      console.error('Erro ao renderizar sub-aba pendente:', err);
+      container.innerHTML = '<p style="text-align:center; color:var(--red-wax); grid-column:1/-1;">Erro ao carregar dados.</p>';
+    }
+
+  } else if (tabName === 'noticias') {
+    const listContainer = document.getElementById('profile-noticias-list');
+    if (!listContainer) return;
+
+    listContainer.innerHTML = '<div class="auth-loading active" style="margin:1rem auto;"><div class="auth-spinner"></div></div>';
+
+    try {
+      const allChars = await getAllCharacters();
+      const currentUserData = allChars[currentUser.uid] || {};
+      const isStaff = currentUserData.isAdmin || currentUserData.isSubAdmin;
+
+      if (isStaff) {
+        // Admin / Sub-admin: Render logs do servidor (serverAlerts descentralizado)
+        const alerts = [];
+        Object.values(allChars).forEach(charData => {
+          const list = charData.serverAlerts || [];
+          list.forEach(alert => {
+            alerts.push({
+              text: alert.text,
+              timestamp: alert.timestamp || Date.now(),
+              author: alert.author || 'Membro'
+            });
+          });
+        });
+
+        alerts.sort((a, b) => b.timestamp - a.timestamp);
+
+        if (alerts.length === 0) {
+          listContainer.innerHTML = '<p style="font-style:italic; font-size:0.9rem; color:#666; text-align:center; margin:1rem 0;">Nenhum log de atividade no servidor registrado.</p>';
+          return;
+        }
+
+        listContainer.innerHTML = alerts.map(a => {
+          return `
+            <div style="background:rgba(212,175,55,0.04); padding:0.6rem; border-radius:4px; font-size:0.85rem; color:var(--ink); border-left:4px solid var(--gold); display:flex; gap:0.5rem; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+              <span>🛡️</span>
+              <div style="flex:1;">
+                <div style="line-height:1.4; font-weight:500;">${a.text}</div>
+                <div style="font-size:0.7rem; color:#666; margin-top:0.2rem;">${new Date(a.timestamp).toLocaleString('pt-BR')}</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } else {
+        // Player: Render notícias publicadas pelo Admin na coleção 'news'
+        const newsSnap = await _db.collection('news').get();
+        const newsList = [];
+        newsSnap.forEach(doc => {
+          newsList.push(doc.data());
+        });
+
+        newsList.sort((a, b) => b.timestamp - a.timestamp);
+
+        if (newsList.length === 0) {
+          listContainer.innerHTML = '<p style="font-style:italic; font-size:0.9rem; color:#666; text-align:center; margin:1rem 0;">Nenhum comunicado da Guilda no momento.</p>';
+          return;
+        }
+
+        listContainer.innerHTML = newsList.map(n => {
+          let badgeColor = 'var(--gold)';
+          let badgeText = n.category || 'Notícia';
+          if (n.category === 'Novas Missões') badgeColor = 'var(--red-wax)';
+          else if (n.category === 'Atualizações') badgeColor = 'var(--blue-magic)';
+
+          return `
+            <div style="background:var(--parchment); padding:1rem; border-radius:6px; border:1px solid var(--wood-plank); box-shadow:0 2px 5px rgba(0,0,0,0.1); margin-bottom:0.5rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem; flex-wrap:wrap; gap:0.5rem;">
+                <span style="background:${badgeColor}; color:#fff; font-family:'Cinzel',serif; font-size:0.7rem; padding:2px 8px; border-radius:3px; font-weight:bold; text-transform:uppercase;">${badgeText}</span>
+                <span style="font-size:0.75rem; color:#666;">${new Date(n.timestamp).toLocaleString('pt-BR')}</span>
+              </div>
+              <h4 style="font-family:'Cinzel',serif; margin:0 0 0.5rem 0; color:var(--ink); font-size:1.1rem; border-bottom:1px dashed var(--wood-plank); padding-bottom:0.2rem;">${n.title}</h4>
+              <p style="font-size:0.92rem; line-height:1.5; color:var(--ink-light); white-space:pre-wrap; margin:0;">${n.content}</p>
+              <div style="text-align:right; font-size:0.75rem; color:#777; margin-top:0.5rem; font-style:italic;">Publicado por: ${n.author || 'Admin Supremo'}</div>
+            </div>
+          `;
+        }).join('');
+      }
+    } catch (err) {
+      console.error('Erro ao carregar Notícias/Logs:', err);
+      listContainer.innerHTML = '<p style="text-align:center; color:var(--red-wax);">Erro ao carregar dados.</p>';
+    }
+
+  } else if (tabName === 'mensagens') {
+    const listContainer = document.getElementById('profile-mensagens-list');
+    if (!listContainer) return;
+
+    listContainer.innerHTML = '<div class="auth-loading active" style="margin:1rem auto;"><div class="auth-spinner"></div></div>';
+
+    try {
+      const snap = await _db.collection('characters').doc(currentUser.uid).get();
+      const data = snap.exists ? snap.data() : {};
+      const notifications = data.notifications || [];
+
+      notifications.sort((a, b) => b.timestamp - a.timestamp);
+
+      if (notifications.length === 0) {
+        listContainer.innerHTML = '<p style="font-style:italic; font-size:0.9rem; color:#666; text-align:center; margin:1rem 0;">Caixa de entrada vazia.</p>';
+        return;
+      }
+
+      listContainer.innerHTML = notifications.map(m => {
+        let icon = '✉️';
+        let borderStyle = 'border-left: 4px solid #4a90e2;';
+        let bg = 'rgba(74,144,226,0.04)';
+        
+        if (m.type === 'success' || m.text.includes('aprovado') || m.text.includes('APROVADA')) {
+          icon = '✔️';
+          borderStyle = 'border-left: 4px solid var(--green-moss);';
+          bg = 'rgba(46,204,113,0.04)';
+        } else if (m.type === 'error' || m.text.includes('rejeitado') || m.text.includes('REJEITADA')) {
+          icon = '❌';
+          borderStyle = 'border-left: 4px solid var(--red-wax);';
+          bg = 'rgba(231,76,60,0.04)';
+        }
+
+        return `
+          <div style="background:${bg}; padding:0.6rem; border-radius:4px; font-size:0.85rem; color:var(--ink); ${borderStyle} display:flex; gap:0.5rem; align-items:center; margin-bottom:0.2rem; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+            <span>${icon}</span>
+            <div style="flex:1;">
+              <div style="line-height:1.4;">${m.text}</div>
+              <div style="font-size:0.7rem; color:#666; margin-top:0.2rem;">${new Date(m.timestamp).toLocaleString('pt-BR')}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } catch (err) {
+      console.error('Erro ao carregar mensagens:', err);
+      listContainer.innerHTML = '<p style="text-align:center; color:var(--red-wax);">Erro ao carregar mensagens.</p>';
+    }
+  }
+}
+
+function resolveAbilityRequestFromProfile(uid, abilityName) {
+  if (confirm(`Deseja aprovar a habilidade 【 ${abilityName} 】 para este personagem? (Clique Cancelar para REJEITAR)`)) {
+    resolveAbilityRequest(uid, abilityName, true);
+  } else {
+    if (confirm(`Deseja realmente REJEITAR a habilidade 【 ${abilityName} 】?`)) {
+      resolveAbilityRequest(uid, abilityName, false);
+    }
+  }
+}
+
+function toggleNewsForm() {
+  const fields = document.getElementById('news-form-fields');
+  if (fields) {
+    fields.style.display = fields.style.display === 'none' ? 'flex' : 'none';
+  }
+}
+
+async function publishNewsAnnouncement() {
+  const titleInput = document.getElementById('news-title-input');
+  const categoryInput = document.getElementById('news-category-input');
+  const contentInput = document.getElementById('news-content-input');
+
+  const title = titleInput ? titleInput.value.trim() : '';
+  const category = categoryInput ? categoryInput.value : '';
+  const content = contentInput ? contentInput.value.trim() : '';
+
+  if (!title || !content) {
+    showToast('⚠️ Preencha o título e o conteúdo da notícia!', 'error');
+    return;
+  }
+
+  const currentUser = _auth.currentUser;
+  if (!currentUser) return;
+
+  try {
+    showToast('⚡ Publicando notícia...', 'info');
+    
+    // Obter nome do admin/mestre
+    const charData = ALL_CHARACTERS[currentUser.uid] || {};
+    const authorName = charData.player?.name || 'Mestre';
+
+    await _db.collection('news').add({
+      title,
+      category,
+      content,
+      author: authorName,
+      timestamp: Date.now()
+    });
+
+    showToast('✅ Notícia publicada com sucesso!', 'success');
+    
+    // Limpar campos
+    if (titleInput) titleInput.value = '';
+    if (contentInput) contentInput.value = '';
+    
+    // Fechar formulário
+    toggleNewsForm();
+
+    // Recarregar aba de notícias
+    loadProfileSubtabData('noticias');
+  } catch (err) {
+    console.error('Erro ao publicar notícia:', err);
+    showToast('❌ Falha ao publicar notícia.', 'error');
+  }
+}
+
+async function runDatabaseMigration() {
+  // Executa apenas uma vez por sessão/recarga do navegador
+  if (window.hasRunKenswordMigration) return;
+  window.hasRunKenswordMigration = true;
+
+  try {
+    const snap = await _db.collection('characters').get();
+    const batch = _db.batch();
+    let hasChanges = false;
+    let deletedCount = 0;
+    let updatedCount = 0;
+    let aliceResetCount = 0;
+    const targetPendingNames = ['akira', 'mizuki', 'korikiwa', 'yurei', 'kuroha'];
+
+    snap.forEach(doc => {
+      const data = doc.data();
+      const docId = doc.id;
+      const charName = (data.character?.name || '').trim().toLowerCase();
+      const playerName = (data.player?.name || '').trim().toLowerCase();
+
+      // 1. Deletar a ficha e a conta de Akice por completo
+      if (charName === 'akice' || playerName === 'akice') {
+        const docRef = _db.collection('characters').doc(docId);
+        batch.delete(docRef);
+        deletedCount++;
+        hasChanges = true;
+        console.log(`[MIGRAÇÃO] Agendada exclusão da conta de Akice (ID: ${docId})`);
+      }
+      // 2. Excluir a ficha da personagem Alice preservando a sua conta de jogador
+      else if (charName === 'alice' || playerName === 'alice') {
+        const docRef = _db.collection('characters').doc(docId);
+        batch.update(docRef, {
+          character: firebase.firestore.FieldValue.delete(),
+          status: firebase.firestore.FieldValue.delete(),
+          pendingAbilities: firebase.firestore.FieldValue.delete(),
+          hasPendingModifications: firebase.firestore.FieldValue.delete(),
+          modificationRequest: firebase.firestore.FieldValue.delete()
+        });
+        aliceResetCount++;
+        hasChanges = true;
+        console.log(`[MIGRAÇÃO] Agendada exclusão da ficha de Alice preservando a conta (ID: ${docId})`);
+      }
+      // 3. Colocar Akira, Mizuki, Korikiwa, Yurei, Kuroha em pending
+      else {
+        const matchesTarget = targetPendingNames.some(name => charName.includes(name) || playerName.includes(name));
+        if (matchesTarget && data.status !== 'pending') {
+          const docRef = _db.collection('characters').doc(docId);
+          batch.update(docRef, { status: 'pending' });
+          updatedCount++;
+          hasChanges = true;
+          console.log(`[MIGRAÇÃO] Agendada atualização para pending de ${data.character?.name || data.player?.name} (ID: ${docId})`);
+        }
+      }
+    });
+
+    if (hasChanges) {
+      await batch.commit();
+      console.log(`[MIGRAÇÃO] Concluída com sucesso! ${deletedCount} excluídos, ${aliceResetCount} fichas de Alice resetadas, ${updatedCount} atualizados para pending.`);
+      showToast(`✨ Banco de dados migrado! Fichas de Akira/Mizuki/etc atualizadas para 'pending', ficha de Alice resetada e Akice excluída.`, 'info');
+    } else {
+      console.log('[MIGRAÇÃO] Nenhuma alteração pendente no banco de dados.');
+    }
+  } catch (err) {
+    console.error('[MIGRAÇÃO] Erro ao rodar migração de dados:', err);
   }
 }
 

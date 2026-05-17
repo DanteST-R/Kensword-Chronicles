@@ -640,3 +640,31 @@ footer {
   50% { transform: scale(1.6); opacity: 1; text-shadow: 0 0 15px rgba(255, 51, 51, 1); }
   100% { transform: scale(1); opacity: 0.6; }
 }
+
+/* ===== SUBTABS DO PERFIL ===== */
+.profile-subtab-btn {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--wood-plank);
+  border-bottom: none;
+  padding: 0.5rem 1rem;
+  font-family: 'Cinzel', serif;
+  font-size: 0.85rem;
+  color: var(--parchment-aged);
+  cursor: pointer;
+  border-radius: 4px 4px 0 0;
+  transition: all 0.2s ease;
+  position: relative;
+  top: 2px;
+}
+
+.profile-subtab-btn:hover {
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--gold-light);
+}
+
+.profile-subtab-btn.active {
+  border-color: var(--wood-plank) var(--wood-plank) transparent;
+  background: var(--parchment-aged);
+  color: var(--ink);
+  font-weight: bold;
+}

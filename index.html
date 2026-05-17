@@ -542,9 +542,55 @@
                     <button class="form-submit-btn" style="width:auto; padding:0.5rem 1rem; margin-top:0; font-size:0.9rem;">Treinar Personagem</button>
                 </div>
 
-                <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); padding-bottom:0.5rem; margin-top:1.5rem; display:flex; align-items:center; gap:0.5rem;">📬 Notícias e Caixa do Servidor</h3>
-                <div id="server-notifications-box" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--wood-plank); border-radius: 8px; padding: 1rem; background: var(--parchment-aged); display:flex; flex-direction:column; gap:0.6rem; box-shadow: inset 0 2px 5px rgba(0,0,0,0.15);">
-                    <p style="font-style:italic; font-size:0.9rem; color:#666; text-align:center; margin:0;">Nenhuma notificação do servidor no momento.</p>
+                <div class="profile-tabs-wrapper" style="margin-top: 1.5rem;">
+                    <div id="profile-subtabs-nav" style="display: flex; gap: 0.5rem; border-bottom: 2px solid var(--wood-plank); padding-bottom: 0.3rem; margin-bottom: 1rem;">
+                        <!-- Injetado via JS de acordo com o Role (Admin/Player) -->
+                    </div>
+                    
+                    <!-- Conteúdo: Fichas Pendentes (Apenas Admin/Sub-Admin) -->
+                    <div id="profile-subtab-pending" class="profile-subtab-content" style="display: none;">
+                        <div id="profile-pending-fichas-container" class="characters-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 1rem; max-height: 350px; overflow-y: auto; padding: 0.5rem; border: 1px solid var(--wood-plank); border-radius: 8px; background: var(--parchment-aged);">
+                            <!-- Fichas Pendentes em tempo real -->
+                        </div>
+                    </div>
+
+                    <!-- Conteúdo: Notícias (Todos) -->
+                    <div id="profile-subtab-noticias" class="profile-subtab-content" style="display: none;">
+                        <!-- Criador de Comunicados (Admin/Sub-Admin) -->
+                        <div id="admin-news-creator" style="display: none; border: 1px dashed var(--gold); border-radius: 8px; padding: 1rem; background: rgba(212,175,55,0.05); margin-bottom: 1rem; box-shadow: inset 0 0 10px rgba(0,0,0,0.15);">
+                            <h4 style="margin: 0 0 0.8rem 0; font-family: 'Cinzel', serif; color: var(--gold); display: flex; align-items: center; justify-content: space-between; font-size: 0.95rem;">
+                                ✍️ Escrever Nova Notícia
+                                <button onclick="toggleNewsForm()" class="form-submit-btn" style="width: auto; margin-top: 0; font-size: 0.75rem; padding: 0.2rem 0.6rem;">Escrever</button>
+                            </h4>
+                            <div id="news-form-fields" style="display: none; flex-direction: column; gap: 0.8rem;">
+                                <div class="field-group" style="margin-bottom: 0;">
+                                    <input type="text" id="news-title-input" placeholder="Título da Notícia / Missão..." style="width:100%; padding:0.4rem; font-family:sans-serif; border:1px solid var(--wood-plank); border-radius:4px; background:var(--parchment); color:var(--ink);">
+                                </div>
+                                <div class="field-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;">
+                                    <select id="news-category-input" style="width:100%; padding:0.4rem; font-family:sans-serif; border:1px solid var(--wood-plank); border-radius:4px; background:var(--parchment); color:var(--ink); font-size: 0.85rem;">
+                                        <option value="Avisos Importantes">📢 Avisos Importantes</option>
+                                        <option value="Novas Missões">⚔️ Novas Missões</option>
+                                        <option value="Atualizações">⚙️ Atualizações</option>
+                                    </select>
+                                    <button onclick="publishNewsAnnouncement()" class="form-submit-btn" style="width: 100%; margin-top: 0; padding: 0.4rem; font-size: 0.85rem;">Publicar 📜</button>
+                                </div>
+                                <div class="field-group" style="margin-bottom: 0;">
+                                    <textarea id="news-content-input" placeholder="Detalhes do aviso ou atualização..." style="width:100%; height:80px; padding:0.4rem; font-family:sans-serif; border:1px solid var(--wood-plank); border-radius:4px; background:var(--parchment); color:var(--ink); box-shadow:inset 0 1px 3px rgba(0,0,0,0.2);"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="profile-noticias-list" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--wood-plank); border-radius: 8px; padding: 1rem; background: var(--parchment-aged); display: flex; flex-direction: column; gap: 0.6rem; box-shadow: inset 0 2px 5px rgba(0,0,0,0.15);">
+                            <!-- Notícias ou Logs do Servidor -->
+                        </div>
+                    </div>
+
+                    <!-- Conteúdo: Mensagens (Todos) -->
+                    <div id="profile-subtab-mensagens" class="profile-subtab-content" style="display: none;">
+                        <div id="profile-mensagens-list" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--wood-plank); border-radius: 8px; padding: 1rem; background: var(--parchment-aged); display: flex; flex-direction: column; gap: 0.6rem; box-shadow: inset 0 2px 5px rgba(0,0,0,0.15);">
+                            <!-- Mensagens privadas / Caixa de entrada -->
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
