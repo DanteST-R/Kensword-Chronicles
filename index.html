@@ -9,8 +9,8 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="auth.css">
+  <link rel="stylesheet" href="style.css?v=1.3">
+  <link rel="stylesheet" href="auth.css?v=1.3">
 </head>
 <body>
 
@@ -225,12 +225,14 @@
             <div class="field-group">
               <label for="reg-ua-title">Título da Habilidade</label>
               <input type="text" id="reg-ua-title" placeholder="Ex: Vento Cortante">
+              <div class="field-error" id="err-ua-title"></div>
             </div>
             <div class="field-group">
               <label for="reg-ua-desc">Descrição</label>
               <textarea id="reg-ua-desc" placeholder="Descreva sua habilidade única em detalhes..."></textarea>
+              <div class="field-error" id="err-ua-desc"></div>
             </div>
-            <div class="field-row">
+            <div class="field-row" style="display:none;">
               <div class="field-group">
                 <label>Buffs <span class="admin-only-badge">Admin</span></label>
                 <input class="field-readonly" type="text" id="reg-ua-buffs" value="— a ser definido pelo mestre —" readonly>
@@ -331,8 +333,8 @@
 
           <div class="form-section-title">História</div>
           <div class="field-group">
-            <label for="reg-story">Conte a história do seu personagem <em style="font-weight:400;text-transform:none;">(opcional, mas muito importante)</em></label>
-            <span class="field-hint">Se escrever, recomendamos 300 palavras ou mais para enriquecer seu personagem.</span>
+            <label for="reg-story">Conte a história do seu personagem <em style="font-weight:700;text-transform:none;color:var(--red-wax);">* Obrigatório (Mínimo de 100 palavras)</em></label>
+            <span class="field-hint">Escreva detalhadamente a origem e jornada do seu personagem para enriquecer a lore e ser aceito na guilda.</span>
             <textarea id="reg-story" style="min-height:150px;" placeholder="Era uma vez, em terras de Kensword..." oninput="updateWordCount()"></textarea>
             <div class="word-counter" id="word-counter">0 palavras</div>
           </div>
@@ -368,6 +370,7 @@
 <!-- ===================================================== -->
 <header>
   <div class="header-content">
+    <div class="profile-avatar" onclick="goToProfileTab()"><img id="header-user-avatar" src="Photos/demihuman.webp" alt="Avatar" /></div>
     <div class="header-emblem">⚔️</div>
     <h1 class="site-title">Kensword Chronicles</h1>
     <p class="site-subtitle">Compêndio do Aventureiro — Continente de Kensword</p>
@@ -376,15 +379,19 @@
 </header>
 
 <nav id="main-nav">
-  <button class="nav-tab active" onclick="showTab('history')" id="tab-history"><span class="nav-icon">📜</span>História</button>
-  <button class="nav-tab" onclick="showTab('races')" id="tab-races"><span class="nav-icon">🧬</span>Raças</button>
-  <button class="nav-tab" onclick="showTab('map')" id="tab-map"><span class="nav-icon">🗺️</span>Continentes</button>
-  <button class="nav-tab" onclick="showTab('elements')" id="tab-elements"><span class="nav-icon">✨</span>Elementos</button>
-  <button class="nav-tab" onclick="showTab('characters')" id="tab-characters"><span class="nav-icon">🗡️</span>Personagens</button>
-  <button class="nav-tab" onclick="showTab('orgs')" id="tab-orgs"><span class="nav-icon">🏰</span>Organizações</button>
-  <button class="nav-tab" onclick="showTab('monsters')" id="tab-monsters"><span class="nav-icon">👾</span>Monstros</button>
-  <button class="nav-tab" onclick="handleLogout()" id="tab-logout" style="margin-left:auto;border-color:var(--red-wax);color:var(--red-wax);"><span class="nav-icon">🚪</span>Sair</button>
-</nav>
+    <button class="nav-tab active" onclick="showTab('history')" id="tab-history"><span class="nav-icon">📜</span>História</button>
+    <button class="nav-tab" onclick="showTab('races')" id="tab-races"><span class="nav-icon">🧬</span>Raças</button>
+    <button class="nav-tab" onclick="showTab('elements')" id="tab-elements"><span class="nav-icon">✨</span>Elementos</button>
+    <button class="nav-tab" onclick="showTab('map')" id="tab-map"><span class="nav-icon">🗺️</span>Localizações</button>
+    <button class="nav-tab" onclick="showTab('characters')" id="tab-characters"><span class="nav-icon">🧑‍🤝‍🧑</span>Personagens</button>
+    <button class="nav-tab" onclick="showTab('npcs')" id="tab-npcs"><span class="nav-icon">🎭</span>NPCs</button>
+    <button class="nav-tab" onclick="showTab('orgs')" id="tab-orgs"><span class="nav-icon">🏰</span>Organizações</button>
+    <button class="nav-tab" onclick="showTab('monsters')" id="tab-monsters"><span class="nav-icon">👾</span>Monstros</button>
+    <div style="margin-left:auto; display:flex;">
+      <button class="nav-tab" onclick="showTab('pending')" id="tab-pending" style="display:none; border-color:var(--red-wax);"><span class="nav-icon">📋</span>Fichas Pendentes<span id="pending-alert-dot" class="pending-alert" style="display:none;">!</span></button>
+      <button class="nav-tab" onclick="handleLogout()" id="tab-logout" style="border-color:var(--red-wax);color:var(--red-wax);"><span class="nav-icon">🚪</span>Sair</button>
+    </div>
+  </nav>
 
 <main>
   <section id="tab-content-history" class="tab-content active">
@@ -412,7 +419,7 @@
 
   <section id="tab-content-map" class="tab-content">
     <div class="parchment-panel">
-      <h2 class="section-title">🗺️ Continentes &amp; Mapa</h2>
+      <h2 class="section-title">🗺️ Localizações &amp; Mapa</h2>
       <div class="ornament-divider"><span>✦</span></div>
       <div class="map-container">
         <img src="Photos/Kensword_Map.jpeg" alt="Mapa do Continente de Kensword — Kensword Chronicles">
@@ -570,6 +577,58 @@
       </div>
     </section>
 
+    <section id="tab-content-npcs" class="tab-content">
+      <div class="parchment-panel">
+        <h2 class="section-title">🎭 NPCs</h2>
+        <div class="ornament-divider"><span>⚔️</span></div>
+        <div id="npcs-grid" class="characters-grid"></div>
+      </div>
+    </section>
+    
+    <section id="tab-content-profile" class="tab-content">
+      <div class="parchment-panel">
+        <h2 class="section-title">👤 Meu Perfil</h2>
+        <div class="ornament-divider"><span>✦</span></div>
+        <div style="display:flex; gap:2rem; flex-wrap:wrap; justify-content:center; align-items:flex-start;">
+            <div style="text-align:center;">
+                <div class="profile-avatar-container" style="position:relative; width:150px; height:150px; margin: 0 auto 1rem; cursor:pointer;" onclick="triggerAvatarUpdate()">
+                    <img id="profile-user-avatar" src="Photos/demihuman.webp" style="width:100%; height:100%; border-radius:50%; object-fit:cover; border:2px solid var(--wood-plank);">
+                    <div class="avatar-edit-overlay" style="position:absolute; bottom:0; right:0; background:var(--gold); border:2px solid var(--wood-dark); width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--wood-dark); font-size:1.1rem; box-shadow:0 2px 5px rgba(0,0,0,0.5); transition:all 0.2s;">
+                        ✏️
+                    </div>
+                </div>
+                <input type="file" id="profile-avatar-input" accept="image/*" style="display:none;" onchange="updateProfileAvatar(event)">
+                <h3 id="profile-user-name" style="font-family:'Cinzel',serif; font-size:1.5rem; color:var(--ink);"></h3>
+                <p><strong>Idade:</strong> <span id="profile-user-age"></span></p>
+                <p><strong>Disponibilidade:</strong> <span id="profile-user-avail"></span></p>
+                <div style="margin-top:1.5rem; padding:1rem; border:1px solid var(--gold); border-radius:8px; background:rgba(0,0,0,0.05);">
+                    <h4 style="margin-top:0;">💰 Moedas Kens</h4>
+                    <p style="font-style:italic; font-size:0.9rem;">Esse recurso será adicionado.</p>
+                </div>
+            </div>
+            <div style="flex:1; min-width:300px;">
+                <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); padding-bottom:0.5rem; margin-top:0;">Meus Personagens</h3>
+                <div id="profile-my-characters" style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:2rem;"></div>
+                
+                <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); padding-bottom:0.5rem; margin-top:0;">Treinos na Semana</h3>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem; border:1px solid var(--wood-plank); border-radius:8px; background:var(--parchment-aged);">
+                    <div style="font-size:1.2rem;"><strong>0</strong> treinos realizados</div>
+                    <button class="form-submit-btn" style="width:auto; padding:0.5rem 1rem; margin-top:0; font-size:0.9rem;">Treinar Personagem</button>
+                </div>
+            </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-content-pending" class="tab-content">
+      <div class="parchment-panel">
+        <h2 class="section-title" style="color:var(--red-wax);">📋 Fichas Pendentes</h2>
+        <div class="ornament-divider"><span>⚔️</span></div>
+        <p style="text-align:center; margin-bottom:1.5rem; font-style:italic;">Fichas de aventureiros aguardando aprovação dos mestres para entrar na Guilda.</p>
+        <div id="pending-characters-grid" class="characters-grid"></div>
+      </div>
+    </section>
+
   <section id="tab-content-orgs" class="tab-content">
     <div class="parchment-panel">
       <h2 class="section-title">🏰 Organizações</h2>
@@ -606,10 +665,10 @@
     </div>
   </div>
 
-  <script src="races_data.js"></script>
-<script src="firebase-config.js"></script>
-<script src="auth.js"></script>
-<script src="portal.js"></script>
-<script src="main.js"></script>
+  <script src="races_data.js?v=1.3"></script>
+<script src="firebase-config.js?v=1.3"></script>
+<script src="auth.js?v=1.3"></script>
+<script src="portal.js?v=1.3"></script>
+<script src="main.js?v=1.3"></script>
 </body>
 </html>
