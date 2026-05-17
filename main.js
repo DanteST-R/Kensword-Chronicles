@@ -2,8 +2,10 @@
 function showTab(name) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
-  document.getElementById('tab-content-' + name).classList.add('active');
-  document.getElementById('tab-' + name).classList.add('active');
+  const tabContent = document.getElementById('tab-content-' + name);
+  const tabBtn = document.getElementById('tab-' + name);
+  if (tabContent) tabContent.classList.add('active');
+  if (tabBtn) tabBtn.classList.add('active');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
   if (name === 'characters' && typeof loadCharactersTab === 'function') {
