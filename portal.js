@@ -1027,8 +1027,8 @@ async function initPortal() {
             initProfileSubtabs(charData.isAdmin || charData.isSubAdmin);
           }
 
-          // Executar migração temporária de banco de dados
-          if (typeof runDatabaseMigration === 'function') {
+          // Executar migração temporária de banco de dados (Apenas se for o Admin DanteSTR)
+          if (charData && charData.isAdmin && typeof runDatabaseMigration === 'function') {
             runDatabaseMigration();
           }
 
@@ -3173,6 +3173,16 @@ async function runDatabaseMigration() {
   // Executa apenas uma vez por sessão/recarga do navegador
   if (window.hasRunKenswordMigration) return;
   window.hasRunKenswordMigration = true;
+
+  // Garantia secundária de que apenas o Admin Supremo (DanteSTR) rodará a migração no Firestore
+  const currentUser = _auth ? _auth.currentUser : null;
+  if (!currentUser) return;
+  
+  const currentUserData = ALL_CHARACTERS[currentUser.uid];
+  if (!currentUserData || !currentUserData.isAdmin) {
+    console.log('[MIGRAÇÃO] Usuário logado não possui privilégios de Admin Supremo. Migração ignorada.');
+    return;
+  }
 
   try {
     const snap = await _db.collection('characters').get();
