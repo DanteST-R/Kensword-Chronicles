@@ -165,18 +165,18 @@ let currentStep = 0;
 
 
 function goToStep(step) {
+  if (typeof isCreatingNewCharacterFromProfile !== 'undefined' && isCreatingNewCharacterFromProfile && step === 0) {
+    closeNewCharacterWizard();
+    return;
+  }
 
   if (step > currentStep && !validateStep(currentStep)) return;
-
-
 
   document.getElementById('reg-step-' + currentStep).style.display = 'none';
 
   document.getElementById('step-dot-' + currentStep).classList.remove('active');
 
   document.getElementById('step-dot-' + currentStep).classList.add('done');
-
-
 
   currentStep = step;
 
@@ -801,13 +801,17 @@ async function handleRegister() {
 
     setLoading(true);
 
-    await registerCharacter(data);
-
-    setLoading(false);
-
-    showToast('âœ… Personagem inscrito na guilda!', 'success');
-
-    setTimeout(() => hidePortal(), 1200);
+    if (typeof isCreatingNewCharacterFromProfile !== 'undefined' && isCreatingNewCharacterFromProfile) {
+      await handleCreateNewCharacter(data);
+      setLoading(false);
+      showToast('✅ Novo personagem criado com sucesso e enviado para aprovação!', 'success');
+      closeNewCharacterWizard();
+    } else {
+      await registerCharacter(data);
+      setLoading(false);
+      showToast('âœ… Personagem inscrito na guilda!', 'success');
+      setTimeout(() => hidePortal(), 1200);
+    }
 
   } catch (err) {
 
@@ -996,12 +1000,21 @@ async function initPortal() {
             // Guardamos localmente para que o clique para abrir a ficha funcione
             ALL_CHARACTERS[user.uid] = charData;
             
-            myCharsContainer.innerHTML = `
-              <div class="character-card" onclick="openCharacterSheet('${user.uid}')" style="margin: 0 auto; max-width: 180px;">
-                <img src="${charAvatarUrl}" alt="${char.name || 'Personagem'}" id="profile-char-card-img">
-                <div class="char-card-name" id="profile-char-card-name">${char.name || 'Sem Nome'}</div>
-              </div>
-            `;
+            if (!char || !char.name) {
+              myCharsContainer.innerHTML = `
+                <div class="character-card" onclick="openNewCharacterWizard()" style="margin: 0 auto; max-width: 180px; display:flex; flex-direction:column; align-items:center; justify-content:center; border:2px dashed var(--gold); background:rgba(212,175,55,0.03); cursor:pointer; height:180px; box-shadow:none;">
+                  <span style="font-size:2.5rem; color:var(--gold);">➕</span>
+                  <div class="char-card-name" style="color:var(--gold); font-size:0.9rem; font-weight:bold; font-family:'Cinzel',serif; border-top:none; background:none; position:static; text-shadow:none; padding:0; margin-top:0.5rem;">Criar Personagem</div>
+                </div>
+              `;
+            } else {
+              myCharsContainer.innerHTML = `
+                <div class="character-card" onclick="openCharacterSheet('${user.uid}')" style="margin: 0 auto; max-width: 180px;">
+                  <img src="${charAvatarUrl}" alt="${char.name || 'Personagem'}" id="profile-char-card-img">
+                  <div class="char-card-name" id="profile-char-card-name">${char.name || 'Sem Nome'}</div>
+                </div>
+              `;
+            }
           }
 
           // Carregar notificações do servidor
@@ -1167,15 +1180,31 @@ function openCharacterSheet(uid) {
   const isStaff = currentUserData && (currentUserData.isAdmin || currentUserData.isSubAdmin);
   const isPending = data.status === 'pending';
 
-  let editButtonHtml = '';
+  let editButtonHtml = '<div style="display:flex; justify-content:flex-end; gap:0.8rem; margin-bottom:1rem; margin-top:-0.5rem; position:relative; z-index:10; flex-wrap:wrap;">';
+  let hasActions = false;
+
   if (isStaff) {
-    editButtonHtml = `
-      <div style="text-align:right; margin-bottom:1rem; margin-top:-0.5rem; position:relative; z-index:10;">
-        <button onclick="toggleEditSheet('${uid}')" class="form-submit-btn" style="background:var(--gold); border-color:var(--gold); color:#000; width:auto; padding:0.4rem 1.2rem; font-family:'Cinzel',serif; font-size:0.85rem; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.2); border-radius:4px;">
-          ✏️ Editar Ficha
-        </button>
-      </div>
+    hasActions = true;
+    editButtonHtml += `
+      <button onclick="toggleEditSheet('${uid}')" class="form-submit-btn" style="background:var(--gold); border-color:var(--gold); color:#000; width:auto; padding:0.4rem 1.2rem; font-family:'Cinzel',serif; font-size:0.85rem; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.2); border-radius:4px; margin-top:0;">
+        ✏️ Editar Ficha
+      </button>
     `;
+  }
+
+  if (currentUser && currentUser.uid === uid) {
+    hasActions = true;
+    editButtonHtml += `
+      <button onclick="deleteCharacterSheet('${uid}')" class="form-submit-btn" style="background:var(--red-wax); border-color:var(--red-wax); color:#fff; width:auto; padding:0.4rem 1.2rem; font-family:'Cinzel',serif; font-size:0.85rem; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.2); border-radius:4px; margin-top:0;">
+        ⚠️ Excluir Personagem
+      </button>
+    `;
+  }
+
+  editButtonHtml += '</div>';
+
+  if (!hasActions) {
+    editButtonHtml = '';
   }
 
   // Se for mestre revisando, Linhagem vira um campo editável
@@ -2579,6 +2608,181 @@ async function loadServerNotifications() {
 
   } catch (err) {
     console.error('Erro ao ler mensagens do servidor:', err);
+  }
+}
+
+// ────────────────────────────────────────────────────────────────
+// EXCLUSÃO E CRIAÇÃO DE NOVO PERSONAGEM A PARTIR DO PERFIL
+// ────────────────────────────────────────────────────────────────
+
+let isCreatingNewCharacterFromProfile = false;
+
+function openNewCharacterWizard() {
+  const currentUser = _auth.currentUser;
+  if (!currentUser) return;
+
+  const charData = ALL_CHARACTERS[currentUser.uid] || {};
+  const player = charData.player || {};
+
+  isCreatingNewCharacterFromProfile = true;
+
+  // 1. Limpar todos os campos do personagem no wizard
+  document.getElementById('reg-char-name').value = '';
+  document.getElementById('reg-char-age').value = '';
+  document.getElementById('reg-char-avatar-base64').value = '';
+  
+  const imgPreview = document.getElementById('reg-char-avatar-preview');
+  if (imgPreview) imgPreview.src = '';
+  
+  const fileInput = document.getElementById('reg-char-avatar');
+  if (fileInput) fileInput.value = '';
+
+  document.getElementById('reg-height').value = '';
+  document.getElementById('reg-weight').value = '';
+  document.getElementById('reg-story').value = '';
+  
+  document.getElementById('reg-ua-title').value = '';
+  document.getElementById('reg-ua-desc').value = '';
+  
+  document.getElementById('reg-item1').value = '';
+  document.getElementById('reg-item2').value = '';
+  document.getElementById('reg-item3').value = '';
+
+  // Resetar atributos
+  if (typeof ATTRS !== 'undefined') {
+    ATTRS.strength = 0;
+    ATTRS.resistance = 0;
+    ATTRS.speed = 0;
+    ATTRS.magic = 0;
+    if (typeof updateAttrPoints === 'function') updateAttrPoints();
+  }
+
+  // 2. Preencher dados ocultos do passo 0
+  document.getElementById('reg-player-name').value = player.name || 'Jogador';
+  document.getElementById('reg-player-age').value = player.age || 20;
+  document.getElementById('reg-pass').value = 'DUMMY_PASSWORD_123';
+  document.getElementById('reg-pass-confirm').value = 'DUMMY_PASSWORD_123';
+
+  // Marcar as caixas de disponibilidade correspondentes
+  const availList = player.availability || [];
+  document.querySelectorAll('input[name="avail"]').forEach(cb => {
+    cb.checked = availList.includes(cb.value);
+  });
+
+  // 3. Modificar o botão final para criar nova ficha do jogador ativo
+  const submitBtn = document.getElementById('register-submit-btn');
+  if (submitBtn) {
+    submitBtn.textContent = '📜 Criar e Enviar Personagem para a Guilda';
+  }
+
+  // 4. Mostrar o formulário de registro, pulando o passo 0 e indo direto ao passo 1
+  document.getElementById('auth-overlay').classList.remove('hidden');
+  showAuthForm('register');
+  
+  // Ocultar navegação do Passo 0 na barra superior
+  const stepDot0 = document.getElementById('step-dot-0');
+  if (stepDot0) stepDot0.style.display = 'none';
+
+  // Forçar ir direto para o passo 1
+  document.getElementById('reg-step-0').style.display = 'none';
+  document.getElementById('step-dot-0').classList.remove('active');
+  document.getElementById('step-dot-0').classList.add('done');
+
+  currentStep = 1;
+  document.getElementById('reg-step-1').style.display = 'block';
+  document.getElementById('step-dot-1').classList.remove('done');
+  document.getElementById('step-dot-1').classList.add('active');
+}
+
+function closeNewCharacterWizard() {
+  isCreatingNewCharacterFromProfile = false;
+  document.getElementById('auth-overlay').classList.add('hidden');
+  
+  // Restaurar navegação normal
+  const stepDot0 = document.getElementById('step-dot-0');
+  if (stepDot0) stepDot0.style.display = 'inline-block';
+
+  const submitBtn = document.getElementById('register-submit-btn');
+  if (submitBtn) {
+    submitBtn.textContent = '📜 Inscrever Personagem na Guilda';
+  }
+}
+
+async function handleCreateNewCharacter(formData) {
+  const currentUser = _auth.currentUser;
+  if (!currentUser) throw new Error('Jogador não autenticado.');
+
+  // Construir o novo documento parcial contendo o personagem
+  const doc = _buildCharacterDocument(currentUser.uid, formData);
+
+  // Obter dados existentes para não sobrepor permissões ou avatares do jogador
+  const existingSnap = await _db.collection('characters').doc(currentUser.uid).get();
+  const existingData = existingSnap.exists ? existingSnap.data() : {};
+
+  const updatedDoc = {
+    status: existingData.isAdmin ? 'approved' : 'pending',
+    character: doc.character,
+    pendingAbilities: [],
+    hasPendingModifications: false,
+    modificationRequest: null,
+    serverAlerts: existingData.serverAlerts || [],
+    notifications: existingData.notifications || []
+  };
+
+  await _db.collection('characters').doc(currentUser.uid).update(updatedDoc);
+  
+  // Recarregar sessões locais e a UI!
+  ALL_CHARACTERS = await getAllCharacters();
+  showTab('profile');
+}
+
+async function deleteCharacterSheet(uid) {
+  if (!_auth || !_auth.currentUser) return;
+  const user = _auth.currentUser;
+  
+  if (user.uid !== uid) {
+    showToast('⚠️ Operação não permitida.', 'error');
+    return;
+  }
+
+  if (!confirm("⚠️ ATENÇÃO: Tem certeza que deseja excluir permanentemente o seu personagem?\nIsso apagará todos os dados da sua ficha (História, Linhagem, Habilidades, Atributos, etc.).\nEsta ação NÃO pode ser desfeita! Suas informações de login e conta de jogador continuarão existindo normalmente.")) return;
+
+  try {
+    showToast('🔮 Excluindo personagem...', 'info');
+    
+    // Resetar campos de personagem mantendo a conta do jogador intacta
+    await _db.collection('characters').doc(uid).update({
+      character: firebase.firestore.FieldValue.delete(),
+      status: firebase.firestore.FieldValue.delete(),
+      pendingAbilities: firebase.firestore.FieldValue.delete(),
+      hasPendingModifications: firebase.firestore.FieldValue.delete(),
+      modificationRequest: firebase.firestore.FieldValue.delete()
+    });
+
+    closeCharacterSheet();
+    showToast('🗑️ Personagem excluído com sucesso!', 'success');
+
+    // Recarregar os dados locais
+    ALL_CHARACTERS = await getAllCharacters();
+    
+    // Atualizar UI
+    if (typeof loadLearnAbilitiesTab === 'function') loadLearnAbilitiesTab();
+    if (typeof loadServerNotifications === 'function') loadServerNotifications();
+    
+    // Preencher a lista "Meus Personagens" (mostrando o botão de Criar Personagem)
+    const myCharsContainer = document.getElementById('profile-my-characters');
+    if (myCharsContainer) {
+      myCharsContainer.innerHTML = `
+        <div class="character-card" onclick="openNewCharacterWizard()" style="margin: 0 auto; max-width: 180px; display:flex; flex-direction:column; align-items:center; justify-content:center; border:2px dashed var(--gold); background:rgba(212,175,55,0.03); cursor:pointer; height:180px; box-shadow:none;">
+          <span style="font-size:2.5rem; color:var(--gold);">➕</span>
+          <div class="char-card-name" style="color:var(--gold); font-size:0.9rem; font-weight:bold; font-family:'Cinzel',serif; border-top:none; background:none; position:static; text-shadow:none; padding:0; margin-top:0.5rem;">Criar Personagem</div>
+        </div>
+      `;
+    }
+
+  } catch (err) {
+    console.error('Erro ao excluir personagem:', err);
+    showToast('Erro ao excluir personagem.', 'error');
   }
 }
 
