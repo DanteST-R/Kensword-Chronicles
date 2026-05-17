@@ -248,7 +248,7 @@ function buildElements() {
   let html = '';
 
   Object.keys(categories).forEach(catKey => {
-    const list = Object.values(window.KENSWORD_ELEMENTS_DB).filter(el => el.category === catKey);
+    const list = Object.values(window.KENSWORD_ELEMENTS_DB).filter(el => el && el.category === catKey);
     if (list.length === 0) return;
 
     html += `
