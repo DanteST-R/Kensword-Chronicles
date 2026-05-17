@@ -966,6 +966,16 @@ async function initPortal() {
         if (tabProfileBtn) tabProfileBtn.style.display = 'block';
 
         if (charData) {
+          // Garantia absoluta de privilégios de Admin Supremo no Frontend
+          const isDante = (charData.player && charData.player.name && 
+            (charData.player.name.trim().toLowerCase() === 'dantestr' || 
+             charData.player.name.trim().toLowerCase() === 'dantest-r')) || 
+            (user.email && user.email.toLowerCase().includes('dantestr'));
+          
+          if (isDante) {
+            charData.isAdmin = true;
+          }
+
           const char = charData.character || {};
           const player = charData.player || {};
           const name = player.name || char.name || 'Aventureiro';
@@ -1201,7 +1211,14 @@ function openCharacterSheet(uid) {
   // Verificar se o usuário atual é admin/sub-admin e se a ficha está pendente
   const currentUser = _auth ? _auth.currentUser : null;
   const currentUserData = currentUser ? ALL_CHARACTERS[currentUser.uid] : null;
-  const isStaff = currentUserData && (currentUserData.isAdmin || currentUserData.isSubAdmin);
+  // Garantia absoluta de privilégios de Admin Supremo no Frontend para DanteSTR
+  const isDante = currentUser && (
+    (currentUser.email && currentUser.email.toLowerCase().includes('dantestr')) ||
+    (currentUserData && currentUserData.player && currentUserData.player.name && 
+     (currentUserData.player.name.trim().toLowerCase() === 'dantestr' || 
+      currentUserData.player.name.trim().toLowerCase() === 'dantest-r'))
+  );
+  const isStaff = isDante || (currentUserData && (currentUserData.isAdmin || currentUserData.isSubAdmin));
   const isPending = data.status === 'pending';
 
   let editButtonHtml = '<div style="display:flex; justify-content:flex-end; gap:0.8rem; margin-bottom:1rem; margin-top:-0.5rem; position:relative; z-index:10; flex-wrap:wrap;">';
