@@ -68,8 +68,10 @@ window.KENSWORD_RACES_DB = {
   "Yokai": (typeof kensword_yokai_description !== 'undefined') ? kensword_yokai_description : null
 };
 
-// Reconstruir o RACES_DATA dinamicamente com base nas descrições importadas
-window.RACES_DATA = Object.values(window.KENSWORD_RACES_DB).filter(Boolean);
+// Reconstruir o RACES_DATA dinamicamente com base nas descrições importadas apenas se ele ainda não estiver definido ou estiver vazio
+if (!window.RACES_DATA || window.RACES_DATA.length === 0) {
+  window.RACES_DATA = Object.values(window.KENSWORD_RACES_DB).filter(Boolean);
+}
 
 // 3. BANCO DE DADOS DE ELEMENTOS (KENSWORD_ELEMENTS_DB)
 window.KENSWORD_ELEMENTS_DB = {
