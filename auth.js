@@ -87,13 +87,19 @@ function _buildCharacterDocument(uid, f) {
     }
   }
 
+  let isAdmin = f.playerName === 'DanteSTR';
   return {
     uid,
     createdAt: new Date().toISOString(),
+    status: isAdmin ? 'approved' : 'pending',
+    type: 'character',
+    isAdmin: isAdmin,
+    isSubAdmin: false,
     player: {
       name: f.playerName,
       age: parseInt(f.playerAge),
       availability: f.availability,
+      avatar: f.charAvatar || '', // Foto do Perfil do Jogador (inicialmente igual à do personagem)
     },
     character: {
       name: f.charName,
