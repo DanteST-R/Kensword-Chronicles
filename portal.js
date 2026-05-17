@@ -373,13 +373,49 @@ function validateStep1() {
 
 
 function validateStep2() {
-
   let ok = true;
+  clearErr('err-ua-title'); clearErr('err-ua-desc');
 
-  // O usuÃ¡rio nÃ£o pediu restriÃ§Ãµes estritas aqui, mas podemos adicionar se necessÃ¡rio
+  const title = document.getElementById('reg-ua-title').value.trim();
+  if (!title) {
+    showErr('err-ua-title', 'Informe o título da habilidade única.');
+    ok = false;
+  }
+
+  const desc = document.getElementById('reg-ua-desc').value.trim();
+  if (!desc) {
+    showErr('err-ua-desc', 'Descreva sua habilidade única em detalhes.');
+    ok = false;
+  }
 
   return ok;
+}
 
+function validateStep3() {
+  let ok = true;
+  clearErr('err-attrs');
+  clearErr('err-register-general');
+
+  const element = document.getElementById('reg-element').value;
+  if (!element) {
+    showErr('err-register-general', '⚠️ Selecione um Elemento Inicial.');
+    ok = false;
+  }
+
+  const used = Object.values(ATTRS).reduce((a, b) => a + b, 0);
+  if (used !== TOTAL_POINTS) {
+    showErr('err-attrs', `⚠️ Distribua todos os ${TOTAL_POINTS} pontos (faltam ${TOTAL_POINTS - used} pontos).`);
+    ok = false;
+  }
+
+  const storyText = document.getElementById('reg-story').value.trim();
+  const wordCount = storyText ? storyText.split(/\s+/).filter(w => w !== '').length : 0;
+  if (wordCount < 100) {
+    showErr('err-register-general', `⚠️ A história do seu personagem deve ter no mínimo 100 palavras! (Você escreveu ${wordCount} palavras).`);
+    ok = false;
+  }
+
+  return ok;
 }
 
 
@@ -687,17 +723,11 @@ function updateAttrDisplay() {
 // â”€â”€ Contador de palavras â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function updateWordCount() {
-
   const text = document.getElementById('reg-story').value.trim();
-
-  const words = text ? text.split(/\s+/).length : 0;
-
+  const words = text ? text.split(/\s+/).filter(w => w !== '').length : 0;
   const el = document.getElementById('word-counter');
-
   el.textContent = words + ' palavra' + (words !== 1 ? 's' : '');
-
-  el.className = 'word-counter' + (words === 0 ? '' : words < 300 ? ' warn' : ' ok');
-
+  el.className = 'word-counter' + (words === 0 ? '' : words < 100 ? ' warn' : ' ok');
 }
 
 
@@ -783,11 +813,11 @@ function collectFormData() {
 // â”€â”€ AÃ§Ãµes de Login e Registro â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 async function handleRegister() {
-
   clearErr('err-register-general');
 
-  const btn = document.getElementById('register-submit-btn');
+  if (!validateStep3()) return;
 
+  const btn = document.getElementById('register-submit-btn');
   btn.disabled = true;
 
   try {
@@ -944,12 +974,85 @@ async function initPortal() {
 
   try {
 
-    onSessionChange((user) => {
+    onSessionChange(async (user, charData) => {
+      if (user) {
+        hidePortal();
+        // Mostrar o botão "Meu Perfil" no menu de navegação
+        const tabProfileBtn = document.getElementById('tab-profile');
+        if (tabProfileBtn) tabProfileBtn.style.display = 'block';
 
-      if (user) hidePortal();
+        if (charData) {
+          const char = charData.character || {};
+          const player = charData.player || {};
+          const name = player.name || char.name || 'Aventureiro';
+          
+          // SEPARAR FOTOS: player.avatar para o perfil do jogador, char.avatar para o personagem
+          const playerAvatarUrl = player.avatar || char.avatar || 'Photos/demihuman.webp';
+          const charAvatarUrl = char.avatar || 'Photos/demihuman.webp';
 
-      else showPortal();
+          // Atualizar o avatar pequeno no canto superior esquerdo (com a foto do PLAYER)
+          const headerAvatar = document.getElementById('header-user-avatar');
+          if (headerAvatar) headerAvatar.src = playerAvatarUrl;
 
+          // Atualizar os campos visíveis no menu do perfil (com a foto do PLAYER)
+          const profileAvatar = document.getElementById('profile-user-avatar');
+          if (profileAvatar) profileAvatar.src = playerAvatarUrl;
+
+          const profileName = document.getElementById('profile-user-name');
+          if (profileName) profileName.textContent = name;
+
+          const profileAge = document.getElementById('profile-user-age');
+          if (profileAge) profileAge.textContent = player.age || char.age || '—';
+
+          const profileAvail = document.getElementById('profile-user-avail');
+          if (profileAvail) {
+            const availList = player.availability || [];
+            profileAvail.textContent = availList.length > 0 ? availList.join(', ') : '—';
+          }
+
+          // Preencher a lista "Meus Personagens" (usando a foto do PERSONAGEM)
+          const myCharsContainer = document.getElementById('profile-my-characters');
+          if (myCharsContainer) {
+            // Guardamos localmente para que o clique para abrir a ficha funcione
+            ALL_CHARACTERS[user.uid] = charData;
+            
+            myCharsContainer.innerHTML = `
+              <div class="character-card" onclick="openCharacterSheet('${user.uid}')" style="margin: 0 auto; max-width: 180px;">
+                <img src="${charAvatarUrl}" alt="${char.name || 'Personagem'}" id="profile-char-card-img">
+                <div class="char-card-name" id="profile-char-card-name">${char.name || 'Sem Nome'}</div>
+              </div>
+            `;
+          }
+
+          // ADMINISTRADOR OU SUB-ADMINISTRADOR: Aba Fichas Pendentes
+          const tabPendingBtn = document.getElementById('tab-pending');
+          if (charData.isAdmin || charData.isSubAdmin) {
+            if (tabPendingBtn) tabPendingBtn.style.display = 'block';
+            // Carregar fichas pendentes e verificar alertas
+            await loadPendingTab();
+          } else {
+            if (tabPendingBtn) tabPendingBtn.style.display = 'none';
+          }
+        }
+      } else {
+        showPortal();
+        // Ocultar abas restritas
+        const tabProfileBtn = document.getElementById('tab-profile');
+        if (tabProfileBtn) tabProfileBtn.style.display = 'none';
+        
+        const tabPendingBtn = document.getElementById('tab-pending');
+        if (tabPendingBtn) tabPendingBtn.style.display = 'none';
+
+        // Redirecionar se estiver em abas do jogador logado
+        const activeTab = document.querySelector('.nav-tab.active');
+        if (activeTab && (activeTab.id === 'tab-profile' || activeTab.id === 'tab-pending')) {
+          showTab('history');
+        }
+
+        // Resetar imagem do header para o padrão
+        const headerAvatar = document.getElementById('header-user-avatar');
+        if (headerAvatar) headerAvatar.src = 'Photos/demihuman.webp';
+      }
     });
 
   } catch (e) {
@@ -1025,87 +1128,114 @@ async function loadCharactersTab() {
 
 
 function openCharacterSheet(uid) {
-
   const data = ALL_CHARACTERS[uid];
-
   if (!data) return;
 
   const char = data.character || {};
-
   const racialHtml = (char.abilities?.racial || []).map(r => `<li style="margin-bottom:0.5rem;"><strong>${r.name}:</strong> ${r.desc}</li>`).join('');
-
   const uniqueHtml = char.uniqueAbility?.title ? `<strong>${char.uniqueAbility.title}</strong><br>${char.uniqueAbility.description}` : 'Nenhuma';
-
   const classHtml = (char.classes || []).join(', ') || 'Nenhuma';
-
   const spellHtml = (char.spells || []).join(', ') || 'Nenhuma';
 
+  // Verificar se o usuário atual é admin/sub-admin e se a ficha está pendente
+  const currentUser = _auth ? _auth.currentUser : null;
+  const currentUserData = currentUser ? ALL_CHARACTERS[currentUser.uid] : null;
+  const isStaff = currentUserData && (currentUserData.isAdmin || currentUserData.isSubAdmin);
+  const isPending = data.status === 'pending';
 
+  // Se for mestre revisando, Linhagem vira um campo editável
+  let lineageHtml = '';
+  if (isStaff && isPending) {
+    const defaultVal = char.lineage && char.lineage.includes('a ser definido') ? '' : char.lineage || '';
+    lineageHtml = `<input type="text" id="review-lineage" value="${defaultVal}" placeholder="Defina a Linhagem (Ex: Linhagem Imperial)" style="width:100%; max-width:280px; padding:0.4rem; font-family:sans-serif; border:1px solid var(--wood-plank); border-radius:4px; background:var(--parchment); color:var(--ink); box-shadow:inset 0 1px 3px rgba(0,0,0,0.2);">`;
+  } else {
+    lineageHtml = char.lineage || '—';
+  }
 
-  const html = `<h2 style="font-family:'Cinzel',serif; text-align:center; color:var(--ink); margin-bottom:1.5rem; border-bottom:1px solid var(--wood-plank); padding-bottom:0.5rem;">${char.name}</h2>
-
+  let html = `<h2 style="font-family:'Cinzel',serif; text-align:center; color:var(--ink); margin-bottom:1.5rem; border-bottom:1px solid var(--wood-plank); padding-bottom:0.5rem;">${char.name}</h2>
     <div style="display:flex; gap:1.5rem; margin-bottom:1.5rem; flex-wrap:wrap; justify-content:center;">
-
       <img src="${char.avatar || 'Photos/demihuman.webp'}" style="width:180px; height:180px; object-fit:cover; border-radius:8px; border:2px solid var(--wood-plank); box-shadow:0 4px 6px rgba(0,0,0,0.3);">
-
       <div style="flex:1; min-width:200px; display:flex; flex-direction:column; justify-content:center;">
-
         <p style="margin-bottom:0.5rem;"><strong>Raça:</strong> ${char.race || 'N/A'}</p>
-
         <p style="margin-bottom:0.5rem;"><strong>Idade:</strong> ${char.age || 'N/A'} anos</p>
-
         <p style="margin-bottom:0.5rem;"><strong>Gênero:</strong> ${char.gender || 'N/A'}</p>
-
-        <p style="margin-bottom:0.5rem;"><strong>Linhagem:</strong> ${char.lineage || '—'}</p>
-
+        <p style="margin-bottom:0.5rem; display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;"><strong>Linhagem:</strong> ${lineageHtml}</p>
       </div>
-
     </div>
-
     <div style="margin-bottom:1.5rem;">
-
       <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-bottom:0.5rem;">Habilidades Raciais</h3>
-
       <ul style="padding-left:1.2rem;">${racialHtml || 'Nenhuma'}</ul>
-
     </div>
-
     <div style="margin-bottom:1.5rem;">
-
       <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-bottom:0.5rem;">Habilidade Única</h3>
-
       <p>${uniqueHtml}</p>
+  `;
 
+  // Se for mestre revisando, adicionamos a área de texto de Buffs e Nerfs
+  if (isStaff && isPending) {
+    const currentBuffs = (char.uniqueAbility?.buffs || []).join('\n');
+    const currentNerfs = (char.uniqueAbility?.nerfs || []).join('\n');
+    html += `
+      <div style="margin-top:1rem; padding:1.2rem; border:1px dashed var(--red-wax); border-radius:8px; background:rgba(139,0,0,0.05);">
+        <h4 style="margin-top:0; font-family:'Cinzel',serif; color:var(--red-wax); border-bottom:1px dashed var(--wood-plank); padding-bottom:0.3rem;">🛡️ Moderação do Mestre: Buffs e Nerfs</h4>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; flex-wrap:wrap;">
+          <div>
+            <label style="display:block; font-weight:bold; color:var(--green-moss); font-size:0.85rem; margin-bottom:0.3rem;">🟢 Buffs (um por linha):</label>
+            <textarea id="review-buffs" style="width:100%; height:90px; padding:0.4rem; font-family:sans-serif; border:1px solid var(--wood-plank); border-radius:4px; background:var(--parchment); color:var(--ink); box-shadow:inset 0 1px 3px rgba(0,0,0,0.2);" placeholder="Ex: +10% dano de fogo">${currentBuffs}</textarea>
+          </div>
+          <div>
+            <label style="display:block; font-weight:bold; color:var(--red-wax); font-size:0.85rem; margin-bottom:0.3rem;">🔴 Nerfs (um por linha):</label>
+            <textarea id="review-nerfs" style="width:100%; height:90px; padding:0.4rem; font-family:sans-serif; border:1px solid var(--wood-plank); border-radius:4px; background:var(--parchment); color:var(--ink); box-shadow:inset 0 1px 3px rgba(0,0,0,0.2);" placeholder="Ex: Custo de mana duplicado">${currentNerfs}</textarea>
+          </div>
+        </div>
+      </div>
+    `;
+  } else {
+    // Exibição pública normal dos Buffs e Nerfs
+    const buffsHtml = (char.uniqueAbility?.buffs || []).map(b => `<li style="color:var(--green-moss); font-weight:500; margin-bottom:0.3rem;">🟢 ${b}</li>`).join('') || '<li style="font-style:italic; color:#777;">Nenhum</li>';
+    const nerfsHtml = (char.uniqueAbility?.nerfs || []).map(n => `<li style="color:var(--red-wax); font-weight:500; margin-bottom:0.3rem;">🔴 ${n}</li>`).join('') || '<li style="font-style:italic; color:#777;">Nenhum</li>';
+    html += `
+      <div style="margin-top:1rem; display:grid; grid-template-columns:1fr 1fr; gap:1.2rem;">
+        <div>
+          <h4 style="margin:0 0 0.4rem; font-size:0.9rem; color:var(--green-moss); font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank);">Bônus (Buffs):</h4>
+          <ul style="list-style:none; padding-left:0; margin:0;">${buffsHtml}</ul>
+        </div>
+        <div>
+          <h4 style="margin:0 0 0.4rem; font-size:0.9rem; color:var(--red-wax); font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank);">Penalidades (Nerfs):</h4>
+          <ul style="list-style:none; padding-left:0; margin:0;">${nerfsHtml}</ul>
+        </div>
+      </div>
+    `;
+  }
+
+  html += `
     </div>
-
     <div style="margin-bottom:1.5rem;">
-
       <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-bottom:0.5rem;">Classes</h3>
-
       <p>${classHtml}</p>
-
     </div>
-
     <div style="margin-bottom:1.5rem;">
-
       <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-bottom:0.5rem;">Magias (3 Principais)</h3>
-
       <p>${spellHtml}</p>
-
     </div>
-
     <div style="margin-bottom:1.5rem;">
-
       <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-bottom:0.5rem;">História</h3>
-
-      <p style="white-space:pre-wrap; line-height:1.6;">${char.story || 'História não informada pelo administrador.'}</p>
-
+      <p style="white-space:pre-wrap; line-height:1.6; font-size:0.95rem;">${char.story || 'História não informada.'}</p>
     </div>`;
 
-  document.getElementById('char-sheet-body').innerHTML = html;
+  let approveButtonHtml = '';
+  if (isStaff && isPending) {
+    approveButtonHtml = `
+      <div style="margin-top:2rem; text-align:center; padding-top:1.5rem; border-top:1px solid var(--wood-plank);">
+        <button onclick="approveCharacterSheet('${uid}')" class="form-submit-btn" style="background:var(--red-wax); color:#fff; border-color:var(--red-wax); width:auto; padding:0.8rem 2.5rem; font-family:'Cinzel',serif; font-size:1.15rem; box-shadow:0 4px 10px rgba(0,0,0,0.4); cursor:pointer; letter-spacing:0.05em; transition:all 0.2s;">
+          🛡️ Aprovar Ficha e Aplicar Modificações
+        </button>
+      </div>
+    `;
+  }
 
+  document.getElementById('char-sheet-body').innerHTML = html + approveButtonHtml;
   document.getElementById('char-sheet-modal').style.display = 'flex';
-
 }
 
 
@@ -1116,3 +1246,201 @@ function closeCharacterSheet() {
 
 }
 
+
+async function loadNpcsTab() {
+  const container = document.getElementById('npcs-grid');
+  if(!container) return;
+  container.innerHTML = '<div class="auth-loading active" style="margin:2rem auto;"><div class="auth-spinner"></div></div>';
+  try {
+    ALL_CHARACTERS = await getAllCharacters();
+    let html = '';
+    const keys = Object.keys(ALL_CHARACTERS);
+    let npcCount = 0;
+    keys.forEach(uid => {
+      const doc = ALL_CHARACTERS[uid];
+      if (doc.type !== 'NPC') return;
+      npcCount++;
+      const char = doc.character || {};
+      const name = char.name || 'Desconhecido';
+      const avatar = char.avatar || 'Photos/demihuman.webp';
+      html += `<div class="character-card" onclick="openCharacterSheet('${uid}')">
+        <img src="${avatar}" alt="${name}">
+        <div class="char-card-name">${name}</div>
+      </div>`;
+    });
+    if (npcCount === 0) {
+      container.innerHTML = '<p style="text-align:center; color:var(--wood-plank); font-style:italic;">Nenhum NPC registrado ainda.</p>';
+      return;
+    }
+    container.innerHTML = html;
+  } catch (err) {
+    console.warn(err);
+    container.innerHTML = '<p style="text-align:center; color:var(--red-wax);">Erro ao carregar NPCs.</p>';
+  }
+}
+
+function goToProfileTab() {
+  if (_auth && _auth.currentUser) {
+    showTab('profile');
+  } else {
+    showToast('🗝️ Faça login para ver seu perfil!', 'error');
+  }
+}
+
+function triggerAvatarUpdate() {
+  const input = document.getElementById('profile-avatar-input');
+  if (input) input.click();
+}
+
+async function updateProfileAvatar(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const user = _auth.currentUser;
+  if (!user) {
+    showToast('⚠️ Você precisa estar logado para editar.', 'error');
+    return;
+  }
+
+  showToast('🔮 Processando imagem...', 'info');
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = async function() {
+      // Redimensionar para no máximo 400x400
+      const canvas = document.createElement('canvas');
+      const MAX_SIZE = 400;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height) {
+        if (width > MAX_SIZE) {
+          height *= MAX_SIZE / width;
+          width = MAX_SIZE;
+        }
+      } else {
+        if (height > MAX_SIZE) {
+          width *= MAX_SIZE / height;
+          height = MAX_SIZE;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+
+      try {
+        // Atualizar no Firestore (salvando separadamente no perfil do player)
+        await _db.collection('characters').doc(user.uid).update({
+          'player.avatar': dataUrl
+        });
+
+        // Atualizar elementos da UI do jogador imediatamente
+        const profileAvatar = document.getElementById('profile-user-avatar');
+        if (profileAvatar) profileAvatar.src = dataUrl;
+
+        const headerAvatar = document.getElementById('header-user-avatar');
+        if (headerAvatar) headerAvatar.src = dataUrl;
+
+        // Atualizar cache local ALL_CHARACTERS
+        if (ALL_CHARACTERS && ALL_CHARACTERS[user.uid]) {
+          if (!ALL_CHARACTERS[user.uid].player) ALL_CHARACTERS[user.uid].player = {};
+          ALL_CHARACTERS[user.uid].player.avatar = dataUrl;
+        }
+
+        showToast('✅ Foto de perfil do jogador atualizada!', 'success');
+      } catch (err) {
+        console.error('Erro ao atualizar avatar:', err);
+        showToast('❌ Falha ao salvar imagem no servidor.', 'error');
+      }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function loadPendingTab() {
+  const container = document.getElementById('pending-characters-grid');
+  if (!container) return;
+  container.innerHTML = '<div class="auth-loading active" style="margin:2rem auto;"><div class="auth-spinner"></div></div>';
+
+  try {
+    ALL_CHARACTERS = await getAllCharacters();
+    const keys = Object.keys(ALL_CHARACTERS);
+    
+    // Filtrar fichas com status 'pending'
+    const pendingChars = keys.filter(uid => ALL_CHARACTERS[uid].status === 'pending');
+    
+    // Atualizar ponto de exclamação vermelho crescendo/diminuindo
+    const alertDot = document.getElementById('pending-alert-dot');
+    if (alertDot) {
+      if (pendingChars.length > 0) {
+        alertDot.style.display = 'inline-block';
+      } else {
+        alertDot.style.display = 'none';
+      }
+    }
+
+    if (pendingChars.length === 0) {
+      container.innerHTML = '<p style="text-align:center; color:var(--wood-plank); font-style:italic;">Não há nenhuma ficha pendente de avaliação no momento.</p>';
+      return;
+    }
+
+    let html = '';
+    pendingChars.forEach(uid => {
+      const char = ALL_CHARACTERS[uid].character || {};
+      const name = char.name || 'Sem Nome';
+      const avatar = char.avatar || 'Photos/demihuman.webp';
+
+      html += `
+        <div class="character-card" onclick="openCharacterSheet('${uid}')" style="position:relative;">
+          <span style="position:absolute; top:8px; right:8px; background:var(--red-wax); color:#fff; font-family:'Cinzel',serif; font-size:0.65rem; padding:2px 8px; border-radius:2px; letter-spacing:0.1em; z-index:2;">PENDENTE</span>
+          <img src="${avatar}" alt="${name}">
+          <div class="char-card-name">${name}</div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  } catch (err) {
+    console.error('Erro ao carregar fichas pendentes:', err);
+    container.innerHTML = '<p style="text-align:center; color:var(--red-wax);">Erro ao carregar fichas pendentes.</p>';
+  }
+}
+
+async function approveCharacterSheet(uid) {
+  if (!confirm('Deseja realmente aprovar esta ficha de personagem e integrá-la à guilda?')) return;
+
+  const lineageInput = document.getElementById('review-lineage');
+  const lineage = lineageInput ? lineageInput.value.trim() : '—';
+  
+  const buffsText = document.getElementById('review-buffs') ? document.getElementById('review-buffs').value : '';
+  const nerfsText = document.getElementById('review-nerfs') ? document.getElementById('review-nerfs').value : '';
+
+  const buffs = buffsText.split('\n').map(b => b.trim()).filter(b => b !== '');
+  const nerfs = nerfsText.split('\n').map(n => n.trim()).filter(n => n !== '');
+
+  try {
+    showToast('⚡ Aprovando ficha...', 'info');
+    await _db.collection('characters').doc(uid).update({
+      status: 'approved',
+      'character.lineage': lineage || '— (a ser definido pelo administrador)',
+      'character.uniqueAbility.buffs': buffs,
+      'character.uniqueAbility.nerfs': nerfs
+    });
+
+    showToast('✅ Ficha aprovada com sucesso!', 'success');
+    closeCharacterSheet();
+
+    // Recarregar os dados das abas
+    if (typeof loadCharactersTab === 'function') await loadCharactersTab();
+    if (typeof loadPendingTab === 'function') await loadPendingTab();
+  } catch (err) {
+    console.error('Erro ao aprovar ficha:', err);
+    showToast('❌ Falha ao aprovar ficha.', 'error');
+  }
+}
