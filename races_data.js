@@ -3,7 +3,7 @@ const RACES_DATA = [
     emoji: "🙋",
     name: "Humano",
     creator: "Dante e Venom",
-    image: "Photos/Human.jpg",
+    image: "kensword_database/kensword_photos/Human.jpg",
     appearance: "Aparência comum de humanos. Costumam viver 300 anos.",
     description: "Humanos são simples, mas são notados pela grande inteligência, que diferente das outras raças, não precisa evoluir para se tornar inteligente. O humano mais sábio que existiu foi o primeiro rei de Hogoku, Solomon. É dito que na era dele não houve guerras.",
     abilities: [
@@ -23,7 +23,7 @@ const RACES_DATA = [
     subraces: [
       {
         name: "Alto Elfo",
-        image: "Photos/Elf.jpg",
+        image: "kensword_database/kensword_photos/Elf.jpg",
         appearance: "Pele clara, corpo esbelto, orelhas pontudas e Cabelos/Olhos normalmente claros, costumam viver 1.000 anos.",
         desc: "Os elfos mais comuns, esnobes e famosos pelos cabelos loiros e pele clara (em sua maioria, mas existem ruivos e outras cores). Uma sociedade sofisticada e orgulhosa, com forte relação com a natureza — florestas altas são seu habitat.",
         abilityName: "Olho por Olho",
@@ -31,7 +31,7 @@ const RACES_DATA = [
       },
       {
         name: "Drow (Elfo Negro)",
-        image: "Photos/Dark_Elf.jpg",
+        image: "kensword_database/kensword_photos/Dark_Elf.jpg",
         appearance: "Pele escura, corpo esbelto, orelhas pontudas e Cabelos/Olhos normalmente escuros, costumam viver 1.200 anos.",
         desc: "Drows são elfos que nasceram com uma anomalia genética, sendo rejeitados pela população élfica. São conhecidos por controlarem o elemento Sombra.",
         abilityName: "Poder Umbral",
@@ -43,7 +43,7 @@ const RACES_DATA = [
     emoji: "🐱",
     name: "Demi-Humano",
     creator: "Dante",
-    image: "Photos/demihuman.webp",
+    image: "kensword_database/kensword_photos/demihuman.webp",
     appearance: "Aparência varia do animal que descende, podendo ser desde cauda e orelhas a até mesmo pelos ou escamas no corpo caso seja um Demi-humano Bestial. Costumam viver 400 anos.",
     description: "São todo tipo de híbridos de humano com animal ou até monstro. Não são tão inteligentes quanto os humanos e suas características variam muito de espécie para espécie, mas são capazes de ser ótimos amigos.",
     abilities: [
@@ -56,7 +56,7 @@ const RACES_DATA = [
     emoji: "🗿",
     name: "Gigante",
     creator: "Dante",
-    image: "Photos/Giant.jpg",
+    image: "kensword_database/kensword_photos/Giant.jpg",
     appearance: "Aparência normalmente humana e musculosa, tamanho tende a ser 8 a 10 Metros. Costumam viver 700 anos.",
     description: "Portando uma força descomunal, gigantes são seres enormes que medem de 8 a 10 metros em sua fase jovem. Mesmo sendo menos inteligentes que os humanos, são extremamente espertos em combate.",
     abilities: [
@@ -68,7 +68,7 @@ const RACES_DATA = [
     emoji: "⛏️",
     name: "Anão",
     creator: "Venom",
-    image: "Photos/Dwarf.jpg",
+    image: "kensword_database/kensword_photos/Dwarf.jpg",
     appearance: "Aparência normalmente humana, tende a ter entre 1,20 a 1,50 metros. Costumam viver 600 anos.",
     description: "Uma variação dos humanos que mede de 1,20 até 1,50 metro na fase adulta. Mais fraco em magia, mas portador da habilidade da lendária forja. Desenvolvida com muito treinamento, são capazes de criar armas durante o combate e forjar as melhores armaduras.",
     abilities: [
@@ -93,7 +93,7 @@ const RACES_DATA = [
     emoji: "♦️",
     name: "Demônio",
     creator: "Venom",
-    image: "Photos/Demon.png",
+    image: "kensword_database/kensword_photos/Demon.png",
     appearance: "Aparência normalmente ligada ao profano. Costumam viver 1.000 anos, aumenta conforme devora almas e pode acabar ficando imortal ao evoluir.",
     description: "Naturais do Império de Umbra, são criaturas variadas em aparência — podem ter muitas formas, geralmente associadas ao profano — conhecidas pela força física e mágica extremamente alta. Feitos para dominar, destroem seus inimigos com facilidade.",
     abilities: [
@@ -108,7 +108,7 @@ const RACES_DATA = [
       },
       {
         name: "Succubus / Incubus",
-        image: "Photos/Succubus.jpg",
+        image: "kensword_database/kensword_photos/Succubus.jpg",
         appearance: "Aparência bela e atraente, ainda que ligada ao profano. Costumam viver 800 anos, aumenta conforme drena a energia de outros seres.",
         desc: "Com aparências mais belas e atraentes, ainda ligadas ao profano. Diferente de outros demônios, têm uma tendência maior ao amor pela vida, já que se alimentam dele. Seus comportamentos variam muito: alguns drenam vitalidade de qualquer presa, outros se apegam a um parceiro para a vida toda.",
         abilityName: "Encargo de Luxúria",
@@ -120,7 +120,7 @@ const RACES_DATA = [
     emoji: "🪽",
     name: "Valquíria",
     creator: "Dante",
-    image: "Photos/Angel.jpg",
+    image: "kensword_database/kensword_photos/Angel.jpg",
     appearance: "Aparência normalmente ligada ao sagrado. Costuma viver uma vida eterna.",
     description: "Valquírias são seres sagrados — mulheres e homens alados — que possuem os gloriosos elementos Luz e Sagrado. Esses guerreiros alados são leais à deusa Hikarium e fazem o que ela mandar sem questionar, tendo-a como fonte de inspiração e amor. Sua aparência é variada, sempre ligada ao sagrado.",
     abilities: [
@@ -132,7 +132,7 @@ const RACES_DATA = [
     emoji: "🧚",
     name: "Fada",
     creator: "JP",
-    image: "Photos/Fairy.jpg",
+    image: "kensword_database/kensword_photos/Fairy.jpg",
     appearance: "Asas translúcidas, tende a ter entre 30 a 50 centímetros. Costuma viver 500 anos.",
     description: "Espíritos da floresta comandados por suas superiores, as Dríades. São seres benéficos que cuidam das plantas, medindo até no máximo 30 centímetros.",
     abilities: [
@@ -144,7 +144,7 @@ const RACES_DATA = [
     emoji: "😈",
     name: "Pixie",
     creator: "Dante e JP",
-    image: "Photos/Pixie.webp",
+    image: "kensword_database/kensword_photos/Pixie.webp",
     appearance: "Não possui asas normalmente, tende a ter até 1 metro e aparência comumente ligada ao profano. Costuma viver 500 anos.",
     description: "São fadas que normalmente aparecem em lugares escuros. Gostam de aprontar e causar alvoroço, sendo muito travessas e possuindo o elemento Trevas. Pixies podem medir até 1 metro de altura.",
     abilities: [
@@ -156,7 +156,7 @@ const RACES_DATA = [
     emoji: "🐾",
     name: "Metamorfo",
     creator: "Dante e Takashi",
-    image: "Photos/Metamorf.jpg",
+    image: "kensword_database/kensword_photos/Metamorf.jpg",
     appearance: "Aparência varia da transformação atual e original, mantendo sutis traços animais.",
     description: "Raça rara e fascinante, conhecida por sua capacidade natural de assumir formas animais. Não copiam criaturas — despertam formas adormecidas em seu próprio sangue. Todo Metamorfo manifesta, ainda jovem, o seu Primeiro Despertar. Sua aparência original carrega traços sutis dessa criatura: olhos diferenciados, presas discretas, postura predatória ou marcas incomuns na pele. Sua transformação é completa e orgânica: ossos, músculos e sentidos se ajustam perfeitamente à nova forma. Por sua versatilidade e poder, são muito cobiçados, mas extremamente difíceis de capturar.",
     abilities: [
@@ -194,7 +194,7 @@ const RACES_DATA = [
     subraces: [
       {
         name: "🐲 Dragonato",
-        image: "Photos/Draconato.jpg",
+        image: "kensword_database/kensword_photos/Draconato.jpg",
         appearance: "Aparência bestial, pode ter até 4 metros e com detalhes do dragão que descende. Costuma viver 800 anos.",
         desc: "Os Draconianos mais próximos de seus ancestrais dragões. Corpos maiores, mais robustos e cobertos por escamas mais grossas. Possuem chifres, cauda desenvolvida e traços faciais mais bestiais. Muitos vivem em Rakuyo, em tribos guerreiras com tradições ligadas aos dragões. (Criador: Dante e Takashi)",
         abilityName: "Sopro Dracônico + Bônus Passivo",
@@ -202,7 +202,7 @@ const RACES_DATA = [
       },
       {
         name: "🐲 Dragonete",
-        image: "Photos/Dragonewt.jpg",
+        image: "kensword_database/kensword_photos/Dragonewt.jpg",
         appearance: "Aparência humana com detalhes dracônicos como asas, chifres ou caudas. Costuma viver 800 anos.",
         desc: "A evolução mais refinada dos Draconianos. Corpos mais próximos dos humanos, com escamas discretas e traços dracônicos sutis. Associados a magia, inteligência estratégica e controle refinado de energia elemental. Integram-se facilmente em sociedades humanoides. (Criador: Takashi e JP)",
         abilityName: "Fluxo Dracônico",
@@ -221,7 +221,7 @@ const RACES_DATA = [
     subraces: [
       {
         name: "🧛 Vampiro Real",
-        image: "Photos/Vampire.jpg",
+        image: "kensword_database/kensword_photos/Vampire.jpg",
         appearance: "Aparência pálida, pele fria, corpo belo e esbelto. Costumam viver uma vida eterna.",
         desc: "Nascidos de puro sangue ou da infecção de um virgem. São mais intelectuais e formidáveis, atuando disfarçados na sociedade como barões ou senhores de terra. Têm desprezo por praticamente tudo, inclusive por outros vampiros.",
         abilityName: "Benefício do Sangue",
@@ -229,7 +229,7 @@ const RACES_DATA = [
       },
       {
         name: "🧟 Vampiro Impuro (Serviçal)",
-        image: "Photos/Impure_Vampire.jpg",
+        image: "kensword_database/kensword_photos/Impure_Vampire.jpg",
         appearance: "Aparência pálida ou acinzentada, corpo não tão atraente. Costumam viver uma vida eterna.",
         desc: "Nascidos de corpos não virgens ou maculados. Aparência menos esbelta que os Reais. Comportamento mais próximo ao animal — violentos, mas astutos. Podem ascender para Vampiro Real se receberem sangue de seu Lorde.",
         abilityName: "Junção a Nosferatu",
@@ -237,7 +237,7 @@ const RACES_DATA = [
       },
       {
         name: "💀 Ghoul da Noite",
-        image: "Photos/Ghoul.jpg",
+        image: "kensword_database/kensword_photos/Ghoul.jpg",
         appearance: "Aparência grotesca, Corpo zumbificado. Costumam viver uma vida eterna.",
         desc: "Cadáveres putrefatos ou pessoas extremamente flageladas que receberam a contaminação vampírica. Corpos reanimados e desengonçados que liberam um ar de morte e podridão. Quase totalmente desprovidos de inteligência, pensam como animais — em uma agonia eterna que a mente esqueceu de sentir.",
         abilityName: "Soldado da Morte",
@@ -250,7 +250,7 @@ const RACES_DATA = [
     name: "Kobold",
     creator: "Dante",
     isMonster: true,
-    image: "Photos/Kobold.webp",
+    image: "kensword_database/kensword_photos/Kobold.webp",
     appearance: "Aparência Bestial Lupina, Canina ou Felina, tamanho comum entre 70 cm a 1,50 metros. Costumam viver 80 anos mas aumenta ao evoluir.",
     description: "Os arqui-inimigos dos goblins, são seres semelhantes a canídeos e felinos bípedes, podendo chegar até dois metros de altura. Há relatos de que evoluem para uma forma de vida superior, onde seu tempo de vida máximo se estende exponencialmente.",
     abilities: [
@@ -263,7 +263,7 @@ const RACES_DATA = [
     name: "Drakobold",
     creator: "Dante",
     isMonster: true,
-    image: "Photos/Drakobold.jpg",
+    image: "kensword_database/kensword_photos/Drakobold.jpg",
     appearance: "Aparência Bestial dracônica e reptiliana, tamanho comum entre 80 a 1,60 metros. Costumam viver 100 anos mas aumenta ao evoluir.",
     description: "Segundo os Kobolds, são seus primos rabugentos. O rank mais baixo dos dragões, misturando essência de Kobold com linhagem dracônica. Tornam-se adultos aos dez anos e são guerreiros natos que habitam cavernas. É dito que podem evoluir para níveis superiores.",
     abilities: [
@@ -276,7 +276,7 @@ const RACES_DATA = [
     name: "Kouris",
     creator: "Dante",
     isMonster: true,
-    image: "Photos/Kouris.jpg",
+    image: "kensword_database/kensword_photos/Kouris.jpg",
     appearance: "Aparência de planta monstruosa parasita ou bestial. Costuma viver 20 anos mas aumenta ao evoluir.",
     description: "Pequenas plantas diabretes, pragas com formas variadas. Diz-se que foram criados pelos elfos para atormentar os humanos. Possuem várias variações — as mais famosas são os parasitas e os animalescos. Dieta carnívora, aparência variada e costumam ser diurnos.",
     abilities: [
@@ -289,7 +289,7 @@ const RACES_DATA = [
     name: "Floraune",
     creator: "Dante",
     isMonster: true,
-    image: "Photos/Floraune.jpeg",
+    image: "kensword_database/kensword_photos/Floraune.jpeg",
     appearance: "Aparência esbelta humanoide com detalhes de planta. cabelo tem cor da planta que descende. Costuma viver 80 anos mas pode aumentar ao evoluir.",
     description: "Mulheres-plantas originadas da Mãe Quinella. São muito belas, mas podem carregar grande brutalidade.",
     abilities: [
@@ -302,7 +302,7 @@ const RACES_DATA = [
     emoji: "👻",
     name: "Espírito",
     creator: "JP",
-    image: "Photos/Spirit.webp",
+    image: "kensword_database/kensword_photos/Spirit.webp",
     appearance: "Forma espiritual variada, desde espectros a corpos idênticos aos de suas vidas passadas.",
     description: "Espíritos possuem diversas formas: seres compostos por mana, almas viventes de eras passadas, de outros mundos, emoções negativas ou espíritos da natureza. Sua velocidade de crescimento depende de sua origem. Espíritos nascidos da alma de pessoas normalmente têm um corpo semelhante à idade que tinham em vida.",
     abilities: [
@@ -315,7 +315,7 @@ const RACES_DATA = [
     name: "Abissal",
     creator: "Dante",
     isMonster: true,
-    image: "Photos/Abyssal.jpeg",
+    image: "kensword_database/kensword_photos/Abyssal.jpeg",
     appearance: "Aparência bestial monstruosa de criaturas das profundezas. Costumam viver 500 anos.",
     description: "Seres abissais, primitivos e raramente vistos na superfície. Apesar de viverem na escuridão, desenvolveram uma visão extremamente mortal que enxerga a longas distâncias e no escuro — inclusive na escuridão absoluta.",
     abilities: [
@@ -334,7 +334,7 @@ const RACES_DATA = [
     subraces: [
       {
         name: "🦊 Kitsune / 😼 Bakeneko / 🦝 Tanuki",
-        image: "Photos/Kitsune.jpg",
+        image: "kensword_database/kensword_photos/Kitsune.jpg",
         appearance: "Kitsune: Aparência bela e esbelta. Bakeneko: Aparência betial felina e traiçoeira. Tanuki: Aparência bestial de guaxinim. Ambas costumam viver uma vida eterna.",
         desc: "Kitsune: raposas de 9 caudas, inteligentes e caóticas, raramente confiáveis mas muito variadas. Bakeneko: semelhantes às Kitsunes, porém gatos — acham que são donos do mundo. Tanuki: o mais fofo e tranquilo dos três, menos maldoso que uma Kitsune e menos convencido que um Bakeneko.",
         abilityName: "Transformismo",
@@ -342,7 +342,7 @@ const RACES_DATA = [
       },
       {
         name: "👺 Tengu",
-        image: "Photos/Tengu.jpg",
+        image: "kensword_database/kensword_photos/Tengu.jpg",
         appearance: "Aparência de pele escura ou avermelhada, com asas negras e normalmente cabelos brancos. Costumam viver uma vida eterna.",
         desc: "Demônios-pássaro de nariz longo, guardiões de montanhas e florestas. Territoriais e às vezes vivem em bandos. Dizem que pessoas orgulhosas viram Tengus ao morrer. Podem pregar peças nos outros.",
         abilityName: "Guardião das Montanhas",
@@ -350,7 +350,7 @@ const RACES_DATA = [
       },
       {
         name: "🐢 Kappa",
-        image: "Photos/Kappa.webp",
+        image: "kensword_database/kensword_photos/Kappa.webp",
         appearance: "Aparência calva e horrenda de ser do rio com casco.",
         desc: "Crianças do rio: criaturas calvas e horrendas que vivem em grupos. Odeiam sair da água para caçar. Buscam sangue e entranhas de suas vítimas — fontes dizem que gostam do fígado humano. Curiosamente, têm lendas de ter ensinado os humanos a realizar amputações. Preferem pepinos e adoram sumô.",
         abilityName: "Kappa Maki",
@@ -358,7 +358,7 @@ const RACES_DATA = [
       },
       {
         name: "👹 Oni",
-        image: "Photos/Oni.jpg",
+        image: "kensword_database/kensword_photos/Oni.jpg",
         appearance: "Aparência de pele que varia entre clara, escura, vermelha e azul normalmente, com chifres. Costumam viver uma vida eterna.",
         desc: "Representam tanto o Mal quanto a proteção e a punição divina. Complexos: alguns são mais humanos, outros mais bestiais. Normalmente vindos do pós-vida para buscar humanos para o inferno.",
         abilityName: "Primo de 3º Grau do Capeta",
