@@ -464,13 +464,7 @@ function openCharacterSheet(uid) {
   editButtonHtml += '</div>';
   if (!hasActions) editButtonHtml = '';
 
-  let lineageHtml = '';
-  if (isStaff && isPending) {
-    const defaultVal = char.lineage && char.lineage.includes('a ser definido') ? '' : char.lineage || '';
-    lineageHtml = `<input type="text" id="review-lineage" value="${defaultVal}" placeholder="Defina a Linhagem (Ex: Linhagem Imperial)" style="width:100%; max-width:280px; padding:0.4rem; font-family:sans-serif; border:1px solid var(--wood-plank); border-radius:4px; background:var(--parchment); color:var(--ink); box-shadow:inset 0 1px 3px rgba(0,0,0,0.2);">`;
-  } else {
-    lineageHtml = char.lineage || '—';
-  }
+  let lineageHtml = char.lineage || '—';
 
   const stats = window.calculateEffectiveStats ? window.calculateEffectiveStats(char) : null;
   let attrsHtml = '';
