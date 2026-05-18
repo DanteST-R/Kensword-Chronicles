@@ -666,6 +666,11 @@ function openCharacterSheet(uid) {
           <input type="text" id="review-lineage" value="${defaultLineageVal}" placeholder="Defina a Linhagem (Ex: Linhagem Imperial)" style="width:100%; padding:0.4rem; font-family:sans-serif; border:1px solid var(--wood-plank); border-radius:4px; background:var(--parchment); color:var(--ink); box-shadow:inset 0 1px 3px rgba(0,0,0,0.2);">
         </div>
 
+        <div style="margin-bottom:1rem;">
+          <label style="font-size:0.85rem; color:var(--ink); font-weight:bold; display:block; margin-bottom:0.3rem;">Descrição da Linhagem:</label>
+          <textarea id="review-lineage-desc" placeholder="Descreva os poderes e história da linhagem..." style="width:100%; height:70px; padding:0.4rem; font-family:sans-serif; border:1px solid var(--wood-plank); border-radius:4px; background:var(--parchment); color:var(--ink); box-shadow:inset 0 1px 3px rgba(0,0,0,0.2);">${linData.description || ''}</textarea>
+        </div>
+
         <!-- BUFFS TABLE (LINHAGEM) -->
         <div style="margin-bottom:1.2rem;">
           <label style="display:flex; align-items:center; gap:0.5rem; font-weight:bold; color:var(--green-moss); font-size:0.88rem; margin-bottom:0.4rem;">🟢 Buffs da Linhagem <span style="font-size:0.72rem;font-weight:normal;color:#888;">(máx. 50% por atributo)</span></label>
@@ -821,6 +826,7 @@ function openCharacterSheet(uid) {
     html += `
       <div style="margin-bottom:1.5rem; padding:1.2rem; border:1px solid var(--gold); border-radius:8px; background:rgba(212,175,55,0.03);">
         <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--gold); margin-top:0; margin-bottom:0.8rem; color:var(--gold); font-size:1rem;">👑 Linhagem: ${char.lineage || 'Nenhuma'}</h3>
+        ${linData.description ? `<p style="margin:0 0 0.8rem; font-size:0.88rem; line-height:1.5; color:var(--ink); font-style:italic;">${linData.description}</p>` : ''}
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.2rem;">
           <div>
             <h4 style="margin:0 0 0.4rem; font-size:0.85rem; color:var(--green-moss); font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank);">🟢 Buffs da Linhagem:</h4>
@@ -1156,6 +1162,11 @@ function openCharacterSheetInEditMode(uid) {
           <input type="text" id="edit-char-lineage" value="${char.lineage && char.lineage.includes('a ser definido') ? '' : char.lineage || ''}" placeholder="Nome da Linhagem..." style="width:100%; border:1px solid var(--wood-plank); border-radius:4px; padding:0.4rem; background:var(--parchment); color:var(--ink);">
         </div>
 
+        <div style="margin-bottom:1rem;">
+          <label style="font-size:0.85rem; color:var(--ink); font-weight:bold; display:block; margin-bottom:0.3rem;">Descrição da Linhagem:</label>
+          <textarea id="edit-lineage-desc" placeholder="Descreva os poderes e história da linhagem..." style="width:100%; height:70px; border:1px solid var(--wood-plank); border-radius:4px; padding:0.4rem; background:var(--parchment); color:var(--ink); font-family:sans-serif;">${linData.description || ''}</textarea>
+        </div>
+
         <!-- BUFFS TABLE (LINHAGEM) -->
         <div style="margin-bottom:1.2rem;">
           <label style="display:flex; align-items:center; gap:0.5rem; font-weight:bold; color:var(--green-moss); font-size:0.88rem; margin-bottom:0.4rem;">🟢 Buffs da Linhagem <span style="font-size:0.72rem;font-weight:normal;color:#888;">(máx. 50% por atributo)</span></label>
@@ -1452,6 +1463,7 @@ async function saveCharacterSheetEdits(uid) {
   let lineageWeakness = [];
   let lineageWeaknessDesc = '';
   let lineageExtraElement = '';
+  let lineageDescription = '';
 
   let uaBuffs = [];
   let uaWeakness = [];
@@ -1469,6 +1481,8 @@ async function saveCharacterSheetEdits(uid) {
     lineageWeaknessDesc = linWeakDescInp ? linWeakDescInp.value.trim() : '';
     const linElemSel = document.getElementById('edit-lineage-extra-element');
     lineageExtraElement = linElemSel ? linElemSel.value : '';
+    const linDescInp = document.getElementById('edit-lineage-desc');
+    lineageDescription = linDescInp ? linDescInp.value.trim() : '';
 
     // Coleta dados estruturados da Habilidade Única
     uaBuffs = typeof _collectBuffTableRows === 'function' ? _collectBuffTableRows('edit-ua-buffs-tbody') : [];
@@ -1550,7 +1564,8 @@ async function saveCharacterSheetEdits(uid) {
             buffs: lineageBuffs,
             weakness: lineageWeakness,
             weaknessDesc: lineageWeaknessDesc,
-            extraElement: lineageExtraElement
+            extraElement: lineageExtraElement,
+            description: lineageDescription
           },
           uaTitle: newUaTitle,
           uaDesc: newUaDesc,
@@ -1606,6 +1621,7 @@ async function saveCharacterSheetEdits(uid) {
         updateData['character.lineageData.weakness'] = lineageWeakness;
         updateData['character.lineageData.weaknessDesc'] = lineageWeaknessDesc;
         updateData['character.lineageData.extraElement'] = lineageExtraElement;
+        updateData['character.lineageData.description'] = lineageDescription;
 
         // Atualiza campos estruturados da Habilidade Única
         updateData['character.uniqueAbility.buffs'] = uaBuffs;

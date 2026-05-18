@@ -507,6 +507,8 @@ async function approveCharacterSheet(uid) {
 
   const linWeakDescInp = document.getElementById('review-lineage-weak-desc');
   const lineageWeaknessDesc = linWeakDescInp ? linWeakDescInp.value.trim() : '';
+  const linDescInp = document.getElementById('review-lineage-desc');
+  const lineageDescription = linDescInp ? linDescInp.value.trim() : '';
 
   // 2. Habilidade Única
   const uaBuffs = typeof _collectBuffTableRows === 'function'
@@ -594,6 +596,7 @@ async function approveCharacterSheet(uid) {
       'character.lineageData.weakness': lineageWeakness,
       'character.lineageData.weaknessDesc': lineageWeaknessDesc,
       'character.lineageData.extraElement': lineageExtraElement,
+      'character.lineageData.description': lineageDescription,
 
       // Habilidade Única Estruturada
       'character.uniqueAbility.buffs': uaBuffs,
