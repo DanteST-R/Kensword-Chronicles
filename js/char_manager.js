@@ -570,42 +570,194 @@ function openCharacterSheet(uid) {
   `;
 
   if (isStaff && isPending) {
-    const currentBuffs = (char.uniqueAbility?.buffs || []).join('\n');
-    const currentNerfs = (char.uniqueAbility?.nerfs || []).join('\n');
+    const ua = char.uniqueAbility || {};
+    const existingBuffs = ua.buffs || {};
+    const existingWeakness = ua.weakness || {};
+    const existingElement = ua.extraElement || '';
+    const isDanteAdmin = isDante;
+
+    // Helper: render a buff row (stat select + % input)
+    function buffRowHtml(rowId, stat, pct) {
+      const primaryOpts = ['Força','Resistência','Velocidade','Magia'];
+      const secondaryOpts = ['Resistência a Venenos','Resistência a Ácidos','Resistência a Queimaduras','Resistência a Pressão','Resistência Elemental','Perfuração','Dano Elemental','Redução de Dano'];
+      const allOpts = [...primaryOpts, ...secondaryOpts];
+      const optsHtml = allOpts.map(o => `<option value="${o}" ${stat===o?'selected':''}>${o}</option>`).join('');
+      return `<tr>
+        <td style="padding:0.3rem;"><select id="buff-stat-${rowId}" onchange="updateBuffRow(${rowId})" style="width:100%;padding:0.25rem;background:var(--parchment);color:var(--ink);border:1px solid var(--wood-plank);border-radius:3px;font-size:0.82rem;"><option value="">— Escolha —</option>${optsHtml}</select></td>
+        <td style="padding:0.3rem;"><input type="number" id="buff-pct-${rowId}" min="0" max="50" value="${pct||''}" placeholder="%" style="width:65px;padding:0.25rem;background:var(--parchment);color:var(--ink);border:1px solid var(--wood-plank);border-radius:3px;text-align:center;"> %</td>
+        <td style="padding:0.3rem;"><button onclick="removeBuffRow(${rowId})" style="background:var(--red-wax);color:#fff;border:none;border-radius:3px;cursor:pointer;padding:2px 6px;font-size:0.8rem;">✕</button></td>
+      </tr>`;
+    }
+
+    let existingBuffRows = '';
+    let buffIndex = 0;
+    if (Array.isArray(existingBuffs)) {
+      existingBuffs.forEach(b => {
+        if (b && b.stat) { existingBuffRows += buffRowHtml(buffIndex, b.stat, b.pct); buffIndex++; }
+      });
+    }
+    window._buffRowCounter = buffIndex;
+
+    // Weakness rows
+    function weakRowHtml(rowId, stat, pct) {
+      const primaryOpts = ['Força','Resistência','Velocidade','Magia'];
+      const secondaryOpts = ['Resistência a Venenos','Resistência a Ácidos','Resistência a Queimaduras','Resistência a Pressão','Resistência Elemental','Perfuração','Dano Elemental','Redução de Dano'];
+      const allOpts = [...primaryOpts, ...secondaryOpts];
+      const optsHtml = allOpts.map(o => `<option value="${o}" ${stat===o?'selected':''}>${o}</option>`).join('');
+      return `<tr>
+        <td style="padding:0.3rem;"><select id="weak-stat-${rowId}" style="width:100%;padding:0.25rem;background:var(--parchment);color:var(--ink);border:1px solid var(--wood-plank);border-radius:3px;font-size:0.82rem;"><option value="">— Escolha —</option>${optsHtml}</select></td>
+        <td style="padding:0.3rem;"><input type="number" id="weak-pct-${rowId}" min="0" max="100" value="${pct||''}" placeholder="%" style="width:65px;padding:0.25rem;background:var(--parchment);color:var(--ink);border:1px solid var(--wood-plank);border-radius:3px;text-align:center;"> %</td>
+        <td style="padding:0.3rem;"><button onclick="removeWeakRow(${rowId})" style="background:var(--red-wax);color:#fff;border:none;border-radius:3px;cursor:pointer;padding:2px 6px;font-size:0.8rem;">✕</button></td>
+      </tr>`;
+    }
+    let existingWeakRows = '';
+    let weakIndex = 0;
+    if (Array.isArray(existingWeakness)) {
+      existingWeakness.forEach(w => {
+        if (w && w.stat) { existingWeakRows += weakRowHtml(weakIndex, w.stat, w.pct); weakIndex++; }
+      });
+    }
+    window._weakRowCounter = weakIndex;
+
+    // Elements list
+    const elementsList = ['Fogo','Água','Terra','Vento','Gelo','Planta','Mineral','Relâmpago','Luz','Sombra','Dimensional','Sagrado','Trevas'];
+    const elemOptsHtml = elementsList.map(e => `<option value="${e}" ${existingElement===e?'selected':''}>${e}</option>`).join('');
+    const khosmoOpt = isDanteAdmin ? `<option value="Chaos" ${existingElement==='Chaos'?'selected':''}>🕳️ Chaos (Primordial)</option><option value="Khosmos" ${existingElement==='Khosmos'?'selected':''}>🌌 Khosmos (Primordial)</option>` : '';
+
+    // Weakness description
+    const existingWeakDesc = ua.weaknessDesc || '';
+
     html += `
-      <div style="margin-top:1rem; padding:1.2rem; border:1px dashed var(--red-wax); border-radius:8px; background:rgba(139,0,0,0.05);">
-        <h4 style="margin-top:0; font-family:'Cinzel',serif; color:var(--red-wax); border-bottom:1px dashed var(--wood-plank); padding-bottom:0.3rem;">🛡️ Moderação do Mestre: Buffs e Nerfs</h4>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; flex-wrap:wrap;">
-          <div>
-            <label style="display:block; font-weight:bold; color:var(--green-moss); font-size:0.85rem; margin-bottom:0.3rem;">🟢 Buffs (um por linha):</label>
-            <textarea id="review-buffs" style="width:100%; height:90px; padding:0.4rem; font-family:sans-serif; border:1px solid var(--wood-plank); border-radius:4px; background:var(--parchment); color:var(--ink); box-shadow:inset 0 1px 3px rgba(0,0,0,0.2);" placeholder="Ex: +10% dano de fogo">${currentBuffs}</textarea>
+      <div style="margin-top:1.2rem; padding:1.2rem; border:2px dashed var(--red-wax); border-radius:8px; background:rgba(139,0,0,0.05);">
+        <h4 style="margin-top:0; font-family:'Cinzel',serif; color:var(--red-wax); border-bottom:1px dashed var(--wood-plank); padding-bottom:0.4rem; font-size:1rem;">⚜️ Painel do Mestre — Habilidade Única & Linhagem</h4>
+
+        <!-- BUFFS TABLE -->
+        <div style="margin-bottom:1.2rem;">
+          <label style="display:flex; align-items:center; gap:0.5rem; font-weight:bold; color:var(--green-moss); font-size:0.88rem; margin-bottom:0.4rem;">🟢 Buffs <span style="font-size:0.72rem;font-weight:normal;color:#888;">(máx. 50% por atributo)</span></label>
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+              <thead>
+                <tr style="background:rgba(0,100,0,0.07);">
+                  <th style="padding:0.3rem 0.5rem; text-align:left; color:var(--ink);">Atributo</th>
+                  <th style="padding:0.3rem 0.5rem; text-align:left; color:var(--ink);">Porcentagem</th>
+                  <th style="padding:0.3rem;"></th>
+                </tr>
+              </thead>
+              <tbody id="review-buffs-tbody">
+                ${existingBuffRows}
+              </tbody>
+            </table>
           </div>
-          <div>
-            <label style="display:block; font-weight:bold; color:var(--red-wax); font-size:0.85rem; margin-bottom:0.3rem;">🔴 Nerfs (um por linha):</label>
-            <textarea id="review-nerfs" style="width:100%; height:90px; padding:0.4rem; font-family:sans-serif; border:1px solid var(--wood-plank); border-radius:4px; background:var(--parchment); color:var(--ink); box-shadow:inset 0 1px 3px rgba(0,0,0,0.2);" placeholder="Ex: Custo de mana duplicado">${currentNerfs}</textarea>
+          <button onclick="addBuffRow()" style="margin-top:0.5rem;background:rgba(0,128,0,0.12);border:1px solid var(--green-moss);color:var(--green-moss);border-radius:4px;padding:0.25rem 0.8rem;cursor:pointer;font-size:0.82rem;">＋ Adicionar Buff</button>
+        </div>
+
+        <!-- ELEMENTO EXTRA (Opcional) -->
+        <div style="margin-bottom:1.2rem; padding:0.8rem; border:1px solid var(--gold); border-radius:6px; background:rgba(212,175,55,0.04);">
+          <label style="display:block; font-weight:bold; color:var(--gold); font-size:0.88rem; margin-bottom:0.4rem;">✨ Elemento Extra (Opcional)</label>
+          <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap;">
+            <select id="review-extra-element" style="flex:1; min-width:160px; padding:0.4rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-family:sans-serif;">
+              <option value="">— Nenhum —</option>
+              ${elemOptsHtml}
+              ${khosmoOpt}
+            </select>
+            <span style="font-size:0.78rem; color:#888; font-style:italic;">Baseado na descrição da habilidade${!isDanteAdmin?' — Chaos/Khosmos requerem Admin Supremo':''}</span>
           </div>
+        </div>
+
+        <!-- FRAQUEZA TABLE -->
+        <div style="margin-bottom:0.8rem;">
+          <label style="display:flex; align-items:center; gap:0.5rem; font-weight:bold; color:var(--red-wax); font-size:0.88rem; margin-bottom:0.4rem;">🔴 Fraquezas</label>
+          <div style="margin-bottom:0.5rem;">
+            <label style="font-size:0.8rem; color:var(--ink); font-weight:500;">Descrição da Fraqueza:</label>
+            <input type="text" id="review-weak-desc" value="${existingWeakDesc}" placeholder="Ex: Vulnerável a luz sagrada..." style="width:100%; margin-top:0.2rem; padding:0.35rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px;">
+          </div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+              <thead>
+                <tr style="background:rgba(139,0,0,0.07);">
+                  <th style="padding:0.3rem 0.5rem; text-align:left; color:var(--ink);">Atributo</th>
+                  <th style="padding:0.3rem 0.5rem; text-align:left; color:var(--ink);">Penalidade %</th>
+                  <th style="padding:0.3rem;"></th>
+                </tr>
+              </thead>
+              <tbody id="review-weakness-tbody">
+                ${existingWeakRows}
+              </tbody>
+            </table>
+          </div>
+          <button onclick="addWeakRow()" style="margin-top:0.5rem;background:rgba(139,0,0,0.1);border:1px solid var(--red-wax);color:var(--red-wax);border-radius:4px;padding:0.25rem 0.8rem;cursor:pointer;font-size:0.82rem;">＋ Adicionar Fraqueza</button>
         </div>
       </div>
     `;
   } else {
-    const buffsHtml = (char.uniqueAbility?.buffs || []).map(b => `<li style="color:var(--green-moss); font-weight:500; margin-bottom:0.3rem;">🟢 ${b}</li>`).join('') || '<li style="font-style:italic; color:#777;">Nenhum</li>';
-    const nerfsHtml = (char.uniqueAbility?.nerfs || []).map(n => `<li style="color:var(--red-wax); font-weight:500; margin-bottom:0.3rem;">🔴 ${n}</li>`).join('') || '<li style="font-style:italic; color:#777;">Nenhum</li>';
+    // View mode
+    const ua = char.uniqueAbility || {};
+    const buffsArr = Array.isArray(ua.buffs) ? ua.buffs : [];
+    const weakArr = Array.isArray(ua.weakness) ? ua.weakness : [];
+    const extraEl = ua.extraElement || '';
+    const weakDesc = ua.weaknessDesc || '';
+
+    const buffsHtml = buffsArr.length > 0
+      ? buffsArr.filter(b=>b&&b.stat).map(b => `<li style="color:var(--green-moss); font-weight:500; margin-bottom:0.3rem;">🟢 ${b.stat}: <strong>+${b.pct}%</strong></li>`).join('')
+      : '<li style="font-style:italic; color:#777;">Nenhum definido</li>';
+    const extraElHtml = extraEl ? `<p style="margin:0.5rem 0 0; color:var(--gold);"><strong>✨ Elemento Extra:</strong> ${extraEl}</p>` : '';
+    const weakDescHtml = weakDesc ? `<p style="margin:0 0 0.3rem; font-size:0.85rem; color:#555; font-style:italic;">${weakDesc}</p>` : '';
+    const weakHtml = weakArr.length > 0
+      ? weakArr.filter(w=>w&&w.stat).map(w => `<li style="color:var(--red-wax); font-weight:500; margin-bottom:0.3rem;">🔴 ${w.stat}: <strong>-${w.pct}%</strong></li>`).join('')
+      : '<li style="font-style:italic; color:#777;">Nenhuma definida</li>';
+
     html += `
       <div style="margin-top:1rem; display:grid; grid-template-columns:1fr 1fr; gap:1.2rem;">
         <div>
-          <h4 style="margin:0 0 0.4rem; font-size:0.9rem; color:var(--green-moss); font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank);">Bônus (Buffs):</h4>
+          <h4 style="margin:0 0 0.4rem; font-size:0.9rem; color:var(--green-moss); font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank);">🟢 Buffs:</h4>
           <ul style="list-style:none; padding-left:0; margin:0;">${buffsHtml}</ul>
+          ${extraElHtml}
         </div>
         <div>
-          <h4 style="margin:0 0 0.4rem; font-size:0.9rem; color:var(--red-wax); font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank);">Penalidades (Nerfs):</h4>
-          <ul style="list-style:none; padding-left:0; margin:0;">${nerfsHtml}</ul>
+          <h4 style="margin:0 0 0.4rem; font-size:0.9rem; color:var(--red-wax); font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank);">🔴 Fraquezas:</h4>
+          ${weakDescHtml}
+          <ul style="list-style:none; padding-left:0; margin:0;">${weakHtml}</ul>
         </div>
       </div>
     `;
   }
 
+  // Level / XP
+  const lvl = char.level || 1;
+  const xp = char.xp || 0;
+  const xpNeeded = lvl * 1000;
+  const xpPct = Math.min(100, Math.round((xp / xpNeeded) * 100));
+  const levelBarHtml = `
+    <div style="margin-bottom:1.5rem; padding:1rem; border:1px solid var(--wood-plank); border-radius:8px; background:var(--parchment-aged);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+        <span style="font-family:'Cinzel',serif; font-weight:bold; color:var(--gold); font-size:1.05rem;">⭐ Nível ${lvl}</span>
+        <span style="font-size:0.85rem; color:var(--ink);">XP: <strong>${xp.toLocaleString('pt-BR')}</strong> / ${xpNeeded.toLocaleString('pt-BR')}</span>
+      </div>
+      <div style="width:100%; height:10px; background:rgba(0,0,0,0.12); border-radius:5px; overflow:hidden;">
+        <div style="height:100%; width:${xpPct}%; background:linear-gradient(90deg,var(--gold),#e8b84b); border-radius:5px; transition:width 0.5s;"></div>
+      </div>
+      <div style="font-size:0.75rem; color:#888; margin-top:0.3rem; text-align:right;">${xpPct}%</div>
+    </div>
+  `;
+
+  // Admin Supremo pode adicionar pontos extras
+  const extraPoints = char.extraPoints || 0;
+  const adminPointsSection = isDante && !isPending ? `
+    <div style="margin-bottom:1.5rem; padding:1rem; border:2px dashed var(--gold); border-radius:8px; background:rgba(212,175,55,0.05);">
+      <h4 style="margin:0 0 0.6rem; font-family:'Cinzel',serif; color:var(--gold); font-size:0.95rem;">🔑 Admin Supremo — Pontos de Atributo Extras</h4>
+      <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+        <label style="font-size:0.85rem;">Pontos para distribuir:</label>
+        <input type="number" id="admin-extra-points" value="${extraPoints}" min="0" step="50" style="width:90px; padding:0.35rem; border:1px solid var(--gold); border-radius:4px; background:var(--parchment); color:var(--ink); text-align:center; font-size:1rem; font-family:'Cinzel',serif;">
+        <button onclick="adminGrantExtraPoints('${uid}')" class="form-submit-btn" style="width:auto; padding:0.4rem 1.2rem; font-size:0.85rem; margin-top:0; background:var(--gold); color:#000; border-color:var(--gold); cursor:pointer; font-family:'Cinzel',serif;">💾 Salvar</button>
+      </div>
+      <p style="margin:0.5rem 0 0; font-size:0.75rem; color:#888; font-style:italic;">Pontos serão somados ao pool de distribuição do jogador.</p>
+    </div>
+  ` : '';
+
   html += `
     </div>
+    ${levelBarHtml}
+    ${adminPointsSection}
     <div style="margin-bottom:1.5rem;">
       <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-bottom:0.5rem;">Classes</h3>
       <p>${classHtml}</p>
@@ -1458,5 +1610,118 @@ async function deleteCharacterSheet(uid) {
   } catch (err) {
     console.error('Erro ao excluir personagem:', err);
     showToast('Erro ao excluir personagem.', 'error');
+  }
+}
+
+// ── Tabela Dinâmica de Buffs (Admin Panel) ─────────────────────────
+function _buildBuffOptHtml(selectedVal) {
+  const opts = ['Força','Resistência','Velocidade','Magia',
+    'Resistência a Venenos','Resistência a Ácidos','Resistência a Queimaduras',
+    'Resistência a Pressão','Resistência Elemental','Perfuração','Dano Elemental','Redução de Dano'];
+  return opts.map(o => `<option value="${o}"${selectedVal===o?' selected':''}>${o}</option>`).join('');
+}
+
+function addBuffRow() {
+  const tbody = document.getElementById('review-buffs-tbody');
+  if (!tbody) return;
+  const id = (window._buffRowCounter = (window._buffRowCounter || 0) + 1);
+  const tr = document.createElement('tr');
+  tr.id = `buff-row-${id}`;
+  tr.innerHTML = `
+    <td style="padding:0.3rem;"><select id="buff-stat-${id}" style="width:100%;padding:0.25rem;background:var(--parchment);color:var(--ink);border:1px solid var(--wood-plank);border-radius:3px;font-size:0.82rem;"><option value="">— Escolha —</option>${_buildBuffOptHtml('')}</select></td>
+    <td style="padding:0.3rem;"><input type="number" id="buff-pct-${id}" min="0" max="50" placeholder="%" style="width:65px;padding:0.25rem;background:var(--parchment);color:var(--ink);border:1px solid var(--wood-plank);border-radius:3px;text-align:center;"> %</td>
+    <td style="padding:0.3rem;"><button onclick="removeBuffRow(${id})" style="background:var(--red-wax);color:#fff;border:none;border-radius:3px;cursor:pointer;padding:2px 6px;font-size:0.8rem;">✕</button></td>`;
+  tbody.appendChild(tr);
+}
+
+function removeBuffRow(id) {
+  const row = document.getElementById(`buff-row-${id}`);
+  if (row) row.remove();
+}
+
+// ── Tabela Dinâmica de Fraquezas (Admin Panel) ─────────────────────
+function addWeakRow() {
+  const tbody = document.getElementById('review-weakness-tbody');
+  if (!tbody) return;
+  const id = (window._weakRowCounter = (window._weakRowCounter || 0) + 1);
+  const tr = document.createElement('tr');
+  tr.id = `weak-row-${id}`;
+  tr.innerHTML = `
+    <td style="padding:0.3rem;"><select id="weak-stat-${id}" style="width:100%;padding:0.25rem;background:var(--parchment);color:var(--ink);border:1px solid var(--wood-plank);border-radius:3px;font-size:0.82rem;"><option value="">— Escolha —</option>${_buildBuffOptHtml('')}</select></td>
+    <td style="padding:0.3rem;"><input type="number" id="weak-pct-${id}" min="0" max="100" placeholder="%" style="width:65px;padding:0.25rem;background:var(--parchment);color:var(--ink);border:1px solid var(--wood-plank);border-radius:3px;text-align:center;"> %</td>
+    <td style="padding:0.3rem;"><button onclick="removeWeakRow(${id})" style="background:var(--red-wax);color:#fff;border:none;border-radius:3px;cursor:pointer;padding:2px 6px;font-size:0.8rem;">✕</button></td>`;
+  tbody.appendChild(tr);
+}
+
+function removeWeakRow(id) {
+  const row = document.getElementById(`weak-row-${id}`);
+  if (row) row.remove();
+}
+
+// ── Coleta de Buffs / Fraquezas das tabelas ────────────────────────
+function _collectBuffTableRows(tbodyId) {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return [];
+  const rows = [];
+  tbody.querySelectorAll('tr').forEach(tr => {
+    const statSel = tr.querySelector('select');
+    const pctInp  = tr.querySelector('input[type="number"]');
+    if (!statSel || !pctInp) return;
+    const stat = statSel.value.trim();
+    const pct  = parseInt(pctInp.value) || 0;
+    if (stat && pct > 0) rows.push({ stat, pct });
+  });
+  return rows;
+}
+
+// ── Admin Supremo: Adicionar Pontos Extras de Atributos ───────────
+async function adminGrantExtraPoints(uid) {
+  const input = document.getElementById('admin-extra-points');
+  if (!input) return;
+  const pts = parseInt(input.value) || 0;
+  if (pts < 0) { showToast('⚠️ Valor inválido.', 'error'); return; }
+  try {
+    showToast('⚡ Salvando pontos extras...', 'info');
+    await _db.collection('characters').doc(uid).update({
+      'character.extraPoints': pts
+    });
+    ALL_CHARACTERS[uid].character = ALL_CHARACTERS[uid].character || {};
+    ALL_CHARACTERS[uid].character.extraPoints = pts;
+    showToast(`✅ ${pts} pontos extras concedidos com sucesso!`, 'success');
+  } catch (err) {
+    console.error('Erro ao conceder pontos extras:', err);
+    showToast('❌ Falha ao salvar pontos extras.', 'error');
+  }
+}
+
+// ── Sistema de Level e XP ─────────────────────────────────────────
+function calcXpForLevel(lvl) { return lvl * 1000; }
+
+async function adminGrantXP(uid, xpAmount) {
+  if (!_auth || !_auth.currentUser) return;
+  const currentUser = _auth.currentUser;
+  const currentData = ALL_CHARACTERS[currentUser.uid] || {};
+  if (!currentData.isAdmin) { showToast('⚠️ Apenas o Admin Supremo pode conceder XP.', 'error'); return; }
+
+  const charData = ALL_CHARACTERS[uid] || {};
+  const char = charData.character || {};
+  let xp = (char.xp || 0) + xpAmount;
+  let lvl = char.level || 1;
+
+  // Level up loop
+  while (xp >= calcXpForLevel(lvl)) {
+    xp -= calcXpForLevel(lvl);
+    lvl++;
+  }
+
+  try {
+    await _db.collection('characters').doc(uid).update({
+      'character.xp': xp,
+      'character.level': lvl
+    });
+    showToast(`✅ XP atualizado! Nível: ${lvl}, XP restante: ${xp}`, 'success');
+  } catch(err) {
+    console.error('Erro ao atualizar XP:', err);
+    showToast('❌ Falha ao atualizar XP.', 'error');
   }
 }

@@ -163,12 +163,32 @@ async function approveCharacterSheet(uid) {
 
   const lineageInput = document.getElementById('review-lineage');
   const lineage = lineageInput ? lineageInput.value.trim() : '—';
-  
-  const buffsText = document.getElementById('review-buffs') ? document.getElementById('review-buffs').value : '';
-  const nerfsText = document.getElementById('review-nerfs') ? document.getElementById('review-nerfs').value : '';
 
-  const buffs = buffsText.split('\n').map(b => b.trim()).filter(b => b !== '');
-  const nerfs = nerfsText.split('\n').map(n => n.trim()).filter(n => n !== '');
+  // Coleta buffs estruturados da tabela
+  const buffs = typeof _collectBuffTableRows === 'function'
+    ? _collectBuffTableRows('review-buffs-tbody')
+    : [];
+
+  // Valida máximo de 50% por stat
+  for (const b of buffs) {
+    if (b.pct > 50) {
+      showToast(`⚠️ Buff de "${b.stat}" ultrapassa o limite de 50%!`, 'error');
+      return;
+    }
+  }
+
+  // Elemento extra
+  const extraElementSel = document.getElementById('review-extra-element');
+  const extraElement = extraElementSel ? extraElementSel.value : '';
+
+  // Fraquezas estruturadas
+  const weakness = typeof _collectBuffTableRows === 'function'
+    ? _collectBuffTableRows('review-weakness-tbody')
+    : [];
+
+  // Descrição da fraqueza
+  const weakDescInp = document.getElementById('review-weak-desc');
+  const weaknessDesc = weakDescInp ? weakDescInp.value.trim() : '';
 
   try {
     showToast('⚡ Aprovando ficha...', 'info');
@@ -230,7 +250,13 @@ async function approveCharacterSheet(uid) {
       status: 'approved',
       'character.lineage': lineage || '— (a ser definido pelo administrador)',
       'character.uniqueAbility.buffs': buffs,
-      'character.uniqueAbility.nerfs': nerfs,
+      'character.uniqueAbility.weakness': weakness,
+      'character.uniqueAbility.weaknessDesc': weaknessDesc,
+      'character.uniqueAbility.extraElement': extraElement,
+      'character.uniqueAbility.nerfs': [],
+      'character.level': 1,
+      'character.xp': 0,
+      'character.extraPoints': 0,
       'character.abilities.racial': racialAbilities,
       notifications: notifications,
       serverAlerts: serverAlerts

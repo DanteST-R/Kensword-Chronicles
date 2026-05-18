@@ -185,6 +185,44 @@ window.calculateEffectiveStats = function(char) {
     }
   });
 
+  // Mapeamento de português para inglês para os novos Buffs estruturados
+  const statMap = {
+    'Força': 'strength',
+    'Resistência': 'resistance',
+    'Velocidade': 'speed',
+    'Magia': 'magic'
+  };
+
+  // Aplicar Buffs estruturados da Habilidade Única / Linhagem (tabela do mestre, max 50%)
+  const ua = char.uniqueAbility || {};
+  const buffsArr = Array.isArray(ua.buffs) ? ua.buffs : [];
+  buffsArr.forEach(b => {
+    if (b && b.stat && b.pct) {
+      const key = statMap[b.stat];
+      if (key) {
+        const limitedPct = Math.min(50, b.pct);
+        multiplierBonus[key] *= (1.0 + (limitedPct / 100));
+        appliedBuffs.push({ name: `Habilidade Única (Buff)`, stat: b.stat, value: `+${limitedPct}%` });
+      } else {
+        appliedBuffs.push({ name: `Habilidade Única (Buff Secundário)`, stat: b.stat, value: `+${b.pct}%` });
+      }
+    }
+  });
+
+  // Aplicar Fraquezas estruturadas da Habilidade Única / Linhagem (tabela do mestre)
+  const weakArr = Array.isArray(ua.weakness) ? ua.weakness : [];
+  weakArr.forEach(w => {
+    if (w && w.stat && w.pct) {
+      const key = statMap[w.stat];
+      if (key) {
+        multiplierBonus[key] *= (1.0 - (w.pct / 100));
+        appliedBuffs.push({ name: `Fraqueza (Nerf)`, stat: w.stat, value: `-${w.pct}%` });
+      } else {
+        appliedBuffs.push({ name: `Fraqueza (Secundária)`, stat: w.stat, value: `-${w.pct}%` });
+      }
+    }
+  });
+
   // Calcular valores finais
   let finalStats = {
     strength: Math.round((baseStats.strength + flatBonus.strength) * multiplierBonus.strength),

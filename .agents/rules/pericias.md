@@ -84,10 +84,10 @@ graph TD
 * **Comunicação** | **Negociação** | **Sedução** | **Drenagem Vital** | **Manipulação**
 * **Social (Reconhecimento)**:
   * **Lvl 1**: Desconhecido
-  * **Lvl 2**: Reconhecido pela Plebe
-  * **Lvl 3**: Reconhecido pela Burguesia
-  * **Lvl 4**: Reconhecido pela Nobreza
-  * **Lvl 5**: Reconhecido pela Realeza
+  * **Lvl 3**: Reconhecido pela Plebe
+  * **Lvl 6**: Reconhecido pela Burguesia
+  * **Lvl 8**: Reconhecido pela Nobreza
+  * **Lvl 10**: Reconhecido pela Realeza
 
 ---
 ---
@@ -105,9 +105,9 @@ graph TD
 | Tipo de Treino | Recompensas Disponíveis | Limites Semanais |
 | :--- | :--- | :--- |
 | **Treino Solo** | +100 XP (Level) • +100 XP (Perícia) • +15 Pontos Base `[+5 × Lvl]` para distribuir | **Máx. 3 vezes** por semana |
-| **Treino Em Dupla** | +300 XP (Level) • +600 XP (Perícia) • +25 Pontos Base `[+5 × Lvl]` para distribuir *(Mínimo de 5 cenas por jogador)* | **Máx. 2 vezes** por semana |
-| **Treino De Aptidão** | +1% de Aptidão Elemental • +100 XP (Perícia) • +5 Pontos Base `[5 × Lvl]` para distribuir | **Máx. 2 vezes** por semana |
-| **Treino De Perícia / Trabalho** | +100 XP (Level) • +100 XP (Perícia/Trabalho) • +5 Pontos Base `[+5 × Lvl]` para distribuir | **Máx. 1 vez** por semana por perícia |
+| **Treino Em Dupla (Esse treino deve ser aprovado)** | +300 XP (Level) • +600 XP (Perícia) • +25 Pontos Base `[+5 × Lvl]` para distribuir *(Mínimo de 5 cenas por jogador)* | **Máx. 2 vezes** por semana |
+| **Treino De Aptidão** | +1% de Aptidão Elemental • +100 XP (Perícia) • +5 Pontos Base `[+5 × Lvl]` para distribuir | **Máx. 2 vezes** por semana |
+| **Treino De Perícia / Trabalho** | +100 XP (Level) • +100 XP (Perícia/Trabalho) • +5 Pontos Base `[+5 × Lvl]` para distribuir | **Máx. 1 vez** por semana por perícia **O treino é diário, mas não pode repetir perícia na semana.**|
 | **Treino De Magia** | +1% de Aptidão Elemental • +15 Pontos de Magia `[+5 × Lvl]` | **Máx. 2 vezes** por semana |
 
 > [!NOTE]
