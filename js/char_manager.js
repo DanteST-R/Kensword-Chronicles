@@ -389,19 +389,15 @@ async function loadCharactersTab() {
 
   try {
     ALL_CHARACTERS = await getAllCharacters();
-    let html = '';
-    const keys = Object.keys(ALL_CHARACTERS);
-
-    if (keys.length === 0) {
-      container.innerHTML = '<p style="text-align:center; color:var(--wood-plank); font-style:italic;">Nenhum personagem registrado ainda.</p>';
-      return;
-    }
-
+    let charCount = 0;
     keys.forEach(uid => {
       const doc = ALL_CHARACTERS[uid];
       if (doc.type === 'NPC') return; // Filtra NPCs da aba geral de personagens
-      const char = doc.character || {};
-      const name = char.name || 'Desconhecido';
+      if (doc.status !== 'approved') return; // Filtra personagens não aprovados (pendentes/deletados)
+      if (!doc.character || !doc.character.name) return; // Filtra fichas incompletas ou deletadas
+      charCount++;
+      const char = doc.character;
+      const name = char.name;
       const avatar = char.avatar || 'kensword_database/kensword_photos/demihuman.webp';
 
       html += `<div class="character-card" onclick="openCharacterSheet('${uid}')">
@@ -409,6 +405,11 @@ async function loadCharactersTab() {
         <div class="char-card-name">${name}</div>
       </div>`;
     });
+
+    if (charCount === 0) {
+      container.innerHTML = '<p style="text-align:center; color:var(--wood-plank); font-style:italic;">Nenhum personagem registrado ainda.</p>';
+      return;
+    }
 
     container.innerHTML = html;
   } catch (err) {
@@ -936,9 +937,11 @@ async function loadNpcsTab() {
     keys.forEach(uid => {
       const doc = ALL_CHARACTERS[uid];
       if (doc.type !== 'NPC') return;
+      if (doc.status !== 'approved') return; // Filtra NPCs não aprovados ou inativos
+      if (!doc.character || !doc.character.name) return; // Filtra NPCs sem dados válidos
       npcCount++;
-      const char = doc.character || {};
-      const name = char.name || 'Desconhecido';
+      const char = doc.character;
+      const name = char.name;
       const avatar = char.avatar || 'kensword_database/kensword_photos/demihuman.webp';
 
       html += `<div class="character-card" onclick="openCharacterSheet('${uid}')">
