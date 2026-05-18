@@ -570,70 +570,105 @@ function openCharacterSheet(uid) {
   `;
 
   if (isStaff && isPending) {
+    const linData = char.lineageData || {};
+    const existingLineageBuffs = linData.buffs || [];
+    const existingLineageWeakness = linData.weakness || [];
+    const existingLineageElement = linData.extraElement || '';
+    const existingLineageWeakDesc = linData.weaknessDesc || '';
+
     const ua = char.uniqueAbility || {};
-    const existingBuffs = ua.buffs || {};
-    const existingWeakness = ua.weakness || {};
-    const existingElement = ua.extraElement || '';
+    const existingUaBuffs = ua.buffs || [];
+    const existingUaWeakness = ua.weakness || [];
+    const existingUaElement = ua.extraElement || '';
+    const existingUaWeakDesc = ua.weaknessDesc || '';
+
     const isDanteAdmin = isDante;
 
     // Helper: render a buff row (stat select + % input)
-    function buffRowHtml(rowId, stat, pct) {
+    function buffRowHtml(rowId, prefix, stat, pct) {
       const primaryOpts = ['Força','Resistência','Velocidade','Magia'];
       const secondaryOpts = ['Resistência a Venenos','Resistência a Ácidos','Resistência a Queimaduras','Resistência a Pressão','Resistência Elemental','Perfuração','Dano Elemental','Redução de Dano'];
       const allOpts = [...primaryOpts, ...secondaryOpts];
       const optsHtml = allOpts.map(o => `<option value="${o}" ${stat===o?'selected':''}>${o}</option>`).join('');
-      return `<tr>
-        <td style="padding:0.3rem;"><select id="buff-stat-${rowId}" onchange="updateBuffRow(${rowId})" style="width:100%;padding:0.25rem;background:var(--parchment);color:var(--ink);border:1px solid var(--wood-plank);border-radius:3px;font-size:0.82rem;"><option value="">— Escolha —</option>${optsHtml}</select></td>
-        <td style="padding:0.3rem;"><input type="number" id="buff-pct-${rowId}" min="0" max="50" value="${pct||''}" placeholder="%" style="width:65px;padding:0.25rem;background:var(--parchment);color:var(--ink);border:1px solid var(--wood-plank);border-radius:3px;text-align:center;"> %</td>
-        <td style="padding:0.3rem;"><button onclick="removeBuffRow(${rowId})" style="background:var(--red-wax);color:#fff;border:none;border-radius:3px;cursor:pointer;padding:2px 6px;font-size:0.8rem;">✕</button></td>
+      return `<tr id="${prefix}-row-${rowId}">
+        <td style="padding:0.3rem;"><select id="${prefix}-stat-${rowId}" style="width:100%;padding:0.25rem;background:var(--parchment);color:var(--ink);border:1px solid var(--wood-plank);border-radius:3px;font-size:0.82rem;"><option value="">— Escolha —</option>${optsHtml}</select></td>
+        <td style="padding:0.3rem;"><input type="number" id="${prefix}-pct-${rowId}" min="0" max="50" value="${pct||''}" placeholder="%" style="width:65px;padding:0.25rem;background:var(--parchment);color:var(--ink);border:1px solid var(--wood-plank);border-radius:3px;text-align:center;"> %</td>
+        <td style="padding:0.3rem;"><button onclick="removeBuffRow('${prefix}-row-${rowId}')" style="background:var(--red-wax);color:#fff;border:none;border-radius:3px;cursor:pointer;padding:2px 6px;font-size:0.8rem;">✕</button></td>
       </tr>`;
     }
 
-    let existingBuffRows = '';
-    let buffIndex = 0;
-    if (Array.isArray(existingBuffs)) {
-      existingBuffs.forEach(b => {
-        if (b && b.stat) { existingBuffRows += buffRowHtml(buffIndex, b.stat, b.pct); buffIndex++; }
-      });
-    }
-    window._buffRowCounter = buffIndex;
-
-    // Weakness rows
-    function weakRowHtml(rowId, stat, pct) {
+    // Helper: render a weakness row (stat select + % input)
+    function weakRowHtml(rowId, prefix, stat, pct) {
       const primaryOpts = ['Força','Resistência','Velocidade','Magia'];
       const secondaryOpts = ['Resistência a Venenos','Resistência a Ácidos','Resistência a Queimaduras','Resistência a Pressão','Resistência Elemental','Perfuração','Dano Elemental','Redução de Dano'];
       const allOpts = [...primaryOpts, ...secondaryOpts];
       const optsHtml = allOpts.map(o => `<option value="${o}" ${stat===o?'selected':''}>${o}</option>`).join('');
-      return `<tr>
-        <td style="padding:0.3rem;"><select id="weak-stat-${rowId}" style="width:100%;padding:0.25rem;background:var(--parchment);color:var(--ink);border:1px solid var(--wood-plank);border-radius:3px;font-size:0.82rem;"><option value="">— Escolha —</option>${optsHtml}</select></td>
-        <td style="padding:0.3rem;"><input type="number" id="weak-pct-${rowId}" min="0" max="100" value="${pct||''}" placeholder="%" style="width:65px;padding:0.25rem;background:var(--parchment);color:var(--ink);border:1px solid var(--wood-plank);border-radius:3px;text-align:center;"> %</td>
-        <td style="padding:0.3rem;"><button onclick="removeWeakRow(${rowId})" style="background:var(--red-wax);color:#fff;border:none;border-radius:3px;cursor:pointer;padding:2px 6px;font-size:0.8rem;">✕</button></td>
+      return `<tr id="${prefix}-row-${rowId}">
+        <td style="padding:0.3rem;"><select id="${prefix}-stat-${rowId}" style="width:100%;padding:0.25rem;background:var(--parchment);color:var(--ink);border:1px solid var(--wood-plank);border-radius:3px;font-size:0.82rem;"><option value="">— Escolha —</option>${optsHtml}</select></td>
+        <td style="padding:0.3rem;"><input type="number" id="${prefix}-pct-${rowId}" min="0" max="100" value="${pct||''}" placeholder="%" style="width:65px;padding:0.25rem;background:var(--parchment);color:var(--ink);border:1px solid var(--wood-plank);border-radius:3px;text-align:center;"> %</td>
+        <td style="padding:0.3rem;"><button onclick="removeWeakRow('${prefix}-row-${rowId}')" style="background:var(--red-wax);color:#fff;border:none;border-radius:3px;cursor:pointer;padding:2px 6px;font-size:0.8rem;">✕</button></td>
       </tr>`;
     }
-    let existingWeakRows = '';
-    let weakIndex = 0;
-    if (Array.isArray(existingWeakness)) {
-      existingWeakness.forEach(w => {
-        if (w && w.stat) { existingWeakRows += weakRowHtml(weakIndex, w.stat, w.pct); weakIndex++; }
+
+    // Linhagem Rows
+    let existingLineageBuffRows = '';
+    let lineageBuffIdx = 0;
+    if (Array.isArray(existingLineageBuffs)) {
+      existingLineageBuffs.forEach(b => {
+        if (b && b.stat) { existingLineageBuffRows += buffRowHtml(lineageBuffIdx, 'lineage-buff', b.stat, b.pct); lineageBuffIdx++; }
       });
     }
-    window._weakRowCounter = weakIndex;
 
-    // Elements list
+    let existingLineageWeakRows = '';
+    let lineageWeakIdx = 0;
+    if (Array.isArray(existingLineageWeakness)) {
+      existingLineageWeakness.forEach(w => {
+        if (w && w.stat) { existingLineageWeakRows += weakRowHtml(lineageWeakIdx, 'lineage-weak', w.stat, w.pct); lineageWeakIdx++; }
+      });
+    }
+
+    // Habilidade Única Rows
+    let existingUaBuffRows = '';
+    let uaBuffIdx = 0;
+    if (Array.isArray(existingUaBuffs)) {
+      existingUaBuffs.forEach(b => {
+        if (b && b.stat) { existingUaBuffRows += buffRowHtml(uaBuffIdx, 'ua-buff', b.stat, b.pct); uaBuffIdx++; }
+      });
+    }
+
+    let existingUaWeakRows = '';
+    let uaWeakIdx = 0;
+    if (Array.isArray(existingUaWeakness)) {
+      existingUaWeakness.forEach(w => {
+        if (w && w.stat) { existingUaWeakRows += weakRowHtml(uaWeakIdx, 'ua-weak', w.stat, w.pct); uaWeakIdx++; }
+      });
+    }
+
+    window._buffRowCounter = Math.max(lineageBuffIdx, uaBuffIdx);
+    window._weakRowCounter = Math.max(lineageWeakIdx, uaWeakIdx);
+
     const elementsList = ['Fogo','Água','Terra','Vento','Gelo','Planta','Mineral','Relâmpago','Luz','Sombra','Dimensional','Sagrado','Trevas'];
-    const elemOptsHtml = elementsList.map(e => `<option value="${e}" ${existingElement===e?'selected':''}>${e}</option>`).join('');
-    const khosmoOpt = isDanteAdmin ? `<option value="Chaos" ${existingElement==='Chaos'?'selected':''}>🕳️ Chaos (Primordial)</option><option value="Khosmos" ${existingElement==='Khosmos'?'selected':''}>🌌 Khosmos (Primordial)</option>` : '';
+    const linElemOptsHtml = elementsList.map(e => `<option value="${e}" ${existingLineageElement===e?'selected':''}>${e}</option>`).join('');
+    const uaElemOptsHtml = elementsList.map(e => `<option value="${e}" ${existingUaElement===e?'selected':''}>${e}</option>`).join('');
 
-    // Weakness description
-    const existingWeakDesc = ua.weaknessDesc || '';
+    const linKhosmoOpt = isDanteAdmin ? `<option value="Chaos" ${existingLineageElement==='Chaos'?'selected':''}>🕳️ Chaos (Primordial)</option><option value="Khosmos" ${existingLineageElement==='Khosmos'?'selected':''}>🌌 Khosmos (Primordial)</option>` : '';
+    const uaKhosmoOpt = isDanteAdmin ? `<option value="Chaos" ${existingUaElement==='Chaos'?'selected':''}>🕳️ Chaos (Primordial)</option><option value="Khosmos" ${existingUaElement==='Khosmos'?'selected':''}>🌌 Khosmos (Primordial)</option>` : '';
+
+    const defaultLineageVal = char.lineage && char.lineage.includes('a ser definido') ? '' : char.lineage || '';
 
     html += `
-      <div style="margin-top:1.2rem; padding:1.2rem; border:2px dashed var(--red-wax); border-radius:8px; background:rgba(139,0,0,0.05);">
-        <h4 style="margin-top:0; font-family:'Cinzel',serif; color:var(--red-wax); border-bottom:1px dashed var(--wood-plank); padding-bottom:0.4rem; font-size:1rem;">⚜️ Painel do Mestre — Habilidade Única & Linhagem</h4>
+      <!-- PAINEL DA LINHAGEM -->
+      <div style="margin-top:1.2rem; padding:1.2rem; border:2px dashed var(--gold); border-radius:8px; background:rgba(212,175,55,0.05); margin-bottom: 1.5rem;">
+        <h4 style="margin-top:0; font-family:'Cinzel',serif; color:var(--gold); border-bottom:1px dashed var(--wood-plank); padding-bottom:0.4rem; font-size:1rem;">👑 Painel do Mestre — Linhagem do Personagem</h4>
+        
+        <div style="margin-bottom:1rem;">
+          <label style="font-size:0.85rem; color:var(--ink); font-weight:bold; display:block; margin-bottom:0.3rem;">Nome da Linhagem:</label>
+          <input type="text" id="review-lineage" value="${defaultLineageVal}" placeholder="Defina a Linhagem (Ex: Linhagem Imperial)" style="width:100%; padding:0.4rem; font-family:sans-serif; border:1px solid var(--wood-plank); border-radius:4px; background:var(--parchment); color:var(--ink); box-shadow:inset 0 1px 3px rgba(0,0,0,0.2);">
+        </div>
 
-        <!-- BUFFS TABLE -->
+        <!-- BUFFS TABLE (LINHAGEM) -->
         <div style="margin-bottom:1.2rem;">
-          <label style="display:flex; align-items:center; gap:0.5rem; font-weight:bold; color:var(--green-moss); font-size:0.88rem; margin-bottom:0.4rem;">🟢 Buffs <span style="font-size:0.72rem;font-weight:normal;color:#888;">(máx. 50% por atributo)</span></label>
+          <label style="display:flex; align-items:center; gap:0.5rem; font-weight:bold; color:var(--green-moss); font-size:0.88rem; margin-bottom:0.4rem;">🟢 Buffs da Linhagem <span style="font-size:0.72rem;font-weight:normal;color:#888;">(máx. 50% por atributo)</span></label>
           <div style="overflow-x:auto;">
             <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
               <thead>
@@ -643,33 +678,33 @@ function openCharacterSheet(uid) {
                   <th style="padding:0.3rem;"></th>
                 </tr>
               </thead>
-              <tbody id="review-buffs-tbody">
-                ${existingBuffRows}
+              <tbody id="review-lineage-buffs-tbody">
+                ${existingLineageBuffRows}
               </tbody>
             </table>
           </div>
-          <button onclick="addBuffRow()" style="margin-top:0.5rem;background:rgba(0,128,0,0.12);border:1px solid var(--green-moss);color:var(--green-moss);border-radius:4px;padding:0.25rem 0.8rem;cursor:pointer;font-size:0.82rem;">＋ Adicionar Buff</button>
+          <button onclick="addBuffRow('review-lineage-buffs-tbody')" style="margin-top:0.5rem;background:rgba(0,128,0,0.12);border:1px solid var(--green-moss);color:var(--green-moss);border-radius:4px;padding:0.25rem 0.8rem;cursor:pointer;font-size:0.82rem;">＋ Adicionar Buff</button>
         </div>
 
-        <!-- ELEMENTO EXTRA (Opcional) -->
+        <!-- ELEMENTO EXTRA (LINHAGEM) -->
         <div style="margin-bottom:1.2rem; padding:0.8rem; border:1px solid var(--gold); border-radius:6px; background:rgba(212,175,55,0.04);">
-          <label style="display:block; font-weight:bold; color:var(--gold); font-size:0.88rem; margin-bottom:0.4rem;">✨ Elemento Extra (Opcional)</label>
+          <label style="display:block; font-weight:bold; color:var(--gold); font-size:0.88rem; margin-bottom:0.4rem;">✨ Elemento Extra da Linhagem (Opcional)</label>
           <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap;">
-            <select id="review-extra-element" style="flex:1; min-width:160px; padding:0.4rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-family:sans-serif;">
+            <select id="review-lineage-extra-element" style="flex:1; min-width:160px; padding:0.4rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-family:sans-serif;">
               <option value="">— Nenhum —</option>
-              ${elemOptsHtml}
-              ${khosmoOpt}
+              ${linElemOptsHtml}
+              ${linKhosmoOpt}
             </select>
-            <span style="font-size:0.78rem; color:#888; font-style:italic;">Baseado na descrição da habilidade${!isDanteAdmin?' — Chaos/Khosmos requerem Admin Supremo':''}</span>
+            <span style="font-size:0.78rem; color:#888; font-style:italic;">${!isDanteAdmin?'Chaos/Khosmos requerem Admin Supremo':''}</span>
           </div>
         </div>
 
-        <!-- FRAQUEZA TABLE -->
+        <!-- FRAQUEZA TABLE (LINHAGEM) -->
         <div style="margin-bottom:0.8rem;">
-          <label style="display:flex; align-items:center; gap:0.5rem; font-weight:bold; color:var(--red-wax); font-size:0.88rem; margin-bottom:0.4rem;">🔴 Fraquezas</label>
+          <label style="display:flex; align-items:center; gap:0.5rem; font-weight:bold; color:var(--red-wax); font-size:0.88rem; margin-bottom:0.4rem;">🔴 Fraquezas da Linhagem</label>
           <div style="margin-bottom:0.5rem;">
-            <label style="font-size:0.8rem; color:var(--ink); font-weight:500;">Descrição da Fraqueza:</label>
-            <input type="text" id="review-weak-desc" value="${existingWeakDesc}" placeholder="Ex: Vulnerável a luz sagrada..." style="width:100%; margin-top:0.2rem; padding:0.35rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px;">
+            <label style="font-size:0.8rem; color:var(--ink); font-weight:500;">Descrição da Fraqueza da Linhagem:</label>
+            <input type="text" id="review-lineage-weak-desc" value="${existingLineageWeakDesc}" placeholder="Ex: Vulnerável a calor extremo..." style="width:100%; margin-top:0.2rem; padding:0.35rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px;">
           </div>
           <div style="overflow-x:auto;">
             <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
@@ -680,43 +715,140 @@ function openCharacterSheet(uid) {
                   <th style="padding:0.3rem;"></th>
                 </tr>
               </thead>
-              <tbody id="review-weakness-tbody">
-                ${existingWeakRows}
+              <tbody id="review-lineage-weakness-tbody">
+                ${existingLineageWeakRows}
               </tbody>
             </table>
           </div>
-          <button onclick="addWeakRow()" style="margin-top:0.5rem;background:rgba(139,0,0,0.1);border:1px solid var(--red-wax);color:var(--red-wax);border-radius:4px;padding:0.25rem 0.8rem;cursor:pointer;font-size:0.82rem;">＋ Adicionar Fraqueza</button>
+          <button onclick="addWeakRow('review-lineage-weakness-tbody')" style="margin-top:0.5rem;background:rgba(139,0,0,0.1);border:1px solid var(--red-wax);color:var(--red-wax);border-radius:4px;padding:0.25rem 0.8rem;cursor:pointer;font-size:0.82rem;">＋ Adicionar Fraqueza</button>
+        </div>
+      </div>
+
+      <!-- PAINEL DA HABILIDADE ÚNICA -->
+      <div style="margin-top:1.2rem; padding:1.2rem; border:2px dashed var(--red-wax); border-radius:8px; background:rgba(139,0,0,0.05); margin-bottom: 1.5rem;">
+        <h4 style="margin-top:0; font-family:'Cinzel',serif; color:var(--red-wax); border-bottom:1px dashed var(--wood-plank); padding-bottom:0.4rem; font-size:1rem;">🔮 Painel do Mestre — Habilidade Única</h4>
+        
+        <!-- BUFFS TABLE (HABILIDADE ÚNICA) -->
+        <div style="margin-bottom:1.2rem;">
+          <label style="display:flex; align-items:center; gap:0.5rem; font-weight:bold; color:var(--green-moss); font-size:0.88rem; margin-bottom:0.4rem;">🟢 Buffs da Habilidade <span style="font-size:0.72rem;font-weight:normal;color:#888;">(máx. 50% por atributo)</span></label>
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+              <thead>
+                <tr style="background:rgba(0,100,0,0.07);">
+                  <th style="padding:0.3rem 0.5rem; text-align:left; color:var(--ink);">Atributo</th>
+                  <th style="padding:0.3rem 0.5rem; text-align:left; color:var(--ink);">Porcentagem</th>
+                  <th style="padding:0.3rem;"></th>
+                </tr>
+              </thead>
+              <tbody id="review-ua-buffs-tbody">
+                ${existingUaBuffRows}
+              </tbody>
+            </table>
+          </div>
+          <button onclick="addBuffRow('review-ua-buffs-tbody')" style="margin-top:0.5rem;background:rgba(0,128,0,0.12);border:1px solid var(--green-moss);color:var(--green-moss);border-radius:4px;padding:0.25rem 0.8rem;cursor:pointer;font-size:0.82rem;">＋ Adicionar Buff</button>
+        </div>
+
+        <!-- ELEMENTO EXTRA (HABILIDADE ÚNICA) -->
+        <div style="margin-bottom:1.2rem; padding:0.8rem; border:1px solid var(--gold); border-radius:6px; background:rgba(212,175,55,0.04);">
+          <label style="display:block; font-weight:bold; color:var(--gold); font-size:0.88rem; margin-bottom:0.4rem;">✨ Elemento Extra da Habilidade (Opcional)</label>
+          <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap;">
+            <select id="review-ua-extra-element" style="flex:1; min-width:160px; padding:0.4rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-family:sans-serif;">
+              <option value="">— Nenhum —</option>
+              ${uaElemOptsHtml}
+              ${uaKhosmoOpt}
+            </select>
+            <span style="font-size:0.78rem; color:#888; font-style:italic;">${!isDanteAdmin?'Chaos/Khosmos requerem Admin Supremo':''}</span>
+          </div>
+        </div>
+
+        <!-- FRAQUEZA TABLE (HABILIDADE ÚNICA) -->
+        <div style="margin-bottom:0.8rem;">
+          <label style="display:flex; align-items:center; gap:0.5rem; font-weight:bold; color:var(--red-wax); font-size:0.88rem; margin-bottom:0.4rem;">🔴 Fraquezas da Habilidade</label>
+          <div style="margin-bottom:0.5rem;">
+            <label style="font-size:0.8rem; color:var(--ink); font-weight:500;">Descrição da Fraqueza da Habilidade:</label>
+            <input type="text" id="review-ua-weak-desc" value="${existingUaWeakDesc}" placeholder="Ex: Causa exaustão severa..." style="width:100%; margin-top:0.2rem; padding:0.35rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px;">
+          </div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+              <thead>
+                <tr style="background:rgba(139,0,0,0.07);">
+                  <th style="padding:0.3rem 0.5rem; text-align:left; color:var(--ink);">Atributo</th>
+                  <th style="padding:0.3rem 0.5rem; text-align:left; color:var(--ink);">Penalidade %</th>
+                  <th style="padding:0.3rem;"></th>
+                </tr>
+              </thead>
+              <tbody id="review-ua-weakness-tbody">
+                ${existingUaWeakRows}
+              </tbody>
+            </table>
+          </div>
+          <button onclick="addWeakRow('review-ua-weakness-tbody')" style="margin-top:0.5rem;background:rgba(139,0,0,0.1);border:1px solid var(--red-wax);color:var(--red-wax);border-radius:4px;padding:0.25rem 0.8rem;cursor:pointer;font-size:0.82rem;">＋ Adicionar Fraqueza</button>
         </div>
       </div>
     `;
   } else {
     // View mode
-    const ua = char.uniqueAbility || {};
-    const buffsArr = Array.isArray(ua.buffs) ? ua.buffs : [];
-    const weakArr = Array.isArray(ua.weakness) ? ua.weakness : [];
-    const extraEl = ua.extraElement || '';
-    const weakDesc = ua.weaknessDesc || '';
+    const linData = char.lineageData || {};
+    const linBuffsArr = Array.isArray(linData.buffs) ? linData.buffs : [];
+    const linWeakArr = Array.isArray(linData.weakness) ? linData.weakness : [];
+    const linExtraEl = linData.extraElement || '';
+    const linWeakDesc = linData.weaknessDesc || '';
 
-    const buffsHtml = buffsArr.length > 0
-      ? buffsArr.filter(b=>b&&b.stat).map(b => `<li style="color:var(--green-moss); font-weight:500; margin-bottom:0.3rem;">🟢 ${b.stat}: <strong>+${b.pct}%</strong></li>`).join('')
+    const linBuffsHtml = linBuffsArr.length > 0
+      ? linBuffsArr.filter(b=>b&&b.stat).map(b => `<li style="color:var(--green-moss); font-weight:500; margin-bottom:0.3rem;">🟢 ${b.stat}: <strong>+${b.pct}%</strong></li>`).join('')
       : '<li style="font-style:italic; color:#777;">Nenhum definido</li>';
-    const extraElHtml = extraEl ? `<p style="margin:0.5rem 0 0; color:var(--gold);"><strong>✨ Elemento Extra:</strong> ${extraEl}</p>` : '';
-    const weakDescHtml = weakDesc ? `<p style="margin:0 0 0.3rem; font-size:0.85rem; color:#555; font-style:italic;">${weakDesc}</p>` : '';
-    const weakHtml = weakArr.length > 0
-      ? weakArr.filter(w=>w&&w.stat).map(w => `<li style="color:var(--red-wax); font-weight:500; margin-bottom:0.3rem;">🔴 ${w.stat}: <strong>-${w.pct}%</strong></li>`).join('')
+    const linExtraElHtml = linExtraEl ? `<p style="margin:0.5rem 0 0; color:var(--gold);"><strong>✨ Elemento Extra da Linhagem:</strong> ${linExtraEl}</p>` : '';
+    const linWeakDescHtml = linWeakDesc ? `<p style="margin:0 0 0.3rem; font-size:0.85rem; color:#555; font-style:italic;">${linWeakDesc}</p>` : '';
+    const linWeakHtml = linWeakArr.length > 0
+      ? linWeakArr.filter(w=>w&&w.stat).map(w => `<li style="color:var(--red-wax); font-weight:500; margin-bottom:0.3rem;">🔴 ${w.stat}: <strong>-${w.pct}%</strong></li>`).join('')
+      : '<li style="font-style:italic; color:#777;">Nenhuma definida</li>';
+
+    const ua = char.uniqueAbility || {};
+    const uaBuffsArr = Array.isArray(ua.buffs) ? ua.buffs : [];
+    const uaWeakArr = Array.isArray(ua.weakness) ? ua.weakness : [];
+    const uaExtraEl = ua.extraElement || '';
+    const uaWeakDesc = ua.weaknessDesc || '';
+
+    const uaBuffsHtml = uaBuffsArr.length > 0
+      ? uaBuffsArr.filter(b=>b&&b.stat).map(b => `<li style="color:var(--green-moss); font-weight:500; margin-bottom:0.3rem;">🟢 ${b.stat}: <strong>+${b.pct}%</strong></li>`).join('')
+      : '<li style="font-style:italic; color:#777;">Nenhum definido</li>';
+    const uaExtraElHtml = uaExtraEl ? `<p style="margin:0.5rem 0 0; color:var(--gold);"><strong>✨ Elemento Extra da Habilidade:</strong> ${uaExtraEl}</p>` : '';
+    const uaWeakDescHtml = uaWeakDesc ? `<p style="margin:0 0 0.3rem; font-size:0.85rem; color:#555; font-style:italic;">${uaWeakDesc}</p>` : '';
+    const uaWeakHtml = uaWeakArr.length > 0
+      ? uaWeakArr.filter(w=>w&&w.stat).map(w => `<li style="color:var(--red-wax); font-weight:500; margin-bottom:0.3rem;">🔴 ${w.stat}: <strong>-${w.pct}%</strong></li>`).join('')
       : '<li style="font-style:italic; color:#777;">Nenhuma definida</li>';
 
     html += `
-      <div style="margin-top:1rem; display:grid; grid-template-columns:1fr 1fr; gap:1.2rem;">
-        <div>
-          <h4 style="margin:0 0 0.4rem; font-size:0.9rem; color:var(--green-moss); font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank);">🟢 Buffs:</h4>
-          <ul style="list-style:none; padding-left:0; margin:0;">${buffsHtml}</ul>
-          ${extraElHtml}
+      <div style="margin-bottom:1.5rem; padding:1.2rem; border:1px solid var(--gold); border-radius:8px; background:rgba(212,175,55,0.03);">
+        <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--gold); margin-top:0; margin-bottom:0.8rem; color:var(--gold); font-size:1rem;">👑 Linhagem: ${char.lineage || 'Nenhuma'}</h3>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.2rem;">
+          <div>
+            <h4 style="margin:0 0 0.4rem; font-size:0.85rem; color:var(--green-moss); font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank);">🟢 Buffs da Linhagem:</h4>
+            <ul style="list-style:none; padding-left:0; margin:0;">${linBuffsHtml}</ul>
+            ${linExtraElHtml}
+          </div>
+          <div>
+            <h4 style="margin:0 0 0.4rem; font-size:0.85rem; color:var(--red-wax); font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank);">🔴 Fraquezas da Linhagem:</h4>
+            ${linWeakDescHtml}
+            <ul style="list-style:none; padding-left:0; margin:0;">${linWeakHtml}</ul>
+          </div>
         </div>
-        <div>
-          <h4 style="margin:0 0 0.4rem; font-size:0.9rem; color:var(--red-wax); font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank);">🔴 Fraquezas:</h4>
-          ${weakDescHtml}
-          <ul style="list-style:none; padding-left:0; margin:0;">${weakHtml}</ul>
+      </div>
+
+      <div style="margin-bottom:1.5rem; padding:1.2rem; border:1px solid var(--wood-plank); border-radius:8px; background:var(--parchment-aged);">
+        <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-top:0; margin-bottom:0.8rem; color:var(--ink); font-size:1rem;">🔮 Habilidade Única: ${ua.title || 'Nenhuma'}</h3>
+        <p style="margin:0 0 0.8rem; font-size:0.88rem; line-height:1.5; color:var(--ink); font-style:italic;">${ua.description || ''}</p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.2rem;">
+          <div>
+            <h4 style="margin:0 0 0.4rem; font-size:0.85rem; color:var(--green-moss); font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank);">🟢 Buffs da Habilidade:</h4>
+            <ul style="list-style:none; padding-left:0; margin:0;">${uaBuffsHtml}</ul>
+            ${uaExtraElHtml}
+          </div>
+          <div>
+            <h4 style="margin:0 0 0.4rem; font-size:0.85rem; color:var(--red-wax); font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank);">🔴 Fraquezas da Habilidade:</h4>
+            ${uaWeakDescHtml}
+            <ul style="list-style:none; padding-left:0; margin:0;">${uaWeakHtml}</ul>
+          </div>
         </div>
       </div>
     `;
@@ -924,6 +1056,8 @@ function openCharacterSheetInEditMode(uid) {
   const currentUser = _auth ? _auth.currentUser : null;
   const currentUserData = currentUser ? ALL_CHARACTERS[currentUser.uid] : null;
   const isSubAdmin = currentUserData && currentUserData.isSubAdmin && !currentUserData.isAdmin;
+  const isStaff = currentUserData && (currentUserData.isAdmin || currentUserData.isSubAdmin || currentUserData.user_role === 'admin' || currentUserData.user_role === 'sub-admin');
+  const isDanteAdmin = currentUserData && (currentUserData.isAdmin || currentUserData.user_role === 'admin' || currentUserData.character?.name === 'DanteSTR');
 
   let html = `<h2 style="font-family:'Cinzel',serif; text-align:center; color:var(--ink); margin-bottom:1.5rem; border-bottom:1px solid var(--wood-plank); padding-bottom:0.5rem;">✏️ Editando Ficha: ${char.name || ''}</h2>`;
 
@@ -935,105 +1069,224 @@ function openCharacterSheetInEditMode(uid) {
     `;
   }
 
-  html += `
-    <div style="display:flex; flex-direction:column; gap:1.2rem;">
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-        <div class="field-group">
-          <label style="font-weight:bold; font-size:0.9rem;">Nome do Personagem</label>
-          <input type="text" id="edit-char-name" value="${char.name || ''}" style="width:100%; border:1px solid var(--wood-plank); border-radius:4px; padding:0.4rem; background:var(--parchment); color:var(--ink);">
-        </div>
-        <div class="field-group">
-          <label style="font-weight:bold; font-size:0.9rem;">Gênero</label>
-          <input type="text" id="edit-char-gender" value="${char.gender || ''}" style="width:100%; border:1px solid var(--wood-plank); border-radius:4px; padding:0.4rem; background:var(--parchment); color:var(--ink);">
-        </div>
-      </div>
+  let lineageSectionHtml = '';
+  let uaSectionHtml = '';
 
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-        <div class="field-group">
-          <label style="font-weight:bold; font-size:0.9rem;">Idade do Personagem</label>
-          <input type="number" id="edit-char-age" value="${char.age || ''}" style="width:100%; border:1px solid var(--wood-plank); border-radius:4px; padding:0.4rem; background:var(--parchment); color:var(--ink);">
-        </div>
-        <div class="field-group">
-          <label style="font-weight:bold; font-size:0.9rem;">Linhagem</label>
-          <input type="text" id="edit-char-lineage" value="${char.lineage || ''}" style="width:100%; border:1px solid var(--wood-plank); border-radius:4px; padding:0.4rem; background:var(--parchment); color:var(--ink);">
-        </div>
-      </div>
+  if (isStaff) {
+    const linData = char.lineageData || {};
+    const existingLineageBuffs = linData.buffs || [];
+    const existingLineageWeakness = linData.weakness || [];
+    const existingLineageElement = linData.extraElement || '';
+    const existingLineageWeakDesc = linData.weaknessDesc || '';
 
-      <div class="field-group">
-        <label style="font-weight:bold; font-size:0.9rem;">Raça</label>
-        <select id="edit-char-race" style="width:100%; border:1px solid var(--wood-plank); border-radius:4px; padding:0.4rem; background:var(--parchment); color:var(--ink); font-family:sans-serif;">
-          <option value="Humano" ${char.race === 'Humano' ? 'selected' : ''}>Humano</option>
-          <option value="Elfo" ${char.race === 'Elfo' ? 'selected' : ''}>Elfo</option>
-          <option value="Elfo Negro" ${char.race === 'Elfo Negro' ? 'selected' : ''}>Elfo Negro</option>
-          <option value="Demi-Humano" ${char.race === 'Demi-Humano' ? 'selected' : ''}>Demi-Humano</option>
-          <option value="Anão" ${char.race === 'Anão' ? 'selected' : ''}>Anão</option>
-          <option value="Gigante" ${char.race === 'Gigante' ? 'selected' : ''}>Gigante</option>
-          <option value="Vampiro" ${char.race === 'Vampiro' ? 'selected' : ''}>Vampiro</option>
-          <option value="Valquíria" ${char.race === 'Valquíria' ? 'selected' : ''}>Valquíria</option>
-          <option value="Demônio" ${char.race === 'Demônio' ? 'selected' : ''}>Demônio</option>
-          <option value="Dracônico" ${char.race === 'Dracônico' ? 'selected' : ''}>Dracônico</option>
-        </select>
-      </div>
+    const existingUaBuffs = unique.buffs || [];
+    const existingUaWeakness = unique.weakness || [];
+    const existingUaElement = unique.extraElement || '';
+    const existingUaWeakDesc = unique.weaknessDesc || '';
 
-      <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-top:1rem; margin-bottom:0.5rem; color:var(--ink);">Atributos</h3>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-        <div style="display:flex; align-items:center; gap:0.5rem;">
-          <span style="font-weight:bold; width:100px;">💪 Força:</span>
-          <input type="number" id="edit-attr-strength" value="${attrs.strength || 0}" style="width:80px; padding:0.3rem; border:1px solid var(--wood-plank); background:var(--parchment); color:var(--ink);">
-        </div>
-        <div style="display:flex; align-items:center; gap:0.5rem;">
-          <span style="font-weight:bold; width:100px;">🛡️ Resistência:</span>
-          <input type="number" id="edit-attr-resistance" value="${attrs.resistance || 0}" style="width:80px; padding:0.3rem; border:1px solid var(--wood-plank); background:var(--parchment); color:var(--ink);">
-        </div>
-        <div style="display:flex; align-items:center; gap:0.5rem;">
-          <span style="font-weight:bold; width:100px;">⚡ Velocidade:</span>
-          <input type="number" id="edit-attr-speed" value="${attrs.speed || 0}" style="width:80px; padding:0.3rem; border:1px solid var(--wood-plank); background:var(--parchment); color:var(--ink);">
-        </div>
-        <div style="display:flex; align-items:center; gap:0.5rem;">
-          <span style="font-weight:bold; width:100px;">✨ Magia:</span>
-          <input type="number" id="edit-attr-magic" value="${attrs.magic || 0}" style="width:80px; padding:0.3rem; border:1px solid var(--wood-plank); background:var(--parchment); color:var(--ink);">
-        </div>
-      </div>
+    // Helper: render a buff row (stat select + % input)
+    function buffRowHtml(rowId, prefix, stat, pct) {
+      const primaryOpts = ['Força','Resistência','Velocidade','Magia'];
+      const secondaryOpts = ['Resistência a Venenos','Resistência a Ácidos','Resistência a Queimaduras','Resistência a Pressão','Resistência Elemental','Perfuração','Dano Elemental','Redução de Dano'];
+      const allOpts = [...primaryOpts, ...secondaryOpts];
+      const optsHtml = allOpts.map(o => `<option value="${o}" ${stat===o?'selected':''}>${o}</option>`).join('');
+      return `<tr id="${prefix}-row-${rowId}">
+        <td style="padding:0.3rem;"><select id="${prefix}-stat-${rowId}" style="width:100%;padding:0.25rem;background:var(--parchment);color:var(--ink);border:1px solid var(--wood-plank);border-radius:3px;font-size:0.82rem;"><option value="">— Escolha —</option>${optsHtml}</select></td>
+        <td style="padding:0.3rem;"><input type="number" id="${prefix}-pct-${rowId}" min="0" max="50" value="${pct||''}" placeholder="%" style="width:65px;padding:0.25rem;background:var(--parchment);color:var(--ink);border:1px solid var(--wood-plank);border-radius:3px;text-align:center;"> %</td>
+        <td style="padding:0.3rem;"><button onclick="removeBuffRow('${prefix}-row-${rowId}')" style="background:var(--red-wax);color:#fff;border:none;border-radius:3px;cursor:pointer;padding:2px 6px;font-size:0.8rem;">✕</button></td>
+      </tr>`;
+    }
 
-      <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-top:1rem; margin-bottom:0.5rem; color:var(--ink);">🌟 Habilidade Única / Aprendida</h3>
-      
-      <div style="background:rgba(201,147,58,0.06); border:2px solid var(--gold); border-radius:6px; padding:1rem; margin-bottom:1rem; box-shadow:0 3px 6px rgba(0,0,0,0.15);">
-        <h4 style="margin:0 0 0.5rem 0; font-family:'Cinzel',serif; color:var(--gold); display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-size:0.95rem; user-select:none;" onclick="const container = document.getElementById('db-lookup-container'); container.style.display = container.style.display === 'none' ? 'block' : 'none'; if(container.style.display==='block') filterDbLookupAbilities();">
-          📚 Consultar Banco de Dados de Habilidades <span style="font-size:0.75rem; font-weight:normal; color:#888;">(Clique para abrir/fechar)</span>
-        </h4>
-        <div id="db-lookup-container" style="display:none; margin-top:0.8rem;">
-          <div class="field-group" style="margin-bottom:0.8rem;">
-            <label style="font-size:0.8rem; font-weight:bold; color:var(--ink); margin-bottom:0.2rem;">Filtrar por Raça / Categoria:</label>
-            <select id="db-lookup-category" onchange="filterDbLookupAbilities()" style="width:100%; border:1px solid var(--wood-plank); border-radius:4px; padding:0.3rem; background:var(--parchment); color:var(--ink); font-family:sans-serif; font-size:0.85rem;">
-              <option value="all">— Todas as Categorias —</option>
-              <option value="Simples">Simples</option>
-              <option value="Humano">Humano</option>
-              <option value="Elfo">Elfo (Geral)</option>
-              <option value="Alto Elfo">Alto Elfo</option>
-              <option value="Drow">Drow</option>
-              <option value="Demi-Humano">Demi-Humano</option>
-              <option value="Gigante">Gigante</option>
-              <option value="Anão">Anão</option>
-              <option value="Vampiro">Vampiro / Ghoul</option>
-              <option value="Valquíria">Valquíria</option>
-              <option value="Demônio">Demônio</option>
-              <option value="Dracônico">Dracônico</option>
+    // Helper: render a weakness row (stat select + % input)
+    function weakRowHtml(rowId, prefix, stat, pct) {
+      const primaryOpts = ['Força','Resistência','Velocidade','Magia'];
+      const secondaryOpts = ['Resistência a Venenos','Resistência a Ácidos','Resistência a Queimaduras','Resistência a Pressão','Resistência Elemental','Perfuração','Dano Elemental','Redução de Dano'];
+      const allOpts = [...primaryOpts, ...secondaryOpts];
+      const optsHtml = allOpts.map(o => `<option value="${o}" ${stat===o?'selected':''}>${o}</option>`).join('');
+      return `<tr id="${prefix}-row-${rowId}">
+        <td style="padding:0.3rem;"><select id="${prefix}-stat-${rowId}" style="width:100%;padding:0.25rem;background:var(--parchment);color:var(--ink);border:1px solid var(--wood-plank);border-radius:3px;font-size:0.82rem;"><option value="">— Escolha —</option>${optsHtml}</select></td>
+        <td style="padding:0.3rem;"><input type="number" id="${prefix}-pct-${rowId}" min="0" max="100" value="${pct||''}" placeholder="%" style="width:65px;padding:0.25rem;background:var(--parchment);color:var(--ink);border:1px solid var(--wood-plank);border-radius:3px;text-align:center;"> %</td>
+        <td style="padding:0.3rem;"><button onclick="removeWeakRow('${prefix}-row-${rowId}')" style="background:var(--red-wax);color:#fff;border:none;border-radius:3px;cursor:pointer;padding:2px 6px;font-size:0.8rem;">✕</button></td>
+      </tr>`;
+    }
+
+    // Linhagem Rows
+    let linBuffRows = '';
+    let linBuffIdx = 0;
+    existingLineageBuffs.forEach(b => {
+      if (b && b.stat) { linBuffRows += buffRowHtml(linBuffIdx, 'edit-lineage-buff', b.stat, b.pct); linBuffIdx++; }
+    });
+
+    let linWeakRows = '';
+    let linWeakIdx = 0;
+    existingLineageWeakness.forEach(w => {
+      if (w && w.stat) { linWeakRows += weakRowHtml(linWeakIdx, 'edit-lineage-weak', w.stat, w.pct); linWeakIdx++; }
+    });
+
+    // Habilidade Única Rows
+    let uaBuffRows = '';
+    let uaBuffIdx = 0;
+    existingUaBuffs.forEach(b => {
+      if (b && b.stat) { uaBuffRows += buffRowHtml(uaBuffIdx, 'edit-ua-buff', b.stat, b.pct); uaBuffIdx++; }
+    });
+
+    let uaWeakRows = '';
+    let uaWeakIdx = 0;
+    existingUaWeakness.forEach(w => {
+      if (w && w.stat) { uaWeakRows += weakRowHtml(uaWeakIdx, 'edit-ua-weak', w.stat, w.pct); uaWeakIdx++; }
+    });
+
+    window._buffRowCounter = Math.max(linBuffIdx, uaBuffIdx);
+    window._weakRowCounter = Math.max(linWeakIdx, uaWeakIdx);
+
+    const elementsList = ['Fogo','Água','Terra','Vento','Gelo','Planta','Mineral','Relâmpago','Luz','Sombra','Dimensional','Sagrado','Trevas'];
+    const linElemOptsHtml = elementsList.map(e => `<option value="${e}" ${existingLineageElement===e?'selected':''}>${e}</option>`).join('');
+    const uaElemOptsHtml = elementsList.map(e => `<option value="${e}" ${existingUaElement===e?'selected':''}>${e}</option>`).join('');
+
+    const linKhosmoOpt = isDanteAdmin ? `<option value="Chaos" ${existingLineageElement==='Chaos'?'selected':''}>🕳️ Chaos (Primordial)</option><option value="Khosmos" ${existingLineageElement==='Khosmos'?'selected':''}>🌌 Khosmos (Primordial)</option>` : '';
+    const uaKhosmoOpt = isDanteAdmin ? `<option value="Chaos" ${existingUaElement==='Chaos'?'selected':''}>🕳️ Chaos (Primordial)</option><option value="Khosmos" ${existingUaElement==='Khosmos'?'selected':''}>🌌 Khosmos (Primordial)</option>` : '';
+
+    lineageSectionHtml = `
+      <!-- PAINEL ESTRUTURADO DE EDIÇÃO DE LINHAGEM (APENAS STAFF) -->
+      <div style="margin-top:1rem; padding:1.2rem; border:2px dashed var(--gold); border-radius:8px; background:rgba(212,175,55,0.05); margin-bottom: 1.5rem;">
+        <h4 style="margin-top:0; font-family:'Cinzel',serif; color:var(--gold); border-bottom:1px dashed var(--wood-plank); padding-bottom:0.4rem; font-size:1rem;">👑 Linhagem do Personagem (Painel do Mestre)</h4>
+        
+        <div style="margin-bottom:1rem;">
+          <label style="font-size:0.85rem; color:var(--ink); font-weight:bold; display:block; margin-bottom:0.3rem;">Nome da Linhagem:</label>
+          <input type="text" id="edit-char-lineage" value="${char.lineage && char.lineage.includes('a ser definido') ? '' : char.lineage || ''}" placeholder="Nome da Linhagem..." style="width:100%; border:1px solid var(--wood-plank); border-radius:4px; padding:0.4rem; background:var(--parchment); color:var(--ink);">
+        </div>
+
+        <!-- BUFFS TABLE (LINHAGEM) -->
+        <div style="margin-bottom:1.2rem;">
+          <label style="display:flex; align-items:center; gap:0.5rem; font-weight:bold; color:var(--green-moss); font-size:0.88rem; margin-bottom:0.4rem;">🟢 Buffs da Linhagem <span style="font-size:0.72rem;font-weight:normal;color:#888;">(máx. 50% por atributo)</span></label>
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+              <thead>
+                <tr style="background:rgba(0,100,0,0.07);">
+                  <th style="padding:0.3rem 0.5rem; text-align:left; color:var(--ink);">Atributo</th>
+                  <th style="padding:0.3rem 0.5rem; text-align:left; color:var(--ink);">Porcentagem</th>
+                  <th style="padding:0.3rem;"></th>
+                </tr>
+              </thead>
+              <tbody id="edit-lineage-buffs-tbody">
+                ${linBuffRows}
+              </tbody>
+            </table>
+          </div>
+          <button onclick="addBuffRow('edit-lineage-buffs-tbody')" style="margin-top:0.5rem;background:rgba(0,128,0,0.12);border:1px solid var(--green-moss);color:var(--green-moss);border-radius:4px;padding:0.25rem 0.8rem;cursor:pointer;font-size:0.82rem;">＋ Adicionar Buff</button>
+        </div>
+
+        <!-- ELEMENTO EXTRA (LINHAGEM) -->
+        <div style="margin-bottom:1.2rem; padding:0.8rem; border:1px solid var(--gold); border-radius:6px; background:rgba(212,175,55,0.04);">
+          <label style="display:block; font-weight:bold; color:var(--gold); font-size:0.88rem; margin-bottom:0.4rem;">✨ Elemento Extra da Linhagem (Opcional)</label>
+          <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap;">
+            <select id="edit-lineage-extra-element" style="flex:1; min-width:160px; padding:0.4rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-family:sans-serif;">
+              <option value="">— Nenhum —</option>
+              ${linElemOptsHtml}
+              ${linKhosmoOpt}
             </select>
-          </div>
-          <div id="db-lookup-results" style="max-height:220px; overflow-y:auto; border:1px solid var(--wood-plank); border-radius:4px; padding:0.5rem; background:rgba(0,0,0,0.05); display:flex; flex-direction:column; gap:0.6rem; margin-top:0.5rem;">
+            <span style="font-size:0.78rem; color:#888; font-style:italic;">${!isDanteAdmin?'Chaos/Khosmos requerem Admin Supremo':''}</span>
           </div>
         </div>
-      </div>
 
-      <div class="field-group">
-        <label style="font-weight:bold; font-size:0.9rem;">Título da Habilidade</label>
-        <input type="text" id="edit-ua-title" value="${unique.title || ''}" style="width:100%; border:1px solid var(--wood-plank); padding:0.4rem; background:var(--parchment); color:var(--ink);">
+        <!-- FRAQUEZA TABLE (LINHAGEM) -->
+        <div style="margin-bottom:0.8rem;">
+          <label style="display:flex; align-items:center; gap:0.5rem; font-weight:bold; color:var(--red-wax); font-size:0.88rem; margin-bottom:0.4rem;">🔴 Fraquezas da Linhagem</label>
+          <div style="margin-bottom:0.5rem;">
+            <label style="font-size:0.8rem; color:var(--ink); font-weight:500;">Descrição da Fraqueza da Linhagem:</label>
+            <input type="text" id="edit-lineage-weak-desc" value="${existingLineageWeakDesc}" placeholder="Ex: Vulnerável a calor extremo..." style="width:100%; margin-top:0.2rem; padding:0.35rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px;">
+          </div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+              <thead>
+                <tr style="background:rgba(139,0,0,0.07);">
+                  <th style="padding:0.3rem 0.5rem; text-align:left; color:var(--ink);">Atributo</th>
+                  <th style="padding:0.3rem 0.5rem; text-align:left; color:var(--ink);">Penalidade %</th>
+                  <th style="padding:0.3rem;"></th>
+                </tr>
+              </thead>
+              <tbody id="edit-lineage-weakness-tbody">
+                ${linWeakRows}
+              </tbody>
+            </table>
+          </div>
+          <button onclick="addWeakRow('edit-lineage-weakness-tbody')" style="margin-top:0.5rem;background:rgba(139,0,0,0.1);border:1px solid var(--red-wax);color:var(--red-wax);border-radius:4px;padding:0.25rem 0.8rem;cursor:pointer;font-size:0.82rem;">＋ Adicionar Fraqueza</button>
+        </div>
       </div>
-      <div class="field-group">
-        <label style="font-weight:bold; font-size:0.9rem;">Descrição da Habilidade</label>
-        <textarea id="edit-ua-desc" style="width:100%; height:80px; border:1px solid var(--wood-plank); padding:0.4rem; background:var(--parchment); color:var(--ink); font-family:sans-serif;">${unique.description || ''}</textarea>
-      </div>
+    `;
 
+    uaSectionHtml = `
+      <!-- PAINEL ESTRUTURADO DE EDIÇÃO DE HABILIDADE ÚNICA (APENAS STAFF) -->
+      <div style="margin-top:1rem; padding:1.2rem; border:2px dashed var(--red-wax); border-radius:8px; background:rgba(139,0,0,0.05); margin-bottom: 1.5rem;">
+        <h4 style="margin-top:0; font-family:'Cinzel',serif; color:var(--red-wax); border-bottom:1px dashed var(--wood-plank); padding-bottom:0.4rem; font-size:1rem;">🔮 Habilidade Única (Painel do Mestre)</h4>
+        
+        <!-- BUFFS TABLE (HABILIDADE ÚNICA) -->
+        <div style="margin-bottom:1.2rem;">
+          <label style="display:flex; align-items:center; gap:0.5rem; font-weight:bold; color:var(--green-moss); font-size:0.88rem; margin-bottom:0.4rem;">🟢 Buffs da Habilidade <span style="font-size:0.72rem;font-weight:normal;color:#888;">(máx. 50% por atributo)</span></label>
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+              <thead>
+                <tr style="background:rgba(0,100,0,0.07);">
+                  <th style="padding:0.3rem 0.5rem; text-align:left; color:var(--ink);">Atributo</th>
+                  <th style="padding:0.3rem 0.5rem; text-align:left; color:var(--ink);">Porcentagem</th>
+                  <th style="padding:0.3rem;"></th>
+                </tr>
+              </thead>
+              <tbody id="edit-ua-buffs-tbody">
+                ${uaBuffRows}
+              </tbody>
+            </table>
+          </div>
+          <button onclick="addBuffRow('edit-ua-buffs-tbody')" style="margin-top:0.5rem;background:rgba(0,128,0,0.12);border:1px solid var(--green-moss);color:var(--green-moss);border-radius:4px;padding:0.25rem 0.8rem;cursor:pointer;font-size:0.82rem;">＋ Adicionar Buff</button>
+        </div>
+
+        <!-- ELEMENTO EXTRA (HABILIDADE ÚNICA) -->
+        <div style="margin-bottom:1.2rem; padding:0.8rem; border:1px solid var(--gold); border-radius:6px; background:rgba(212,175,55,0.04);">
+          <label style="display:block; font-weight:bold; color:var(--gold); font-size:0.88rem; margin-bottom:0.4rem;">✨ Elemento Extra da Habilidade (Opcional)</label>
+          <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap;">
+            <select id="edit-ua-extra-element" style="flex:1; min-width:160px; padding:0.4rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-family:sans-serif;">
+              <option value="">— Nenhum —</option>
+              ${uaElemOptsHtml}
+              ${uaKhosmoOpt}
+            </select>
+            <span style="font-size:0.78rem; color:#888; font-style:italic;">${!isDanteAdmin?'Chaos/Khosmos requerem Admin Supremo':''}</span>
+          </div>
+        </div>
+
+        <!-- FRAQUEZA TABLE (HABILIDADE ÚNICA) -->
+        <div style="margin-bottom:0.8rem;">
+          <label style="display:flex; align-items:center; gap:0.5rem; font-weight:bold; color:var(--red-wax); font-size:0.88rem; margin-bottom:0.4rem;">🔴 Fraquezas da Habilidade</label>
+          <div style="margin-bottom:0.5rem;">
+            <label style="font-size:0.8rem; color:var(--ink); font-weight:500;">Descrição da Fraqueza da Habilidade:</label>
+            <input type="text" id="edit-ua-weak-desc" value="${existingUaWeakDesc}" placeholder="Ex: Causa exaustão severa..." style="width:100%; margin-top:0.2rem; padding:0.35rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px;">
+          </div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+              <thead>
+                <tr style="background:rgba(139,0,0,0.07);">
+                  <th style="padding:0.3rem 0.5rem; text-align:left; color:var(--ink);">Atributo</th>
+                  <th style="padding:0.3rem 0.5rem; text-align:left; color:var(--ink);">Penalidade %</th>
+                  <th style="padding:0.3rem;"></th>
+                </tr>
+              </thead>
+              <tbody id="edit-ua-weakness-tbody">
+                ${uaWeakRows}
+              </tbody>
+            </table>
+          </div>
+          <button onclick="addWeakRow('edit-ua-weakness-tbody')" style="margin-top:0.5rem;background:rgba(139,0,0,0.1);border:1px solid var(--red-wax);color:var(--red-wax);border-radius:4px;padding:0.25rem 0.8rem;cursor:pointer;font-size:0.82rem;">＋ Adicionar Fraqueza</button>
+        </div>
+      </div>
+    `;
+  } else {
+    lineageSectionHtml = `
+      <div class="field-group">
+        <label style="font-weight:bold; font-size:0.9rem;">Linhagem</label>
+        <input type="text" id="edit-char-lineage" value="${char.lineage || ''}" style="width:100%; border:1px solid var(--wood-plank); border-radius:4px; padding:0.4rem; background:var(--parchment); color:var(--ink);">
+      </div>
+    `;
+
+    uaSectionHtml = `
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
         <div class="field-group">
           <label style="color:var(--green-moss); font-weight:bold; font-size:0.9rem;">🟢 Buffs (um por linha)</label>
@@ -1044,27 +1297,129 @@ function openCharacterSheetInEditMode(uid) {
           <textarea id="edit-ua-nerfs" style="width:100%; height:80px; border:1px solid var(--wood-plank); padding:0.4rem; background:var(--parchment); color:var(--ink); font-family:sans-serif;">${(unique.nerfs || []).join('\n')}</textarea>
         </div>
       </div>
+    `;
+  }
 
-      <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-top:1rem; margin-bottom:0.5rem; color:var(--ink);">🧬 Classes & Magias</h3>
-      <div class="field-group">
-        <label style="font-weight:bold; font-size:0.9rem;">Classes (separadas por vírgula)</label>
-        <input type="text" id="edit-char-classes" value="${(char.classes || []).join(', ')}" style="width:100%; border:1px solid var(--wood-plank); padding:0.4rem; background:var(--parchment); color:var(--ink);">
-      </div>
-      <div class="field-group">
-        <label style="font-weight:bold; font-size:0.9rem;">Magias (separadas por vírgula)</label>
-        <input type="text" id="edit-char-spells" value="${(char.spells || []).join(', ')}" style="width:100%; border:1px solid var(--wood-plank); padding:0.4rem; background:var(--parchment); color:var(--ink);">
-      </div>
+  html += `
+    <div style="display:flex; flex-direction:column; gap:1.2rem;">
+      <div style="display:flex; flex-direction:column; gap:1.2rem;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+          <div class="field-group">
+            <label style="font-weight:bold; font-size:0.9rem;">Nome do Personagem</label>
+            <input type="text" id="edit-char-name" value="${char.name || ''}" style="width:100%; border:1px solid var(--wood-plank); border-radius:4px; padding:0.4rem; background:var(--parchment); color:var(--ink);">
+          </div>
+          <div class="field-group">
+            <label style="font-weight:bold; font-size:0.9rem;">Gênero</label>
+            <input type="text" id="edit-char-gender" value="${char.gender || ''}" style="width:100%; border:1px solid var(--wood-plank); border-radius:4px; padding:0.4rem; background:var(--parchment); color:var(--ink);">
+          </div>
+        </div>
 
-      <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-top:1rem; margin-bottom:0.5rem; color:var(--ink);">📜 História do Personagem</h3>
-      <div class="field-group">
-        <textarea id="edit-char-story" style="width:100%; height:120px; border:1px solid var(--wood-plank); padding:0.4rem; background:var(--parchment); color:var(--ink); font-family:sans-serif;">${char.story || ''}</textarea>
-      </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+          <div class="field-group">
+            <label style="font-weight:bold; font-size:0.9rem;">Idade do Personagem</label>
+            <input type="number" id="edit-char-age" value="${char.age || ''}" style="width:100%; border:1px solid var(--wood-plank); border-radius:4px; padding:0.4rem; background:var(--parchment); color:var(--ink);">
+          </div>
+          ${lineageSectionHtml}
+        </div>
 
-      <div style="margin-top:1.5rem; display:flex; gap:1rem; justify-content:center;">
-        <button onclick="toggleEditSheet('${uid}')" class="form-submit-btn" style="background:var(--parchment-aged); color:var(--ink); border-color:var(--wood-plank); width:auto; padding:0.6rem 1.5rem; cursor:pointer;">Cancelar</button>
-        <button onclick="saveCharacterSheetEdits('${uid}')" class="form-submit-btn" style="background:var(--red-wax); color:#fff; border-color:var(--red-wax); width:auto; padding:0.6rem 2rem; cursor:pointer;">
-          ${isSubAdmin ? '📨 Solicitar Alterações' : '💾 Salvar Alterações'}
-        </button>
+        <div class="field-group">
+          <label style="font-weight:bold; font-size:0.9rem;">Raça</label>
+          <select id="edit-char-race" style="width:100%; border:1px solid var(--wood-plank); border-radius:4px; padding:0.4rem; background:var(--parchment); color:var(--ink); font-family:sans-serif;">
+            <option value="Humano" ${char.race === 'Humano' ? 'selected' : ''}>Humano</option>
+            <option value="Elfo" ${char.race === 'Elfo' ? 'selected' : ''}>Elfo</option>
+            <option value="Elfo Negro" ${char.race === 'Elfo Negro' ? 'selected' : ''}>Elfo Negro</option>
+            <option value="Demi-Humano" ${char.race === 'Demi-Humano' ? 'selected' : ''}>Demi-Humano</option>
+            <option value="Anão" ${char.race === 'Anão' ? 'selected' : ''}>Anão</option>
+            <option value="Gigante" ${char.race === 'Gigante' ? 'selected' : ''}>Gigante</option>
+            <option value="Vampiro" ${char.race === 'Vampiro' ? 'selected' : ''}>Vampiro</option>
+            <option value="Valquíria" ${char.race === 'Valquíria' ? 'selected' : ''}>Valquíria</option>
+            <option value="Demônio" ${char.race === 'Demônio' ? 'selected' : ''}>Demônio</option>
+            <option value="Dracônico" ${char.race === 'Dracônico' ? 'selected' : ''}>Dracônico</option>
+          </select>
+        </div>
+
+        <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-top:1rem; margin-bottom:0.5rem; color:var(--ink);">Atributos</h3>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <span style="font-weight:bold; width:100px;">💪 Força:</span>
+            <input type="number" id="edit-attr-strength" value="${attrs.strength || 0}" style="width:80px; padding:0.3rem; border:1px solid var(--wood-plank); background:var(--parchment); color:var(--ink);">
+          </div>
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <span style="font-weight:bold; width:100px;">🛡️ Resistência:</span>
+            <input type="number" id="edit-attr-resistance" value="${attrs.resistance || 0}" style="width:80px; padding:0.3rem; border:1px solid var(--wood-plank); background:var(--parchment); color:var(--ink);">
+          </div>
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <span style="font-weight:bold; width:100px;">⚡ Velocidade:</span>
+            <input type="number" id="edit-attr-speed" value="${attrs.speed || 0}" style="width:80px; padding:0.3rem; border:1px solid var(--wood-plank); background:var(--parchment); color:var(--ink);">
+          </div>
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <span style="font-weight:bold; width:100px;">✨ Magia:</span>
+            <input type="number" id="edit-attr-magic" value="${attrs.magic || 0}" style="width:80px; padding:0.3rem; border:1px solid var(--wood-plank); background:var(--parchment); color:var(--ink);">
+          </div>
+        </div>
+
+        <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-top:1rem; margin-bottom:0.5rem; color:var(--ink);">🌟 Habilidade Única / Aprendida</h3>
+        
+        <div style="background:rgba(201,147,58,0.06); border:2px solid var(--gold); border-radius:6px; padding:1rem; margin-bottom:1rem; box-shadow:0 3px 6px rgba(0,0,0,0.15);">
+          <h4 style="margin:0 0 0.5rem 0; font-family:'Cinzel',serif; color:var(--gold); display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-size:0.95rem; user-select:none;" onclick="const container = document.getElementById('db-lookup-container'); container.style.display = container.style.display === 'none' ? 'block' : 'none'; if(container.style.display==='block') filterDbLookupAbilities();">
+            📚 Consultar Banco de Dados de Habilidades <span style="font-size:0.75rem; font-weight:normal; color:#888;">(Clique para abrir/fechar)</span>
+          </h4>
+          <div id="db-lookup-container" style="display:none; margin-top:0.8rem;">
+            <div class="field-group" style="margin-bottom:0.8rem;">
+              <label style="font-size:0.8rem; font-weight:bold; color:var(--ink); margin-bottom:0.2rem;">Filtrar por Raça / Categoria:</label>
+              <select id="db-lookup-category" onchange="filterDbLookupAbilities()" style="width:100%; border:1px solid var(--wood-plank); border-radius:4px; padding:0.3rem; background:var(--parchment); color:var(--ink); font-family:sans-serif; font-size:0.85rem;">
+                <option value="all">— Todas as Categorias —</option>
+                <option value="Simples">Simples</option>
+                <option value="Humano">Humano</option>
+                <option value="Elfo">Elfo (Geral)</option>
+                <option value="Alto Elfo">Alto Elfo</option>
+                <option value="Drow">Drow</option>
+                <option value="Demi-Humano">Demi-Humano</option>
+                <option value="Gigante">Gigante</option>
+                <option value="Anão">Anão</option>
+                <option value="Vampiro">Vampiro / Ghoul</option>
+                <option value="Valquíria">Valquíria</option>
+                <option value="Demônio">Demônio</option>
+                <option value="Dracônico">Dracônico</option>
+              </select>
+            </div>
+            <div id="db-lookup-results" style="max-height:220px; overflow-y:auto; border:1px solid var(--wood-plank); border-radius:4px; padding:0.5rem; background:rgba(0,0,0,0.05); display:flex; flex-direction:column; gap:0.6rem; margin-top:0.5rem;">
+            </div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label style="font-weight:bold; font-size:0.9rem;">Título da Habilidade</label>
+          <input type="text" id="edit-ua-title" value="${unique.title || ''}" style="width:100%; border:1px solid var(--wood-plank); padding:0.4rem; background:var(--parchment); color:var(--ink);">
+        </div>
+        <div class="field-group">
+          <label style="font-weight:bold; font-size:0.9rem;">Descrição da Habilidade</label>
+          <textarea id="edit-ua-desc" style="width:100%; height:80px; border:1px solid var(--wood-plank); padding:0.4rem; background:var(--parchment); color:var(--ink); font-family:sans-serif;">${unique.description || ''}</textarea>
+        </div>
+
+        ${uaSectionHtml}
+
+        <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-top:1rem; margin-bottom:0.5rem; color:var(--ink);">🧬 Classes & Magias</h3>
+        <div class="field-group">
+          <label style="font-weight:bold; font-size:0.9rem;">Classes (separadas por vírgula)</label>
+          <input type="text" id="edit-char-classes" value="${(char.classes || []).join(', ')}" style="width:100%; border:1px solid var(--wood-plank); padding:0.4rem; background:var(--parchment); color:var(--ink);">
+        </div>
+        <div class="field-group">
+          <label style="font-weight:bold; font-size:0.9rem;">Magias (separadas por vírgula)</label>
+          <input type="text" id="edit-char-spells" value="${(char.spells || []).join(', ')}" style="width:100%; border:1px solid var(--wood-plank); padding:0.4rem; background:var(--parchment); color:var(--ink);">
+        </div>
+
+        <h3 style="font-family:'Cinzel',serif; border-bottom:1px solid var(--wood-plank); margin-top:1rem; margin-bottom:0.5rem; color:var(--ink);">📜 História do Personagem</h3>
+        <div class="field-group">
+          <textarea id="edit-char-story" style="width:100%; height:120px; border:1px solid var(--wood-plank); padding:0.4rem; background:var(--parchment); color:var(--ink); font-family:sans-serif;">${char.story || ''}</textarea>
+        </div>
+
+        <div style="margin-top:1.5rem; display:flex; gap:1rem; justify-content:center;">
+          <button onclick="toggleEditSheet('${uid}')" class="form-submit-btn" style="background:var(--parchment-aged); color:var(--ink); border-color:var(--wood-plank); width:auto; padding:0.6rem 1.5rem; cursor:pointer;">Cancelar</button>
+          <button onclick="saveCharacterSheetEdits('${uid}')" class="form-submit-btn" style="background:var(--red-wax); color:#fff; border-color:var(--red-wax); width:auto; padding:0.6rem 2rem; cursor:pointer;">
+            ${isSubAdmin ? '📨 Solicitar Alterações' : '💾 Salvar Alterações'}
+          </button>
+        </div>
       </div>
     </div>
   `;
@@ -1087,17 +1442,67 @@ async function saveCharacterSheetEdits(uid) {
   const newClasses = document.getElementById('edit-char-classes').value.split(',').map(c => c.trim()).filter(c => c !== '');
   const newSpells = document.getElementById('edit-char-spells').value.split(',').map(s => s.trim()).filter(s => s !== '');
   const newStory = document.getElementById('edit-char-story').value.trim();
-  const newBuffs = document.getElementById('edit-ua-buffs').value.split('\n').map(b => b.trim()).filter(b => b !== '');
-  const newNerfs = document.getElementById('edit-ua-nerfs').value.split('\n').map(n => n.trim()).filter(n => n !== '');
+
+  const currentUser = _auth ? _auth.currentUser : null;
+  const currentUserData = currentUser ? ALL_CHARACTERS[currentUser.uid] : null;
+  const isSubAdmin = currentUserData && currentUserData.isSubAdmin && !currentUserData.isAdmin;
+  const isStaff = currentUserData && (currentUserData.isAdmin || currentUserData.isSubAdmin || currentUserData.user_role === 'admin' || currentUserData.user_role === 'sub-admin');
+
+  let lineageBuffs = [];
+  let lineageWeakness = [];
+  let lineageWeaknessDesc = '';
+  let lineageExtraElement = '';
+
+  let uaBuffs = [];
+  let uaWeakness = [];
+  let uaWeaknessDesc = '';
+  let uaExtraElement = '';
+
+  let legacyBuffs = [];
+  let legacyNerfs = [];
+
+  if (isStaff) {
+    // Coleta dados estruturados da Linhagem
+    lineageBuffs = typeof _collectBuffTableRows === 'function' ? _collectBuffTableRows('edit-lineage-buffs-tbody') : [];
+    lineageWeakness = typeof _collectBuffTableRows === 'function' ? _collectBuffTableRows('edit-lineage-weakness-tbody') : [];
+    const linWeakDescInp = document.getElementById('edit-lineage-weak-desc');
+    lineageWeaknessDesc = linWeakDescInp ? linWeakDescInp.value.trim() : '';
+    const linElemSel = document.getElementById('edit-lineage-extra-element');
+    lineageExtraElement = linElemSel ? linElemSel.value : '';
+
+    // Coleta dados estruturados da Habilidade Única
+    uaBuffs = typeof _collectBuffTableRows === 'function' ? _collectBuffTableRows('edit-ua-buffs-tbody') : [];
+    uaWeakness = typeof _collectBuffTableRows === 'function' ? _collectBuffTableRows('edit-ua-weakness-tbody') : [];
+    const uaWeakDescInp = document.getElementById('edit-ua-weak-desc');
+    uaWeaknessDesc = uaWeakDescInp ? uaWeakDescInp.value.trim() : '';
+    const uaElemSel = document.getElementById('edit-ua-extra-element');
+    uaExtraElement = uaElemSel ? uaElemSel.value : '';
+
+    // Valida o teto de 50% para buffs estruturados
+    for (const b of lineageBuffs) {
+      if (b.pct > 50) {
+        showToast(`⚠️ Buff de Linhagem "${b.stat}" ultrapassa o limite de 50%!`, 'error');
+        return;
+      }
+    }
+    for (const b of uaBuffs) {
+      if (b.pct > 50) {
+        showToast(`⚠️ Buff de Habilidade "${b.stat}" ultrapassa o limite de 50%!`, 'error');
+        return;
+      }
+    }
+  } else {
+    // Modo Legado
+    const buffsEl = document.getElementById('edit-ua-buffs');
+    legacyBuffs = buffsEl ? buffsEl.value.split('\n').map(b => b.trim()).filter(b => b !== '') : [];
+    const nerfsEl = document.getElementById('edit-ua-nerfs');
+    legacyNerfs = nerfsEl ? nerfsEl.value.split('\n').map(n => n.trim()).filter(n => n !== '') : [];
+  }
 
   const data = ALL_CHARACTERS[uid];
   const char = data.character || {};
   const origUa = char.uniqueAbility || {};
   const origAttrs = char.attributes || {};
-
-  const currentUser = _auth ? _auth.currentUser : null;
-  const currentUserData = currentUser ? ALL_CHARACTERS[currentUser.uid] : null;
-  const isSubAdmin = currentUserData && currentUserData.isSubAdmin && !currentUserData.isAdmin;
 
   let diffs = [];
   if (char.name !== newName) diffs.push(`Nome: "${char.name}" ➔ "${newName}"`);
@@ -1114,8 +1519,12 @@ async function saveCharacterSheetEdits(uid) {
   if ((char.classes || []).join(', ') !== newClasses.join(', ')) diffs.push(`Classes: "${(char.classes || []).join(', ')}" ➔ "${newClasses.join(', ')}"`);
   if ((char.spells || []).join(', ') !== newSpells.join(', ')) diffs.push(`Magias: "${(char.spells || []).join(', ')}" ➔ "${newSpells.join(', ')}"`);
   if (char.story !== newStory) diffs.push(`História modificada`);
-  if ((origUa.buffs || []).join('\n') !== newBuffs.join('\n')) diffs.push(`Buffs modificados`);
-  if ((origUa.nerfs || []).join('\n') !== newNerfs.join('\n')) diffs.push(`Nerfs modificados`);
+  if (isStaff) {
+    diffs.push(`Dados estruturados de Linhagem/UA modificados pelo Mestre`);
+  } else {
+    if ((origUa.buffs || []).join('\n') !== legacyBuffs.join('\n')) diffs.push(`Buffs modificados`);
+    if ((origUa.nerfs || []).join('\n') !== legacyNerfs.join('\n')) diffs.push(`Nerfs modificados`);
+  }
 
   if (diffs.length === 0) {
     showToast('⚠️ Nenhuma alteração foi detectada.', 'info');
@@ -1126,7 +1535,7 @@ async function saveCharacterSheetEdits(uid) {
 
   try {
     if (isSubAdmin) {
-      showToast('⚡ Enviando solicitação...', 'info');
+      showToast('📨 Enviando solicitação de modificação...', 'info');
       
       const modificationRequest = {
         proposedBy: currentUserData.player?.name || 'Sub-admin',
@@ -1137,17 +1546,29 @@ async function saveCharacterSheetEdits(uid) {
           age: newAge,
           gender: newGender,
           lineage: newLineage,
+          lineageData: {
+            buffs: lineageBuffs,
+            weakness: lineageWeakness,
+            weaknessDesc: lineageWeaknessDesc,
+            extraElement: lineageExtraElement
+          },
           uaTitle: newUaTitle,
           uaDesc: newUaDesc,
+          uniqueAbility: {
+            title: newUaTitle,
+            description: newUaDesc,
+            buffs: uaBuffs,
+            weakness: uaWeakness,
+            weaknessDesc: uaWeaknessDesc,
+            extraElement: uaExtraElement
+          },
           strength: newStrength,
           resistance: newResistance,
           speed: newSpeed,
           magic: newMagic,
           classes: newClasses,
           spells: newSpells,
-          story: newStory,
-          buffs: newBuffs,
-          nerfs: newNerfs
+          story: newStory
         },
         diffSummary: diffSummary,
         timestamp: new Date().toISOString()
@@ -1160,9 +1581,9 @@ async function saveCharacterSheetEdits(uid) {
 
       showToast('📨 Alterações enviadas para aprovação do Admin Supremo!', 'success');
     } else {
-      showToast('⚡ Salvando alterações...', 'info');
+      showToast('⚡ Salvando alterações diretamente...', 'info');
       
-      await _db.collection('characters').doc(uid).update({
+      const updateData = {
         'character.name': newName,
         'character.race': newRace,
         'character.age': newAge,
@@ -1176,12 +1597,30 @@ async function saveCharacterSheetEdits(uid) {
         'character.attributes.magic': newMagic,
         'character.classes': newClasses,
         'character.spells': newSpells,
-        'character.story': newStory,
-        'character.uniqueAbility.buffs': newBuffs,
-        'character.uniqueAbility.nerfs': newNerfs
-      });
+        'character.story': newStory
+      };
 
-      showToast(`✅ Ficha modificada e salva! (Modificado: ${diffSummary})`, 'success', 5000);
+      if (isStaff) {
+        // Atualiza campos estruturados da Linhagem
+        updateData['character.lineageData.buffs'] = lineageBuffs;
+        updateData['character.lineageData.weakness'] = lineageWeakness;
+        updateData['character.lineageData.weaknessDesc'] = lineageWeaknessDesc;
+        updateData['character.lineageData.extraElement'] = lineageExtraElement;
+
+        // Atualiza campos estruturados da Habilidade Única
+        updateData['character.uniqueAbility.buffs'] = uaBuffs;
+        updateData['character.uniqueAbility.weakness'] = uaWeakness;
+        updateData['character.uniqueAbility.weaknessDesc'] = uaWeaknessDesc;
+        updateData['character.uniqueAbility.extraElement'] = uaExtraElement;
+        updateData['character.uniqueAbility.nerfs'] = [];
+      } else {
+        updateData['character.uniqueAbility.buffs'] = legacyBuffs;
+        updateData['character.uniqueAbility.nerfs'] = legacyNerfs;
+      }
+
+      await _db.collection('characters').doc(uid).update(updateData);
+
+      showToast(`✅ Ficha modificada e salva com sucesso!`, 'success', 5000);
     }
 
     IS_EDITING_SHEET_UID = null;
@@ -1621,40 +2060,64 @@ function _buildBuffOptHtml(selectedVal) {
   return opts.map(o => `<option value="${o}"${selectedVal===o?' selected':''}>${o}</option>`).join('');
 }
 
-function addBuffRow() {
-  const tbody = document.getElementById('review-buffs-tbody');
+function addBuffRow(tbodyId) {
+  const tbody = document.getElementById(tbodyId);
   if (!tbody) return;
+  
+  // Determina prefixo com base no tbodyId
+  let prefix = 'ua-buff';
+  if (tbodyId.includes('lineage')) {
+    prefix = 'lineage-buff';
+  } else if (tbodyId.includes('edit') && tbodyId.includes('lineage')) {
+    prefix = 'edit-lineage-buff';
+  } else if (tbodyId.includes('edit') && tbodyId.includes('ua')) {
+    prefix = 'edit-ua-buff';
+  }
+
   const id = (window._buffRowCounter = (window._buffRowCounter || 0) + 1);
   const tr = document.createElement('tr');
-  tr.id = `buff-row-${id}`;
+  const rowFullId = `${prefix}-row-${id}`;
+  tr.id = rowFullId;
   tr.innerHTML = `
-    <td style="padding:0.3rem;"><select id="buff-stat-${id}" style="width:100%;padding:0.25rem;background:var(--parchment);color:var(--ink);border:1px solid var(--wood-plank);border-radius:3px;font-size:0.82rem;"><option value="">— Escolha —</option>${_buildBuffOptHtml('')}</select></td>
-    <td style="padding:0.3rem;"><input type="number" id="buff-pct-${id}" min="0" max="50" placeholder="%" style="width:65px;padding:0.25rem;background:var(--parchment);color:var(--ink);border:1px solid var(--wood-plank);border-radius:3px;text-align:center;"> %</td>
-    <td style="padding:0.3rem;"><button onclick="removeBuffRow(${id})" style="background:var(--red-wax);color:#fff;border:none;border-radius:3px;cursor:pointer;padding:2px 6px;font-size:0.8rem;">✕</button></td>`;
+    <td style="padding:0.3rem;"><select id="${prefix}-stat-${id}" style="width:100%;padding:0.25rem;background:var(--parchment);color:var(--ink);border:1px solid var(--wood-plank);border-radius:3px;font-size:0.82rem;"><option value="">— Escolha —</option>${_buildBuffOptHtml('')}</select></td>
+    <td style="padding:0.3rem;"><input type="number" id="${prefix}-pct-${id}" min="0" max="50" placeholder="%" style="width:65px;padding:0.25rem;background:var(--parchment);color:var(--ink);border:1px solid var(--wood-plank);border-radius:3px;text-align:center;"> %</td>
+    <td style="padding:0.3rem;"><button onclick="removeBuffRow('${rowFullId}')" style="background:var(--red-wax);color:#fff;border:none;border-radius:3px;cursor:pointer;padding:2px 6px;font-size:0.8rem;">✕</button></td>`;
   tbody.appendChild(tr);
 }
 
-function removeBuffRow(id) {
-  const row = document.getElementById(`buff-row-${id}`);
+function removeBuffRow(rowId) {
+  const row = document.getElementById(rowId);
   if (row) row.remove();
 }
 
 // ── Tabela Dinâmica de Fraquezas (Admin Panel) ─────────────────────
-function addWeakRow() {
-  const tbody = document.getElementById('review-weakness-tbody');
+function addWeakRow(tbodyId) {
+  const tbody = document.getElementById(tbodyId);
   if (!tbody) return;
+
+  // Determina prefixo com base no tbodyId
+  let prefix = 'ua-weak';
+  if (tbodyId.includes('lineage')) {
+    prefix = 'lineage-weak';
+  } else if (tbodyId.includes('edit') && tbodyId.includes('lineage')) {
+    prefix = 'edit-lineage-weak';
+  } else if (tbodyId.includes('edit') && tbodyId.includes('ua')) {
+    prefix = 'edit-ua-weak';
+  }
+
   const id = (window._weakRowCounter = (window._weakRowCounter || 0) + 1);
   const tr = document.createElement('tr');
-  tr.id = `weak-row-${id}`;
+  const rowFullId = `${prefix}-row-${id}`;
+  tr.id = rowFullId;
   tr.innerHTML = `
-    <td style="padding:0.3rem;"><select id="weak-stat-${id}" style="width:100%;padding:0.25rem;background:var(--parchment);color:var(--ink);border:1px solid var(--wood-plank);border-radius:3px;font-size:0.82rem;"><option value="">— Escolha —</option>${_buildBuffOptHtml('')}</select></td>
-    <td style="padding:0.3rem;"><input type="number" id="weak-pct-${id}" min="0" max="100" placeholder="%" style="width:65px;padding:0.25rem;background:var(--parchment);color:var(--ink);border:1px solid var(--wood-plank);border-radius:3px;text-align:center;"> %</td>
-    <td style="padding:0.3rem;"><button onclick="removeWeakRow(${id})" style="background:var(--red-wax);color:#fff;border:none;border-radius:3px;cursor:pointer;padding:2px 6px;font-size:0.8rem;">✕</button></td>`;
+    <td style="padding:0.3rem;"><select id="${prefix}-stat-${id}" style="width:100%;padding:0.25rem;background:var(--parchment);color:var(--ink);border:1px solid var(--wood-plank);border-radius:3px;font-size:0.82rem;"><option value="">— Escolha —</option>${_buildBuffOptHtml('')}</select></td>
+    <td style="padding:0.3rem;"><input type="number" id="${prefix}-pct-${id}" min="0" max="100" placeholder="%" style="width:65px;padding:0.25rem;background:var(--parchment);color:var(--ink);border:1px solid var(--wood-plank);border-radius:3px;text-align:center;"> %</td>
+    <td style="padding:0.3rem;"><button onclick="removeWeakRow('${rowFullId}')" style="background:var(--red-wax);color:#fff;border:none;border-radius:3px;cursor:pointer;padding:2px 6px;font-size:0.8rem;">✕</button></td>`;
   tbody.appendChild(tr);
 }
 
-function removeWeakRow(id) {
-  const row = document.getElementById(`weak-row-${id}`);
+function removeWeakRow(rowId) {
+  const row = document.getElementById(rowId);
   if (row) row.remove();
 }
 

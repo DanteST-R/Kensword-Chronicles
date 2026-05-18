@@ -479,31 +479,56 @@ function renderPendingTabContent() {
 }
 
 // ── Aprovação de Novas Fichas pelo Mestre ─────────────────────────────
+// ── Aprovação de Novas Fichas pelo Mestre ─────────────────────────────
 async function approveCharacterSheet(uid) {
   if (!confirm('Deseja realmente aprovar esta ficha de personagem e integrá-la à guilda?')) return;
 
   const lineageInput = document.getElementById('review-lineage');
-  const lineage = lineageInput ? lineageInput.value.trim() : '—';
+  const lineageName = lineageInput ? lineageInput.value.trim() : '—';
 
-  // Buffs estruturados da tabela
-  const buffs = typeof _collectBuffTableRows === 'function'
-    ? _collectBuffTableRows('review-buffs-tbody') : [];
+  // 1. Linhagem
+  const lineageBuffs = typeof _collectBuffTableRows === 'function'
+    ? _collectBuffTableRows('review-lineage-buffs-tbody')
+    : [];
 
-  for (const b of buffs) {
+  for (const b of lineageBuffs) {
     if (b.pct > 50) {
-      showToast(`⚠️ Buff de "${b.stat}" ultrapassa o limite de 50%!`, 'error');
+      showToast(`⚠️ Buff de Linhagem "${b.stat}" ultrapassa o limite de 50%!`, 'error');
       return;
     }
   }
 
-  const extraElementSel = document.getElementById('review-extra-element');
-  const extraElement = extraElementSel ? extraElementSel.value : '';
+  const linExtraElementSel = document.getElementById('review-lineage-extra-element');
+  const lineageExtraElement = linExtraElementSel ? linExtraElementSel.value : '';
 
-  const weakness = typeof _collectBuffTableRows === 'function'
-    ? _collectBuffTableRows('review-weakness-tbody') : [];
+  const lineageWeakness = typeof _collectBuffTableRows === 'function'
+    ? _collectBuffTableRows('review-lineage-weakness-tbody')
+    : [];
 
-  const weakDescInp = document.getElementById('review-weak-desc');
-  const weaknessDesc = weakDescInp ? weakDescInp.value.trim() : '';
+  const linWeakDescInp = document.getElementById('review-lineage-weak-desc');
+  const lineageWeaknessDesc = linWeakDescInp ? linWeakDescInp.value.trim() : '';
+
+  // 2. Habilidade Única
+  const uaBuffs = typeof _collectBuffTableRows === 'function'
+    ? _collectBuffTableRows('review-ua-buffs-tbody')
+    : [];
+
+  for (const b of uaBuffs) {
+    if (b.pct > 50) {
+      showToast(`⚠️ Buff de Habilidade "${b.stat}" ultrapassa o limite de 50%!`, 'error');
+      return;
+    }
+  }
+
+  const uaExtraElementSel = document.getElementById('review-ua-extra-element');
+  const uaExtraElement = uaExtraElementSel ? uaExtraElementSel.value : '';
+
+  const uaWeakness = typeof _collectBuffTableRows === 'function'
+    ? _collectBuffTableRows('review-ua-weakness-tbody')
+    : [];
+
+  const uaWeakDescInp = document.getElementById('review-ua-weak-desc');
+  const uaWeaknessDesc = uaWeakDescInp ? uaWeakDescInp.value.trim() : '';
 
   try {
     showToast('⚡ Aprovando ficha...', 'info');
@@ -562,12 +587,21 @@ async function approveCharacterSheet(uid) {
 
     await _db.collection('characters').doc(uid).update({
       status: 'approved',
-      'character.lineage': lineage || '— (a ser definido pelo administrador)',
-      'character.uniqueAbility.buffs': buffs,
-      'character.uniqueAbility.weakness': weakness,
-      'character.uniqueAbility.weaknessDesc': weaknessDesc,
-      'character.uniqueAbility.extraElement': extraElement,
+      'character.lineage': lineageName || '— (a ser definido pelo mestre)',
+      
+      // Linhagem Estruturada
+      'character.lineageData.buffs': lineageBuffs,
+      'character.lineageData.weakness': lineageWeakness,
+      'character.lineageData.weaknessDesc': lineageWeaknessDesc,
+      'character.lineageData.extraElement': lineageExtraElement,
+
+      // Habilidade Única Estruturada
+      'character.uniqueAbility.buffs': uaBuffs,
+      'character.uniqueAbility.weakness': uaWeakness,
+      'character.uniqueAbility.weaknessDesc': uaWeaknessDesc,
+      'character.uniqueAbility.extraElement': uaExtraElement,
       'character.uniqueAbility.nerfs': [],
+
       'character.level': 1,
       'character.xp': 0,
       'character.extraPoints': 0,

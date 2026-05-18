@@ -193,10 +193,40 @@ window.calculateEffectiveStats = function(char) {
     'Magia': 'magic'
   };
 
-  // Aplicar Buffs estruturados da Habilidade Única / Linhagem (tabela do mestre, max 50%)
+  // 1. Aplicar Buffs estruturados da Linhagem (max 50%)
+  const linData = char.lineageData || {};
+  const linBuffs = Array.isArray(linData.buffs) ? linData.buffs : [];
+  linBuffs.forEach(b => {
+    if (b && b.stat && b.pct) {
+      const key = statMap[b.stat];
+      if (key) {
+        const limitedPct = Math.min(50, b.pct);
+        multiplierBonus[key] *= (1.0 + (limitedPct / 100));
+        appliedBuffs.push({ name: `Linhagem (Buff)`, stat: b.stat, value: `+${limitedPct}%` });
+      } else {
+        appliedBuffs.push({ name: `Linhagem (Buff Secundário)`, stat: b.stat, value: `+${b.pct}%` });
+      }
+    }
+  });
+
+  // 2. Aplicar Fraquezas estruturadas da Linhagem
+  const linWeak = Array.isArray(linData.weakness) ? linData.weakness : [];
+  linWeak.forEach(w => {
+    if (w && w.stat && w.pct) {
+      const key = statMap[w.stat];
+      if (key) {
+        multiplierBonus[key] *= (1.0 - (w.pct / 100));
+        appliedBuffs.push({ name: `Linhagem (Nerf)`, stat: w.stat, value: `-${w.pct}%` });
+      } else {
+        appliedBuffs.push({ name: `Linhagem (Secundária)`, stat: w.stat, value: `-${w.pct}%` });
+      }
+    }
+  });
+
+  // 3. Aplicar Buffs estruturados da Habilidade Única (max 50%)
   const ua = char.uniqueAbility || {};
-  const buffsArr = Array.isArray(ua.buffs) ? ua.buffs : [];
-  buffsArr.forEach(b => {
+  const uaBuffs = Array.isArray(ua.buffs) ? ua.buffs : [];
+  uaBuffs.forEach(b => {
     if (b && b.stat && b.pct) {
       const key = statMap[b.stat];
       if (key) {
@@ -209,16 +239,16 @@ window.calculateEffectiveStats = function(char) {
     }
   });
 
-  // Aplicar Fraquezas estruturadas da Habilidade Única / Linhagem (tabela do mestre)
-  const weakArr = Array.isArray(ua.weakness) ? ua.weakness : [];
-  weakArr.forEach(w => {
+  // 4. Aplicar Fraquezas estruturadas da Habilidade Única
+  const uaWeak = Array.isArray(ua.weakness) ? ua.weakness : [];
+  uaWeak.forEach(w => {
     if (w && w.stat && w.pct) {
       const key = statMap[w.stat];
       if (key) {
         multiplierBonus[key] *= (1.0 - (w.pct / 100));
-        appliedBuffs.push({ name: `Fraqueza (Nerf)`, stat: w.stat, value: `-${w.pct}%` });
+        appliedBuffs.push({ name: `Habilidade Única (Nerf)`, stat: w.stat, value: `-${w.pct}%` });
       } else {
-        appliedBuffs.push({ name: `Fraqueza (Secundária)`, stat: w.stat, value: `-${w.pct}%` });
+        appliedBuffs.push({ name: `Habilidade Única (Secundária)`, stat: w.stat, value: `-${w.pct}%` });
       }
     }
   });
