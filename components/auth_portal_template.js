@@ -348,4 +348,4 @@ window.KENSWORD_TEMPLATES.authPortal = `
     </div><!-- /portal-panel -->
   </div><!-- /portal-container -->
 </div><!-- /auth-overlay -->
-\`;
+`;
