@@ -105,8 +105,18 @@ window.getAllKenswordAbilities = function() {
 
 window.findKenswordAbility = function(name) {
   if (!name) return null;
+  let abilityName = "";
+  if (typeof name === 'string') {
+    abilityName = name;
+  } else if (typeof name === 'object') {
+    abilityName = name.name || name.title || "";
+  } else {
+    abilityName = String(name);
+  }
+  if (!abilityName) return null;
+
   const all = window.getAllKenswordAbilities();
-  const searchName = name.trim().toLowerCase();
+  const searchName = abilityName.trim().toLowerCase();
   return all.find(ab => ab.name.toLowerCase() === searchName || searchName.includes(ab.name.toLowerCase())) || null;
 };
 
