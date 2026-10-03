@@ -434,23 +434,23 @@ window.KENSWORD_TEMPLATES.tabContents = `
           <p style="font-size:0.82rem; color:var(--ink-light); margin-bottom:0.9rem; font-style:italic;">
             Cada arma exige sua própria perícia. A velocidade de ataque depende da arma empunhada.
           </p>
-          <div style="display:flex; flex-wrap:wrap; gap:0.4rem; margin-bottom:1rem;">
-            <span style="background:rgba(240,160,80,0.12); border:1px solid rgba(240,160,80,0.3); color:#f0a050; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Adaga</span>
-            <span style="background:rgba(240,160,80,0.12); border:1px solid rgba(240,160,80,0.3); color:#f0a050; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Espada</span>
-            <span style="background:rgba(240,160,80,0.12); border:1px solid rgba(240,160,80,0.3); color:#f0a050; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Katana</span>
-            <span style="background:rgba(240,160,80,0.12); border:1px solid rgba(240,160,80,0.3); color:#f0a050; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Lança</span>
-            <span style="background:rgba(240,160,80,0.12); border:1px solid rgba(240,160,80,0.3); color:#f0a050; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Alabarda</span>
-            <span style="background:rgba(240,160,80,0.12); border:1px solid rgba(240,160,80,0.3); color:#f0a050; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Espadão</span>
-            <span style="background:rgba(240,160,80,0.12); border:1px solid rgba(240,160,80,0.3); color:#f0a050; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Machado</span>
-            <span style="background:rgba(240,160,80,0.12); border:1px solid rgba(240,160,80,0.3); color:#f0a050; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Foice</span>
-            <span style="background:rgba(240,160,80,0.12); border:1px solid rgba(240,160,80,0.3); color:#f0a050; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Martelo</span>
-            <span style="background:rgba(240,160,80,0.12); border:1px solid rgba(240,160,80,0.3); color:#f0a050; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Maça</span>
-            <span style="background:rgba(240,160,80,0.12); border:1px solid rgba(240,160,80,0.3); color:#f0a050; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Escudo</span>
-            <span style="background:rgba(240,160,80,0.12); border:1px solid rgba(240,160,80,0.3); color:#f0a050; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Ioiô</span>
-            <span style="background:rgba(240,160,80,0.12); border:1px solid rgba(240,160,80,0.3); color:#f0a050; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Cajado</span>
-            <span style="background:rgba(240,160,80,0.12); border:1px solid rgba(240,160,80,0.3); color:#f0a050; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Grimório</span>
+          <div style="display:flex; flex-wrap:wrap; gap:0.45rem; margin-bottom:1rem;">
+            <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(240,160,80,0.5); color:#ffb770; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.85rem; font-weight:bold; letter-spacing:0.02em;">Adaga</span>
+            <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(240,160,80,0.5); color:#ffb770; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.85rem; font-weight:bold; letter-spacing:0.02em;">Espada</span>
+            <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(240,160,80,0.5); color:#ffb770; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.85rem; font-weight:bold; letter-spacing:0.02em;">Katana</span>
+            <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(240,160,80,0.5); color:#ffb770; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.85rem; font-weight:bold; letter-spacing:0.02em;">Lança</span>
+            <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(240,160,80,0.5); color:#ffb770; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.85rem; font-weight:bold; letter-spacing:0.02em;">Alabarda</span>
+            <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(240,160,80,0.5); color:#ffb770; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.85rem; font-weight:bold; letter-spacing:0.02em;">Espadão</span>
+            <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(240,160,80,0.5); color:#ffb770; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.85rem; font-weight:bold; letter-spacing:0.02em;">Machado</span>
+            <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(240,160,80,0.5); color:#ffb770; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.85rem; font-weight:bold; letter-spacing:0.02em;">Foice</span>
+            <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(240,160,80,0.5); color:#ffb770; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.85rem; font-weight:bold; letter-spacing:0.02em;">Martelo</span>
+            <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(240,160,80,0.5); color:#ffb770; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.85rem; font-weight:bold; letter-spacing:0.02em;">Maça</span>
+            <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(240,160,80,0.5); color:#ffb770; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.85rem; font-weight:bold; letter-spacing:0.02em;">Escudo</span>
+            <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(240,160,80,0.5); color:#ffb770; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.85rem; font-weight:bold; letter-spacing:0.02em;">Ioiô</span>
+            <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(240,160,80,0.5); color:#ffb770; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.85rem; font-weight:bold; letter-spacing:0.02em;">Cajado</span>
+            <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(240,160,80,0.5); color:#ffb770; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.85rem; font-weight:bold; letter-spacing:0.02em;">Grimório</span>
           </div>
-          <div style="background:rgba(0,0,0,0.3); border-radius:6px; padding:0.6rem 0.8rem; border:1px solid rgba(255,255,255,0.06); font-size:0.85rem; color:var(--ink);">
+          <div style="background:rgba(0,0,0,0.4); border-radius:6px; padding:0.7rem 0.9rem; border:1px solid rgba(255,255,255,0.08); font-size:0.88rem; color:var(--ink);">
             🏹 <strong>Arco e flecha:</strong> Velocidade de ataque e recuo dependem do tipo de arco e da tensão utilizada.
           </div>
         </div>
@@ -478,20 +478,20 @@ window.KENSWORD_TEMPLATES.tabContents = `
           <div style="font-family:'Cinzel',serif; font-size:1.15rem; color:#8bc34a; font-weight:bold; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
             <span>🌿</span> Ofícios, Trabalho & Exploração
           </div>
-          <div style="display:flex; flex-wrap:wrap; gap:0.4rem; margin-bottom:1rem;">
-            <span style="background:rgba(139,195,74,0.12); border:1px solid rgba(139,195,74,0.3); color:#8bc34a; padding:0.25rem 0.55rem; border-radius:5px; font-size:0.82rem;">Agricultura</span>
-            <span style="background:rgba(139,195,74,0.12); border:1px solid rgba(139,195,74,0.3); color:#8bc34a; padding:0.25rem 0.55rem; border-radius:5px; font-size:0.82rem;">Pecuária</span>
-            <span style="background:rgba(139,195,74,0.12); border:1px solid rgba(139,195,74,0.3); color:#8bc34a; padding:0.25rem 0.55rem; border-radius:5px; font-size:0.82rem;">Culinária</span>
-            <span style="background:rgba(139,195,74,0.12); border:1px solid rgba(139,195,74,0.3); color:#8bc34a; padding:0.25rem 0.55rem; border-radius:5px; font-size:0.82rem;">Mineração</span>
-            <span style="background:rgba(139,195,74,0.12); border:1px solid rgba(139,195,74,0.3); color:#8bc34a; padding:0.25rem 0.55rem; border-radius:5px; font-size:0.82rem;">Artesanato</span>
-            <span style="background:rgba(139,195,74,0.12); border:1px solid rgba(139,195,74,0.3); color:#8bc34a; padding:0.25rem 0.55rem; border-radius:5px; font-size:0.82rem;">Metalurgia</span>
-            <span style="background:rgba(139,195,74,0.12); border:1px solid rgba(139,195,74,0.3); color:#8bc34a; padding:0.25rem 0.55rem; border-radius:5px; font-size:0.82rem;">Síntese</span>
-            <span style="background:rgba(139,195,74,0.12); border:1px solid rgba(139,195,74,0.3); color:#8bc34a; padding:0.25rem 0.55rem; border-radius:5px; font-size:0.82rem;">Estilismo</span>
-            <span style="background:rgba(139,195,74,0.12); border:1px solid rgba(139,195,74,0.3); color:#8bc34a; padding:0.25rem 0.55rem; border-radius:5px; font-size:0.82rem;">Caça</span>
-            <span style="background:rgba(139,195,74,0.12); border:1px solid rgba(139,195,74,0.3); color:#8bc34a; padding:0.25rem 0.55rem; border-radius:5px; font-size:0.82rem;">Monstros</span>
-            <span style="background:rgba(139,195,74,0.12); border:1px solid rgba(139,195,74,0.3); color:#8bc34a; padding:0.25rem 0.55rem; border-radius:5px; font-size:0.82rem;">Ciência</span>
-            <span style="background:rgba(139,195,74,0.12); border:1px solid rgba(139,195,74,0.3); color:#8bc34a; padding:0.25rem 0.55rem; border-radius:5px; font-size:0.82rem;">Alquimia</span>
-            <span style="background:rgba(139,195,74,0.12); border:1px solid rgba(139,195,74,0.3); color:#8bc34a; padding:0.25rem 0.55rem; border-radius:5px; font-size:0.82rem;">Masmorra</span>
+          <div style="display:flex; flex-wrap:wrap; gap:0.45rem; margin-bottom:1rem;">
+            <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(139,195,74,0.5); color:#a6e258; padding:0.35rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Agricultura</span>
+            <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(139,195,74,0.5); color:#a6e258; padding:0.35rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Pecuária</span>
+            <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(139,195,74,0.5); color:#a6e258; padding:0.35rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Culinária</span>
+            <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(139,195,74,0.5); color:#a6e258; padding:0.35rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Mineração</span>
+            <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(139,195,74,0.5); color:#a6e258; padding:0.35rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Artesanato</span>
+            <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(139,195,74,0.5); color:#a6e258; padding:0.35rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Metalurgia</span>
+            <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(139,195,74,0.5); color:#a6e258; padding:0.35rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Síntese</span>
+            <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(139,195,74,0.5); color:#a6e258; padding:0.35rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Estilismo</span>
+            <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(139,195,74,0.5); color:#a6e258; padding:0.35rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Caça</span>
+            <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(139,195,74,0.5); color:#a6e258; padding:0.35rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Monstros</span>
+            <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(139,195,74,0.5); color:#a6e258; padding:0.35rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Ciência</span>
+            <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(139,195,74,0.5); color:#a6e258; padding:0.35rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Alquimia</span>
+            <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(139,195,74,0.5); color:#a6e258; padding:0.35rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Masmorra</span>
           </div>
           <div style="display:flex; flex-direction:column; gap:0.35rem; font-size:0.85rem; color:var(--ink-light); border-top:1px solid rgba(255,255,255,0.06); padding-top:0.6rem;">
             <div>🌱 <strong>Conhecimento da Flora:</strong> Identificação e colheita de ervas e plantas místicas.</div>

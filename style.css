@@ -1,26 +1,26 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap');
 
 :root {
-  --wood-dark: #2c1a0e;
-  --wood-mid: #3d2412;
-  --wood-light: #6b3a1f;
-  --wood-plank: #8b5a2b;
-  --parchment: #f4e4c1;
-  --parchment-dark: #e8d5a3;
-  --parchment-aged: #d4b896;
-  --ink: #1a0f00;
-  --ink-light: #3d2010;
-  --gold: #c9933a;
-  --gold-light: #e8b84b;
-  --gold-bright: #f0c860;
-  --amber: #b8860b;
-  --fire: #e85d04;
-  --fire-dark: #9d2900;
-  --red-wax: #8b0000;
-  --green-moss: #4a6741;
-  --blue-magic: #1e3a5f;
-  --shadow: rgba(0,0,0,0.6);
-  --glow: rgba(232, 184, 75, 0.3);
+  --wood-dark: #120b06;
+  --wood-mid: #1c120a;
+  --wood-light: #422513;
+  --wood-plank: #68411e;
+  --parchment: #22170f;
+  --parchment-dark: #180f08;
+  --parchment-aged: #bfa588;
+  --ink: #f0e6d6;
+  --ink-light: #d6c6b2;
+  --gold: #d4a754;
+  --gold-light: #f3cc77;
+  --gold-bright: #ffdd88;
+  --amber: #cca044;
+  --fire: #ff6b1a;
+  --fire-dark: #ff8533;
+  --red-wax: #c93b3b;
+  --green-moss: #5ea853;
+  --blue-magic: #4ba3e3;
+  --shadow: rgba(0,0,0,0.85);
+  --glow: rgba(212, 167, 84, 0.35);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -144,9 +144,9 @@ nav {
   font-family: 'Cinzel', serif;
   font-size: 0.78rem;
   font-weight: 600;
-  color: var(--parchment-aged);
-  background: linear-gradient(180deg, var(--parchment-dark) 0%, var(--parchment) 60%, #e0cc9a 100%);
-  border: 2px solid var(--amber);
+  color: #c9b49a;
+  background: linear-gradient(180deg, #24160d 0%, #1a0f08 60%, #140b06 100%);
+  border: 1px solid var(--wood-plank);
   border-bottom: none;
   padding: 0.7rem 1.2rem 0.9rem;
   cursor: pointer;
@@ -155,7 +155,7 @@ nav {
   transition: all 0.25s ease;
   margin-top: 8px;
   clip-path: polygon(8px 0%, calc(100% - 8px) 0%, 100% 100%, 0% 100%);
-  text-shadow: 1px 1px 2px rgba(200,150,80,0.3);
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
   min-width: 100px;
   text-align: center;
   user-select: none;
@@ -166,24 +166,25 @@ nav {
   position: absolute;
   top: 2px; left: 2px; right: 2px;
   height: 40%;
-  background: linear-gradient(180deg, rgba(255,255,255,0.25), transparent);
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), transparent);
   pointer-events: none;
 }
 
 .nav-tab:hover {
-  background: linear-gradient(180deg, #fff8e8 0%, var(--parchment) 60%, #e8d898 100%);
-  color: var(--ink);
+  background: linear-gradient(180deg, #382214 0%, #24160d 60%, #1a0f08 100%);
+  color: var(--gold-light);
   transform: translateY(-3px);
   border-color: var(--gold);
-  box-shadow: 0 -4px 12px rgba(201,147,58,0.3);
+  box-shadow: 0 -4px 14px rgba(0,0,0,0.6);
 }
 
 .nav-tab.active {
-  background: linear-gradient(180deg, #fffdf5 0%, var(--parchment) 100%);
-  color: var(--ink);
-  border-color: var(--gold-bright);
-  transform: translateY(-5px);
-  box-shadow: 0 -6px 20px rgba(201,147,58,0.4), inset 0 -2px 0 var(--gold);
+  background: linear-gradient(180deg, #2d1c10 0%, #1e1109 100%);
+  color: var(--gold-bright);
+  font-weight: 700;
+  border-color: var(--gold);
+  transform: translateY(-4px);
+  box-shadow: 0 -6px 20px rgba(0,0,0,0.7), inset 0 2px 0 var(--gold-bright);
   z-index: 2;
 }
 
@@ -192,7 +193,7 @@ nav {
   position: absolute;
   bottom: -3px; left: -1px; right: -1px;
   height: 4px;
-  background: var(--parchment);
+  background: #1e1109;
 }
 
 .nav-icon { font-size: 1rem; display: block; margin-bottom: 2px; }
@@ -215,26 +216,27 @@ main {
 /* ===== PARCHMENT PANEL ===== */
 .parchment-panel {
   background:
-    radial-gradient(ellipse at 10% 10%, rgba(255,250,230,0.8) 0%, transparent 50%),
-    radial-gradient(ellipse at 90% 90%, rgba(200,160,100,0.4) 0%, transparent 50%),
-    linear-gradient(135deg, #f5e8c8 0%, var(--parchment) 30%, #edd9aa 70%, #e0c990 100%);
-  border: 3px solid var(--wood-plank);
-  border-radius: 4px;
+    radial-gradient(ellipse at 10% 10%, rgba(35,22,12,0.6) 0%, transparent 60%),
+    radial-gradient(ellipse at 90% 90%, rgba(20,12,6,0.8) 0%, transparent 60%),
+    linear-gradient(145deg, #20140b 0%, #170d06 50%, #120904 100%);
+  border: 2px solid var(--wood-plank);
+  border-radius: 6px;
   padding: 2.5rem;
   box-shadow:
-    0 0 0 1px var(--gold),
-    0 8px 40px rgba(0,0,0,0.5),
-    inset 0 0 80px rgba(200,160,80,0.1);
+    0 0 0 1px rgba(212,167,84,0.35),
+    0 12px 48px rgba(0,0,0,0.85),
+    inset 0 0 60px rgba(0,0,0,0.5);
   position: relative;
   margin-bottom: 2rem;
+  color: var(--ink);
 }
 
 .parchment-panel::before {
   content: '';
   position: absolute;
   top: 6px; left: 6px; right: 6px; bottom: 6px;
-  border: 1px solid rgba(201,147,58,0.3);
-  border-radius: 2px;
+  border: 1px solid rgba(212,167,84,0.2);
+  border-radius: 4px;
   pointer-events: none;
 }
 
@@ -242,10 +244,10 @@ main {
 .section-title {
   font-family: 'Cinzel Decorative', serif;
   font-size: clamp(1.5rem, 3vw, 2.2rem);
-  color: var(--wood-dark);
+  color: var(--gold-bright);
   text-align: center;
   margin-bottom: 0.5rem;
-  text-shadow: 1px 1px 3px rgba(201,147,58,0.4);
+  text-shadow: 0 0 15px rgba(212,167,84,0.4), 2px 2px 4px rgba(0,0,0,0.8);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -261,7 +263,7 @@ main {
 .ornament-divider::before, .ornament-divider::after {
   content: '';
   flex: 1;
-  height: 2px;
+  height: 1px;
   background: linear-gradient(90deg, transparent, var(--wood-plank), transparent);
 }
 .ornament-divider span { color: var(--gold); font-size: 1.3rem; }
@@ -273,11 +275,11 @@ main {
 }
 
 .race-card {
-  background: linear-gradient(135deg, rgba(255,252,240,0.95) 0%, rgba(245,235,210,0.9) 100%);
-  border: 2px solid var(--wood-plank);
-  border-radius: 4px;
+  background: linear-gradient(145deg, #1f130a 0%, #150c06 100%);
+  border: 1px solid var(--wood-plank);
+  border-radius: 6px;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3), inset 0 0 30px rgba(200,160,80,0.05);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.6), inset 0 0 25px rgba(0,0,0,0.3);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   position: relative;
 }
@@ -337,10 +339,10 @@ main {
 
 /* Ability boxes */
 .ability-box {
-  background: linear-gradient(135deg, rgba(44,26,14,0.08), rgba(107,58,31,0.05));
+  background: rgba(0, 0, 0, 0.4);
   border: 1px solid var(--wood-plank);
   border-left: 4px solid var(--gold);
-  border-radius: 2px;
+  border-radius: 4px;
   padding: 0.9rem 1.1rem;
   margin-bottom: 0.8rem;
   position: relative;
@@ -349,7 +351,7 @@ main {
 .ability-name {
   font-family: 'Cinzel', serif;
   font-weight: 700;
-  color: var(--fire-dark);
+  color: var(--gold-bright);
   font-size: 0.95rem;
   margin-bottom: 0.4rem;
   display: flex;
@@ -358,7 +360,7 @@ main {
 }
 .ability-name::before { content: '⚔'; font-size: 0.85rem; color: var(--gold); }
 
-.ability-desc { font-size: 0.95rem; line-height: 1.6; color: var(--ink-light); }
+.ability-desc { font-size: 0.95rem; line-height: 1.6; color: var(--ink); }
 
 /* Subrace */
 .subraces-container { margin-top: 1.5rem; }
@@ -370,7 +372,7 @@ main {
   color: var(--blue-magic);
   text-transform: uppercase;
   letter-spacing: 0.2em;
-  border-bottom: 1px dashed var(--parchment-aged);
+  border-bottom: 1px dashed rgba(212,167,84,0.3);
   padding-bottom: 0.3rem;
   margin-bottom: 1rem;
   display: flex;
@@ -380,10 +382,10 @@ main {
 .subrace-label::before { content: '◈'; color: var(--blue-magic); }
 
 .subrace-card {
-  background: linear-gradient(135deg, rgba(30,58,95,0.06), rgba(44,26,14,0.04));
-  border: 1px solid rgba(107,58,31,0.35);
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(104, 65, 30, 0.6);
   border-left: 3px solid var(--blue-magic);
-  border-radius: 3px;
+  border-radius: 4px;
   padding: 1rem 1.2rem;
   margin-bottom: 1rem;
 }
@@ -396,20 +398,20 @@ main {
   margin-bottom: 0.5rem;
 }
 
-.subrace-desc { font-size: 0.93rem; line-height: 1.6; color: var(--ink-light); margin-bottom: 0.7rem; }
+.subrace-desc { font-size: 0.93rem; line-height: 1.6; color: var(--ink); margin-bottom: 0.7rem; }
 
 .subrace-ability {
-  background: rgba(30,58,95,0.08);
-  border: 1px solid rgba(30,58,95,0.2);
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(75, 163, 227, 0.3);
   border-left: 3px solid var(--amber);
   padding: 0.6rem 0.9rem;
-  border-radius: 2px;
+  border-radius: 4px;
 }
 
 .subrace-ability-name {
   font-family: 'Cinzel', serif;
   font-weight: 600;
-  color: var(--amber);
+  color: var(--gold-light);
   font-size: 0.85rem;
   margin-bottom: 0.3rem;
 }
@@ -418,14 +420,14 @@ main {
 
 /* Monster habilidade de aço */
 .monster-note {
-  background: linear-gradient(135deg, rgba(139,0,0,0.08), rgba(44,26,14,0.06));
+  background: rgba(0, 0, 0, 0.45);
   border: 1px dashed var(--red-wax);
-  border-radius: 3px;
+  border-radius: 4px;
   padding: 0.8rem 1.2rem;
   margin-bottom: 1.5rem;
   font-style: italic;
   font-size: 0.93rem;
-  color: var(--ink-light);
+  color: var(--ink);
 }
 .monster-note strong { color: var(--red-wax); font-family: 'Cinzel', serif; font-style: normal; }
 
@@ -584,12 +586,12 @@ main {
 
 /* ===== ELEMENTOS ===== */
 .element-card {
-  background: var(--parchment);
-  border: 2px solid;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--wood-plank);
   border-radius: 8px;
   padding: 1.2rem;
   color: var(--ink);
-  box-shadow: inset 0 0 15px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
   display: flex;
   flex-direction: column;
 }
@@ -598,39 +600,41 @@ main {
   font-size: 1.3rem;
   font-weight: bold;
   margin-bottom: 0.3rem;
+  color: var(--gold-bright);
 }
 .el-traits {
   font-style: italic;
   font-size: 0.85rem;
-  color: #555;
+  color: var(--ink-light);
   margin-bottom: 0.8rem;
-  border-bottom: 1px solid rgba(0,0,0,0.1);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
   padding-bottom: 0.5rem;
 }
 .el-desc {
   font-size: 0.95rem;
   line-height: 1.5;
+  color: var(--ink);
 }
-.el-fogo { border-color: #ff3300; }
-.el-agua { border-color: #0066ff; }
-.el-terra { border-color: #f4a460; }
-.el-vento { border-color: #20b2aa; }
-.el-gelo { border-color: #87cefa; }
-.el-planta { border-color: #32cd32; }
-.el-mineral { border-color: #ffd700; }
-.el-raio { border-color: #00ffff; box-shadow: 0 0 10px #00ffff inset; }
-.el-dim { border-color: #dda0dd; }
-.el-sombra { border-color: #4b0082; }
-.el-luz { border-color: #ffffe0; background: #fffacd; color:#000; }
-.el-trevas { border-color: #111; box-shadow: 0 0 10px #ff00ff inset; }
-.el-sagrado { border-color: #fff; box-shadow: 0 0 15px #fff inset; }
+.el-fogo { border-color: #ff5522; border-left-width: 4px; }
+.el-agua { border-color: #3388ff; border-left-width: 4px; }
+.el-terra { border-color: #e09855; border-left-width: 4px; }
+.el-vento { border-color: #38c8be; border-left-width: 4px; }
+.el-gelo { border-color: #70c4ff; border-left-width: 4px; }
+.el-planta { border-color: #55d855; border-left-width: 4px; }
+.el-mineral { border-color: #ffd700; border-left-width: 4px; }
+.el-raio { border-color: #00ffff; border-left-width: 4px; box-shadow: 0 0 10px rgba(0,255,255,0.2) inset; }
+.el-dim { border-color: #dda0dd; border-left-width: 4px; }
+.el-sombra { border-color: #8a4bbf; border-left-width: 4px; }
+.el-luz { border-color: #fff0aa; border-left-width: 4px; color: var(--ink); }
+.el-trevas { border-color: #bf55ff; border-left-width: 4px; box-shadow: 0 0 10px rgba(191,85,255,0.2) inset; }
+.el-sagrado { border-color: #ffffff; border-left-width: 4px; box-shadow: 0 0 10px rgba(255,255,255,0.2) inset; }
 .el-chaos { 
-  border: 3px solid transparent; 
-  background: linear-gradient(var(--parchment), var(--parchment)) padding-box, linear-gradient(45deg, #000, #fff) border-box; 
+  border: 2px solid #ff4444; 
+  border-left-width: 4px;
 }
 .el-khosmo { 
-  border: 3px solid transparent; 
-  background: linear-gradient(var(--parchment), var(--parchment)) padding-box, linear-gradient(45deg, #fff, #8a2be2) border-box; 
+  border: 2px solid #ba68c8; 
+  border-left-width: 4px;
 }
 
 /* ===== FOOTER ===== */
