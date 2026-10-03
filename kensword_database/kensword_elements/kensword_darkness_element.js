@@ -1,17 +1,7 @@
-// ================================================================
-// KENSWORD CHRONICLES — BANCO DE DADOS DE ELEMENTOS
-// Elemento: Trevas
-// ================================================================
-
 const kensword_darkness_element = {
   name: "Trevas",
-  emoji: "🦇",
+  emoji: "🔮",
   category: "Místicos",
   traits: ["Corruptor", "Cruel", "Flexível"],
-  description: "Conhecido pela maldade interminável. Possui diversas artes distintas: necromancia, corrupção e pactos.",
-  modifiers: {
-    corruptionDamage: 1.20,
-    lifestealPercent: 0.10
-  },
-  professionalDetails: "Ataques de Trevas possuem 10% de Roubo de Vida passivo, restaurando a saúde do conjurador. Danifica intensamente seres sagrados (causa +30% de dano a criaturas sagradas)."
+  description: "Um elemento conhecido pela maldade interminável, disseminada pelas criaturas do caos entre as criaturas da terra. As trevas possuem diversas artes distintas. Dentre as mais conhecidas, a necromancia, a corrupção e os pactos. Não coexiste com Luz e Sagrado."
 };

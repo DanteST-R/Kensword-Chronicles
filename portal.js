@@ -30,7 +30,7 @@ const RACE_LIMITS = {
 
   "ValquÃ­ria":    { minAge: 1, maxAge: 99999,minH: 140, maxH: 230 },
 
-  "Fada":         { minAge: 1, maxAge: 500,  minH: 30,  maxH: 50  },
+  "Fada":         { minAge: 1, maxAge: 500,  minH: 30,  maxH: 100 },
 
   "Pixie":        { minAge: 1, maxAge: 500,  minH: 20,  maxH: 100 },
 
@@ -44,17 +44,9 @@ const RACE_LIMITS = {
 
   "Drakobold":    { minAge: 1, maxAge: 100,  minH: 80,  maxH: 160 },
 
-  "Kouris":       { minAge: 1, maxAge: 20,   minH: 30,  maxH: 200 },
-
-  "Floraune":     { minAge: 1, maxAge: 80,   minH: 140, maxH: 220 },
-
   "EspÃ­rito":     { minAge: 1, maxAge: 99999,minH: 1,   maxH: 300 },
 
-  "Abissal":      { minAge: 1, maxAge: 500,  minH: 100, maxH: 400 },
-
-  "Yokai":        { minAge: 1, maxAge: 99999,minH: 100, maxH: 250 },
-
-};
+  };
 
 
 

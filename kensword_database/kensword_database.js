@@ -67,17 +67,13 @@ window.KENSWORD_ELEMENTS_DB = {
   "Água": (typeof kensword_water_element !== 'undefined') ? kensword_water_element : null,
   "Terra": (typeof kensword_earth_element !== 'undefined') ? kensword_earth_element : null,
   "Vento": (typeof kensword_wind_element !== 'undefined') ? kensword_wind_element : null,
-  "Gelo": (typeof kensword_ice_element !== 'undefined') ? kensword_ice_element : null,
-  "Planta": (typeof kensword_plant_element !== 'undefined') ? kensword_plant_element : null,
   "Mineral": (typeof kensword_mineral_element !== 'undefined') ? kensword_mineral_element : null,
   "Relâmpago": (typeof kensword_lightning_element !== 'undefined') ? kensword_lightning_element : null,
   "Luz": (typeof kensword_light_element !== 'undefined') ? kensword_light_element : null,
   "Sombra": (typeof kensword_shadow_element !== 'undefined') ? kensword_shadow_element : null,
   "Dimensional": (typeof kensword_dimensional_element !== 'undefined') ? kensword_dimensional_element : null,
   "Sagrado": (typeof kensword_sacred_element !== 'undefined') ? kensword_sacred_element : null,
-  "Trevas": (typeof kensword_darkness_element !== 'undefined') ? kensword_darkness_element : null,
-  "Chaos": (typeof kensword_chaos_element !== 'undefined') ? kensword_chaos_element : null,
-  "Khosmos": (typeof kensword_khosmos_element !== 'undefined') ? kensword_khosmos_element : null
+  "Trevas": (typeof kensword_darkness_element !== 'undefined') ? kensword_darkness_element : null
 };
 
 // 4. MÉTODOS DE BUSCA E UTILITÁRIOS GLOBAIS

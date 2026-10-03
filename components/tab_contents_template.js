@@ -50,50 +50,14 @@ window.KENSWORD_TEMPLATES.tabContents = `
 
   <section id="tab-content-elements" class="tab-content">
     <div class="parchment-panel">
-      <h2 class="section-title">✨ Elementos & Aptidões</h2>
+      <h2 class="section-title">✨ Elementos</h2>
       <div class="ornament-divider"><span>✦</span></div>
 
-      <p style="font-size:1.05rem; line-height:1.6; text-align:center;">Ao ter um elemento, você ganha uma criação e manipulação limitada dele. Para melhorá-la, você deve ter muitos pontos de magia ou até uma habilidade para isso.</p>
-      <div style="text-align:center; font-family:'Cinzel',serif; font-size:1.1rem; margin:1rem 0; color:var(--red-wax);">
-        <strong>100 Pontos [Magia] = 1 Metro [Alcance]</strong>
+      <p style="font-size:1.05rem; line-height:1.6; text-align:center;">Ao ter um elemento, você ganha uma criação e manipulação limitada do seu elemento, para melhorá-lo, você deve ter muitos pontos de magia ou até uma habilidade própria.</p>
+      <div style="text-align:center; font-family:'Cinzel',serif; font-size:1.15rem; margin:1.2rem 0; color:var(--red-wax);">
+        <strong>1 Ponto [Magia] = 1 Metro [Alcance]</strong>
       </div>
-      <p style="text-align:center; font-style:italic; margin-bottom:2rem;">Caso queira uma manipulação mais precisa, crie magias ou até mesmo habilidades baseadas no seu elemento.</p>
-
-      <div class="monster-note" style="margin-bottom:2rem;">
-        <h3 style="margin-top:0;font-family:'Cinzel',serif;">Aptidões</h3>
-        <ul style="margin:0.5rem 0 1rem 1.2rem; font-size:0.95rem; line-height:1.5;">
-          <li>Você pode ter diferentes tipos de aptidão dependendo do elemento.</li>
-          <li>A aptidão define o nível de poder das suas magias, isso não faz diferença quando se trata de buffs e debuffs.</li>
-          <li>Lembrando que você pode escolher qual Elemento tem qual aptidão, mas depois de feito, será permanente.</li>
-          <li>Você pode melhorar a aptidão com treinos específicos.</li>
-        </ul>
-        <div style="display:flex; gap:1rem; flex-wrap:wrap; justify-content:space-between; background:rgba(0,0,0,0.05); padding:1rem; border-radius:6px;">
-          <div style="flex:1; min-width:200px;">
-            <strong style="color:var(--red-wax);">1 - Elementais [25/50/75/100]</strong><br>
-            <ul style="list-style:none; padding:0; margin-top:0.3rem;">
-              <li>Elemento 1 - 100%</li>
-              <li>Elemento 2 - 75%</li>
-              <li>Elemento 3 - 50%</li>
-              <li>Elemento 4 - 25%</li>
-            </ul>
-          </div>
-          <div style="flex:1; min-width:200px;">
-            <strong style="color:var(--red-wax);">2 - Arcanos [0/25/50/50/100]</strong><br>
-            <ul style="list-style:none; padding:0; margin-top:0.3rem;">
-              <li>Elemento 1 - 50%</li>
-              <li>Elemento 2 - 25%</li>
-              <li>Dimensional - 50%</li>
-              <li>Luz OU Sombra - 100% ou 0%</li>
-            </ul>
-          </div>
-          <div style="flex:1; min-width:200px;">
-            <strong style="color:var(--red-wax);">3 - Místicos</strong><br>
-            <ul style="list-style:none; padding:0; margin-top:0.3rem;">
-              <li>Sagrado OU Trevas - Mesma aptidão da versão arcana.</li>
-            </ul>
-          </div>
-        </div>
-      </div>
+      <p style="text-align:center; font-style:italic; margin-bottom:2rem; color:var(--ink-light);">Caso queira uma manipulação mais precisa, crie magias ou até mesmo habilidades baseadas no seu elemento.</p>
 
       <div id="dynamic-elements-container"></div>
     </div>

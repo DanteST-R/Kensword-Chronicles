@@ -1,17 +1,7 @@
-// ================================================================
-// KENSWORD CHRONICLES — BANCO DE DADOS DE ELEMENTOS
-// Elemento: Sagrado
-// ================================================================
-
 const kensword_sacred_element = {
   name: "Sagrado",
-  emoji: "🕊️",
+  emoji: "✨",
   category: "Místicos",
-  traits: ["Suporte", "Anti mortos-vivos", "Religioso"],
-  description: "Considerado milagroso, que cura feridas e ilumina o caminho. O usuário deve ser aprovado pela igreja.",
-  modifiers: {
-    undeadDamageBonus: 1.50,
-    resurrectionCooldownReduction: 0.20
-  },
-  professionalDetails: "Causa +50% de dano contra demônios, mortos-vivos, vampiros e ghouls. Cura ferimentos graves e purifica efeitos de veneno e infecção instantaneamente."
+  traits: ["Suporte", "Destruidor de mortos-vivos", "Religioso"],
+  description: "Um elemento considerado milagroso, que cura feridas e ilumina o caminho dos humildes. Apenas os abençoados nascem com esse elemento, outros mais esforçados podem acabar aprendendo ele. Não coexiste com Sombra e Trevas."
 };
