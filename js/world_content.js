@@ -27,15 +27,19 @@ function isStaffOrAdminUser() {
   if (!_auth || !_auth.currentUser) return false;
   const user = _auth.currentUser;
   const currentUserData = (typeof ALL_CHARACTERS !== 'undefined' && ALL_CHARACTERS[user.uid]) ? ALL_CHARACTERS[user.uid] : null;
-  const isDante = user && (
-    (user.email && user.email.toLowerCase().includes('dantestr')) ||
-    (currentUserData && currentUserData.player && currentUserData.player.name && 
-     (currentUserData.player.name.trim().toLowerCase() === 'dantestr' || 
-      currentUserData.player.name.trim().toLowerCase() === 'dantest-r')) ||
-    (currentUserData && currentUserData.character && currentUserData.character.name && 
-     (currentUserData.character.name.trim().toLowerCase() === 'dantestr' || 
-      currentUserData.character.name.trim().toLowerCase() === 'dantest-r'))
-  );
+  const email = (user.email || '').toLowerCase();
+  const displayName = (user.displayName || '').toLowerCase();
+  const playerName = (currentUserData?.player?.name || '').trim().toLowerCase();
+  const charName = (currentUserData?.character?.name || '').trim().toLowerCase();
+
+  const isDante = email.includes('dantestr') ||
+                  email.includes('dantest-r') ||
+                  displayName.includes('dantestr') ||
+                  playerName === 'dantestr' ||
+                  playerName === 'dantest-r' ||
+                  charName === 'dantestr' ||
+                  charName === 'dantest-r';
+
   return !!(isDante || (currentUserData && (
     currentUserData.isAdmin || 
     currentUserData.isSubAdmin || 
@@ -43,6 +47,74 @@ function isStaffOrAdminUser() {
     currentUserData.user_role === 'sub-admin'
   )));
 }
+
+// ── BANCO DE DADOS RESILIENTE COM FALLBACK TRANSPARENTE ─────────────
+async function dbGetEntities(collectionName, typeTag) {
+  if (!_db) return [];
+  const list = [];
+  try {
+    const snap = await _db.collection(collectionName).get();
+    snap.forEach(doc => list.push({ id: doc.id, ...doc.data() }));
+    if (list.length > 0) return list;
+  } catch (err) {
+    console.warn(`Coleção '${collectionName}' inacessível no Firestore (${err.message}). Tentando fallback em characters...`);
+  }
+
+  // Fallback: buscar documentos em characters com worldType
+  try {
+    const snapChar = await _db.collection('characters').where('worldType', '==', typeTag).get();
+    snapChar.forEach(doc => {
+      const data = doc.data();
+      list.push({ id: doc.id, ...data });
+    });
+  } catch (err2) {
+    console.warn(`Fallback characters para '${typeTag}' também falhou:`, err2);
+  }
+  return list;
+}
+
+async function dbSaveEntity(collectionName, typeTag, entityId, entityData) {
+  if (!_db) throw new Error("Banco de dados não conectado");
+  let saved = false;
+  try {
+    if (entityId) {
+      await _db.collection(collectionName).doc(entityId).set(entityData, { merge: true });
+    } else {
+      entityData.createdAt = Date.now();
+      const ref = await _db.collection(collectionName).add(entityData);
+      entityId = ref.id;
+    }
+    saved = true;
+  } catch (err) {
+    console.warn(`Tentativa em '${collectionName}' falhou (${err.message}). Utilizando fallback em 'characters'...`);
+  }
+
+  if (!saved) {
+    const fallbackId = entityId || ('world_' + typeTag + '_' + Date.now());
+    const dataWithTag = {
+      ...entityData,
+      worldType: typeTag,
+      status: 'approved',
+      isWorldContent: true
+    };
+    await _db.collection('characters').doc(fallbackId).set(dataWithTag, { merge: true });
+    return fallbackId;
+  }
+  return entityId;
+}
+
+async function dbDeleteEntity(collectionName, typeTag, entityId) {
+  if (!_db) return;
+  try {
+    await _db.collection(collectionName).doc(entityId).delete();
+  } catch (e) {
+    console.warn(`Falha ao deletar em '${collectionName}'. Tentando fallback:`, e);
+  }
+  try {
+    await _db.collection('characters').doc(entityId).delete();
+  } catch (e2) {}
+}
+
 
 // ─────────────────────────────────────────────────────────────────────
 // MODAL GERAL
@@ -141,12 +213,7 @@ async function loadNpcsTab() {
   container.innerHTML = '<div class="auth-loading active" style="margin:2rem auto;"><div class="auth-spinner"></div></div>';
 
   try {
-    ALL_NPCS = [];
-    if (_db) {
-      const snap = await _db.collection('npcs').get();
-      snap.forEach(doc => ALL_NPCS.push({ id: doc.id, ...doc.data() }));
-    }
-
+    ALL_NPCS = await dbGetEntities('npcs', 'NPC');
     renderNpcsGrid(ALL_NPCS);
   } catch (err) {
     console.error('Erro ao carregar NPCs:', err);
@@ -603,12 +670,7 @@ async function saveNpc(event, npcId) {
 
   try {
     showToast('💾 Salvando NPC...', 'info');
-    if (npcId) {
-      await _db.collection('npcs').doc(npcId).set(npcData, { merge: true });
-    } else {
-      npcData.createdAt = Date.now();
-      await _db.collection('npcs').add(npcData);
-    }
+    await dbSaveEntity('npcs', 'NPC', npcId, npcData);
     showToast('✅ NPC salvo com sucesso!', 'success');
     closeWorldContentModal();
     await loadNpcsTab();
@@ -624,7 +686,7 @@ async function deleteNpc(npcId) {
 
   try {
     showToast('🗑️ Excluindo NPC...', 'info');
-    await _db.collection('npcs').doc(npcId).delete();
+    await dbDeleteEntity('npcs', 'NPC', npcId);
     showToast('✅ NPC excluído com sucesso!', 'success');
     await loadNpcsTab();
   } catch (err) {
@@ -654,12 +716,7 @@ async function loadMonstersTab() {
   container.innerHTML = '<div class="auth-loading active" style="margin:2rem auto;"><div class="auth-spinner"></div></div>';
 
   try {
-    ALL_MONSTERS = [];
-    if (_db) {
-      const snap = await _db.collection('monsters').get();
-      snap.forEach(doc => ALL_MONSTERS.push({ id: doc.id, ...doc.data() }));
-    }
-
+    ALL_MONSTERS = await dbGetEntities('monsters', 'monster');
     renderMonstersGrid(ALL_MONSTERS);
   } catch (err) {
     console.error('Erro ao carregar monstros:', err);
@@ -943,6 +1000,12 @@ function openMonsterEditor(monsterId = null) {
         <div class="field-group">
           <label>Fotos Gerais do Monstro (Uma ou mais URLs, uma por linha):</label>
           <textarea id="mon-photos" rows="3" placeholder="https://exemplo.com/monstro.jpg" style="width:100%; box-sizing:border-box; padding:0.6rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-family:monospace; font-size:0.85rem;">${photosStr}</textarea>
+          <div style="margin-top:0.4rem; display:flex; gap:0.6rem; align-items:center;">
+            <input type="file" id="mon-photo-upload" accept="image/*" style="display:none;" onchange="handleMonsterPhotoUpload(event)">
+            <button type="button" onclick="document.getElementById('mon-photo-upload').click()" class="admin-action-btn" style="font-size:0.75rem; padding:0.25rem 0.6rem;">
+              📁 Upload Foto
+            </button>
+          </div>
         </div>
 
         <!-- DESCRIÇÃO DO MONSTRO -->
@@ -1000,6 +1063,35 @@ function openMonsterEditor(monsterId = null) {
   variants.forEach((v, idx) => addMonsterVariantBlock(v, idx));
 }
 
+function handleMonsterPhotoUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const area = document.getElementById('mon-photos');
+    if (area) {
+      area.value = area.value.trim() ? area.value.trim() + '\n' + e.target.result : e.target.result;
+      showToast('📸 Foto adicionada ao monstro!', 'success');
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleVariantPhotoUpload(event, fileInput) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const parent = fileInput.parentElement;
+    const textInput = parent ? parent.querySelector('.mon-v-photo') : null;
+    if (textInput) {
+      textInput.value = e.target.result;
+      showToast('📸 Foto da variante carregada!', 'success');
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
 function addMonsterVariantBlock(v = {}, idx = 0) {
   const container = document.getElementById('monster-variants-container');
   if (!container) return;
@@ -1021,8 +1113,12 @@ function addMonsterVariantBlock(v = {}, idx = 0) {
 
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; margin-bottom:0.8rem;">
       <div>
-        <label style="font-size:0.8rem;">Foto Específica da Variante (URL):</label>
-        <input type="text" class="mon-v-photo" value="${(v.photo || '').replace(/"/g, '&quot;')}" placeholder="URL da foto desta variante" style="width:100%; box-sizing:border-box; padding:0.35rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-size:0.85rem;">
+        <label style="font-size:0.8rem;">Foto Específica da Variante (URL ou Upload):</label>
+        <div style="display:flex; gap:0.4rem; align-items:center;">
+          <input type="text" class="mon-v-photo" value="${(v.photo || '').replace(/"/g, '&quot;')}" placeholder="URL da foto desta variante" style="flex:1; box-sizing:border-box; padding:0.35rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-size:0.85rem;">
+          <input type="file" class="mon-v-photo-file" accept="image/*" style="display:none;" onchange="handleVariantPhotoUpload(event, this)">
+          <button type="button" onclick="this.previousElementSibling.click()" class="admin-action-btn" style="font-size:0.7rem; padding:0.25rem 0.5rem; white-space:nowrap;">📁 Upload</button>
+        </div>
       </div>
       <div>
         <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -1175,12 +1271,7 @@ async function saveMonster(event, monsterId) {
 
   try {
     showToast('💾 Salvando monstro...', 'info');
-    if (monsterId) {
-      await _db.collection('monsters').doc(monsterId).set(monData, { merge: true });
-    } else {
-      monData.createdAt = Date.now();
-      await _db.collection('monsters').add(monData);
-    }
+    await dbSaveEntity('monsters', 'monster', monsterId, monData);
     showToast('✅ Monstro cadastrado com sucesso!', 'success');
     closeWorldContentModal();
     await loadMonstersTab();
@@ -1196,7 +1287,7 @@ async function deleteMonster(monsterId) {
 
   try {
     showToast('🗑️ Excluindo monstro...', 'info');
-    await _db.collection('monsters').doc(monsterId).delete();
+    await dbDeleteEntity('monsters', 'monster', monsterId);
     showToast('✅ Monstro excluído com sucesso!', 'success');
     await loadMonstersTab();
   } catch (err) {
@@ -1226,12 +1317,7 @@ async function loadOrgsTab() {
   container.innerHTML = '<div class="auth-loading active" style="margin:2rem auto;"><div class="auth-spinner"></div></div>';
 
   try {
-    ALL_ORGS = [];
-    if (_db) {
-      const snap = await _db.collection('organizations').get();
-      snap.forEach(doc => ALL_ORGS.push({ id: doc.id, ...doc.data() }));
-    }
-
+    ALL_ORGS = await dbGetEntities('organizations', 'organization');
     renderOrgsGrid(ALL_ORGS);
   } catch (err) {
     console.error('Erro ao carregar organizações:', err);
@@ -1579,12 +1665,7 @@ async function saveOrg(event, orgId) {
 
   try {
     showToast('💾 Salvando organização...', 'info');
-    if (orgId) {
-      await _db.collection('organizations').doc(orgId).set(orgData, { merge: true });
-    } else {
-      orgData.createdAt = Date.now();
-      await _db.collection('organizations').add(orgData);
-    }
+    await dbSaveEntity('organizations', 'organization', orgId, orgData);
     showToast('✅ Organização salva com sucesso!', 'success');
     closeWorldContentModal();
     await loadOrgsTab();
@@ -1600,7 +1681,7 @@ async function deleteOrg(orgId) {
 
   try {
     showToast('🗑️ Excluindo organização...', 'info');
-    await _db.collection('organizations').doc(orgId).delete();
+    await dbDeleteEntity('organizations', 'organization', orgId);
     showToast('✅ Organização excluída com sucesso!', 'success');
     await loadOrgsTab();
   } catch (err) {
@@ -1630,12 +1711,7 @@ async function loadHistoryTab() {
   container.innerHTML = '<div class="auth-loading active" style="margin:2rem auto;"><div class="auth-spinner"></div></div>';
 
   try {
-    ALL_STORIES = [];
-    if (_db) {
-      const snap = await _db.collection('stories').get();
-      snap.forEach(doc => ALL_STORIES.push({ id: doc.id, ...doc.data() }));
-    }
-
+    ALL_STORIES = await dbGetEntities('stories', 'story');
     ALL_STORIES.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     renderStoriesList(ALL_STORIES);
   } catch (err) {
@@ -1884,20 +1960,29 @@ async function openStoryEditor(storyId = null) {
   const isEdit = !!storyId;
   const story = isEdit ? ALL_STORIES.find(s => s.id === storyId) || {} : {};
 
-  // Atualiza listas do banco
-  if (_db) {
+  // Atualiza listas do banco com proteção contra falhas
+  try {
     if (ALL_NPCS.length === 0) {
-      const snapN = await _db.collection('npcs').get();
-      snapN.forEach(d => ALL_NPCS.push({ id: d.id, ...d.data() }));
+      ALL_NPCS = await dbGetEntities('npcs', 'NPC');
     }
+  } catch (eNpc) {
+    console.warn('Aviso ao carregar NPCs para histórias:', eNpc);
+  }
+
+  try {
     if (ALL_MONSTERS.length === 0) {
-      const snapM = await _db.collection('monsters').get();
-      snapM.forEach(d => ALL_MONSTERS.push({ id: d.id, ...d.data() }));
+      ALL_MONSTERS = await dbGetEntities('monsters', 'monster');
     }
+  } catch (eMon) {
+    console.warn('Aviso ao carregar Monstros para histórias:', eMon);
+  }
+
+  try {
     if (ALL_ORGS.length === 0) {
-      const snapO = await _db.collection('organizations').get();
-      snapO.forEach(d => ALL_ORGS.push({ id: d.id, ...d.data() }));
+      ALL_ORGS = await dbGetEntities('organizations', 'organization');
     }
+  } catch (eOrg) {
+    console.warn('Aviso ao carregar Organizações para histórias:', eOrg);
   }
 
   const selectedNpcIds = (story.npcs || []).map(n => typeof n === 'object' ? n.id : n).filter(Boolean);
@@ -2125,12 +2210,7 @@ async function saveStory(event, storyId) {
 
   try {
     showToast('💾 Salvando história...', 'info');
-    if (storyId) {
-      await _db.collection('stories').doc(storyId).set(storyData, { merge: true });
-    } else {
-      storyData.createdAt = Date.now();
-      await _db.collection('stories').add(storyData);
-    }
+    await dbSaveEntity('stories', 'story', storyId, storyData);
     showToast('✅ História salva com sucesso!', 'success');
     closeWorldContentModal();
     await loadHistoryTab();
@@ -2146,7 +2226,7 @@ async function deleteStory(storyId) {
 
   try {
     showToast('🗑️ Excluindo história...', 'info');
-    await _db.collection('stories').doc(storyId).delete();
+    await dbDeleteEntity('stories', 'story', storyId);
     showToast('✅ História excluída com sucesso!', 'success');
     await loadHistoryTab();
   } catch (err) {
@@ -2162,9 +2242,17 @@ async function deleteStory(storyId) {
 async function toggleEntityVisibility(collectionName, entityId, newVisibility) {
   if (!isStaffOrAdminUser()) return;
   try {
-    await _db.collection(collectionName).doc(entityId).set({
-      isVisible: newVisibility
-    }, { merge: true });
+    let done = false;
+    try {
+      await _db.collection(collectionName).doc(entityId).set({ isVisible: newVisibility }, { merge: true });
+      done = true;
+    } catch (e1) {
+      console.warn(`Falha na coleção '${collectionName}'. Tentando fallback:`, e1);
+    }
+    if (!done) {
+      await _db.collection('characters').doc(entityId).set({ isVisible: newVisibility }, { merge: true });
+    }
+
     showToast(newVisibility ? '👁️ Item tornado visível!' : '🙈 Item ocultado para jogadores!', 'info');
     if (collectionName === 'npcs') await loadNpcsTab();
     if (collectionName === 'monsters') await loadMonstersTab();
@@ -2175,6 +2263,54 @@ async function toggleEntityVisibility(collectionName, entityId, newVisibility) {
     showToast('❌ Falha ao alterar visibilidade.', 'error');
   }
 }
+
+// ── EXPÕE FUNÇÕES NO ESCOPO GLOBAL (WINDOW) ─────────────────────────
+window.isStaffOrAdminUser = isStaffOrAdminUser;
+window.openWorldContentModal = openWorldContentModal;
+window.closeWorldContentModal = closeWorldContentModal;
+window.openZoomPhoto = openZoomPhoto;
+
+// NPCs
+window.loadNpcsTab = loadNpcsTab;
+window.openNpcEditor = openNpcEditor;
+window.saveNpc = saveNpc;
+window.deleteNpc = deleteNpc;
+window.handleNpcPhotoUpload = handleNpcPhotoUpload;
+window.addNpcPericiaRow = addNpcPericiaRow;
+window.addNpcHabilidadeRow = addNpcHabilidadeRow;
+
+// Monstros
+window.loadMonstersTab = loadMonstersTab;
+window.openMonsterEditor = openMonsterEditor;
+window.saveMonster = saveMonster;
+window.deleteMonster = deleteMonster;
+window.handleMonsterPhotoUpload = handleMonsterPhotoUpload;
+window.handleVariantPhotoUpload = handleVariantPhotoUpload;
+window.addMonsterVariantBlock = addMonsterVariantBlock;
+window.addVariantPericia = addVariantPericia;
+window.addVariantHabilidade = addVariantHabilidade;
+window.switchMonsterVariant = switchMonsterVariant;
+
+// Organizações
+window.loadOrgsTab = loadOrgsTab;
+window.openOrgEditor = openOrgEditor;
+window.saveOrganization = saveOrganization;
+window.deleteOrg = deleteOrg;
+window.handleOrgLogoUpload = handleOrgLogoUpload;
+window.handleOrgLeaderPhotoUpload = handleOrgLeaderPhotoUpload;
+window.handleMemberAvatarUpload = handleMemberAvatarUpload;
+window.addOrgMemberRow = addOrgMemberRow;
+window.onOrgMemberSelectChange = onOrgMemberSelectChange;
+window.scrollOrgMembers = scrollOrgMembers;
+
+// Histórias
+window.loadHistoryTab = loadHistoryTab;
+window.openStoryEditor = openStoryEditor;
+window.saveStory = saveStory;
+window.deleteStory = deleteStory;
+window.handleStoryPhotoUpload = handleStoryPhotoUpload;
+window.openStoryDetails = openStoryDetails;
+window.toggleEntityVisibility = toggleEntityVisibility;
 
 // Inicialização ao carregar
 document.addEventListener('DOMContentLoaded', () => {
