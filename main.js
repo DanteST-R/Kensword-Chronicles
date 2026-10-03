@@ -263,11 +263,39 @@ function buildElements() {
   container.innerHTML = html;
 }
 
+// Build level table dynamically
+function buildLevelTable() {
+  const container = document.getElementById('level-table-rows');
+  if (!container) return;
+  let html = '';
+  for (let lvl = 1; lvl <= 50; lvl++) {
+    const xpNeeded = lvl * 100;
+    const isEven = lvl % 2 === 0;
+    const isMilestone = lvl % 10 === 0;
+    const bg = isMilestone
+      ? 'background:rgba(212,175,55,0.12);'
+      : isEven ? 'background:rgba(255,255,255,0.02);' : '';
+    const borderTop = isMilestone ? 'border-top:1px solid rgba(212,175,55,0.3);' : '';
+    const lvlColor = isMilestone ? 'color:var(--gold); font-weight:bold;' : 'color:var(--ink);';
+    const milestoneTag = isMilestone
+      ? `<span style="font-size:0.7rem; background:rgba(212,175,55,0.2); color:var(--gold); border:1px solid rgba(212,175,55,0.4); padding:1px 6px; border-radius:3px; margin-left:6px;">+10 pts</span>`
+      : '';
+    html += `
+      <div style="display:grid; grid-template-columns:1fr 1fr; padding:0.55rem 1.2rem; ${bg} ${borderTop} transition:background 0.15s;">
+        <span style="font-family:'Cinzel',serif; font-size:0.92rem; ${lvlColor}">Lvl ${String(lvl).padStart(2, '0')} ${milestoneTag}</span>
+        <span style="font-size:0.88rem; color:var(--ink-light);">[ 000 / ${xpNeeded.toLocaleString('pt-BR')} XP ]</span>
+      </div>
+    `;
+  }
+  container.innerHTML = html;
+}
+
 // Init
 buildRaces();
 buildElements();
+buildLevelTable();
 
 // Active tab from URL hash
 const hash = window.location.hash.replace('#', '');
-const validTabs = ['history','races','elements','map','characters','npcs','orgs','monsters','profile','pending','learn-abilities'];
+const validTabs = ['history','races','elements','nivelamento','map','characters','npcs','orgs','monsters','profile','pending','learn-abilities'];
 if (validTabs.includes(hash)) showTab(hash);

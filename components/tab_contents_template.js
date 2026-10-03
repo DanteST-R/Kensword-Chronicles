@@ -63,6 +63,106 @@ window.KENSWORD_TEMPLATES.tabContents = `
     </div>
   </section>
 
+  <section id="tab-content-nivelamento" class="tab-content">
+    <div class="parchment-panel">
+      <h2 class="section-title">📈 Nivelamento</h2>
+      <div class="ornament-divider"><span>✦</span></div>
+
+      <!-- Introdução -->
+      <p style="font-size:1.05rem; line-height:1.7; text-align:center; max-width:720px; margin:0 auto 0.5rem;">
+        Você começa com <strong>20 pontos base</strong> para distribuir livremente entre seus atributos.
+        Para evoluir, você precisará subir de nível — e para subir de nível... basta fazer missões e treinos!
+      </p>
+      <div style="text-align:center; font-family:'Cinzel',serif; font-size:1.1rem; margin:1.2rem 0 2.5rem; color:var(--red-wax);">
+        <strong>A cada nível, você ganha 10 pontos para distribuir.</strong>
+      </div>
+
+      <!-- Grid de duas colunas: Níveis + Atributos -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; align-items:start; max-width:1000px; margin:0 auto;">
+
+        <!-- COLUNA ESQUERDA: Níveis e XP -->
+        <div>
+          <h3 class="section-title" style="font-size:1.4rem; text-align:left; margin-bottom:1.2rem;">⚔️ Tabela de Níveis</h3>
+          <div style="border:1px solid var(--wood-plank); border-radius:10px; overflow:hidden; box-shadow:0 4px 15px rgba(0,0,0,0.25);">
+            <!-- Cabeçalho -->
+            <div style="background:rgba(212,175,55,0.15); display:grid; grid-template-columns:1fr 1fr; padding:0.7rem 1.2rem; font-family:'Cinzel',serif; font-size:0.85rem; color:var(--gold); font-weight:bold; border-bottom:1px solid var(--wood-plank);">
+              <span>NÍVEL</span>
+              <span>XP NECESSÁRIO</span>
+            </div>
+            <!-- Linhas de nível -->
+            <div id="level-table-rows" style="max-height:460px; overflow-y:auto;">
+              <!-- Gerado dinamicamente pelo JS abaixo -->
+            </div>
+          </div>
+          <p style="font-size:0.8rem; color:var(--ink-light); font-style:italic; margin-top:0.7rem; text-align:center;">
+            A fórmula é: <strong>Lvl N → N × 100 XP</strong>
+          </p>
+        </div>
+
+        <!-- COLUNA DIREITA: Atributos e suas conversões -->
+        <div>
+          <h3 class="section-title" style="font-size:1.4rem; text-align:left; margin-bottom:1.2rem;">🧮 Sistema de Atributos</h3>
+
+          <!-- Força -->
+          <div class="nivel-attr-card" style="border:1px solid var(--wood-plank); border-left:4px solid #e05252; border-radius:8px; padding:1rem 1.2rem; background:rgba(0,0,0,0.22); margin-bottom:1rem; box-shadow:0 3px 8px rgba(0,0,0,0.2);">
+            <div style="font-family:'Cinzel',serif; font-size:1.15rem; color:#e05252; font-weight:bold; margin-bottom:0.5rem;">
+              ⚔️ Força
+            </div>
+            <div style="font-size:0.83rem; color:var(--gold); font-style:italic; margin-bottom:0.5rem;">1 Ponto de Atributo =</div>
+            <div style="display:flex; flex-direction:column; gap:0.25rem;">
+              <div style="font-size:0.9rem; color:var(--ink); display:flex; align-items:center; gap:0.5rem;">
+                <span style="color:#e05252;">▸</span> <strong>10 Kg</strong>&nbsp;Força Física
+              </div>
+            </div>
+          </div>
+
+          <!-- Resistência -->
+          <div class="nivel-attr-card" style="border:1px solid var(--wood-plank); border-left:4px solid #5285e0; border-radius:8px; padding:1rem 1.2rem; background:rgba(0,0,0,0.22); margin-bottom:1rem; box-shadow:0 3px 8px rgba(0,0,0,0.2);">
+            <div style="font-family:'Cinzel',serif; font-size:1.15rem; color:#5285e0; font-weight:bold; margin-bottom:0.5rem;">
+              🛡️ Resistência
+            </div>
+            <div style="font-size:0.83rem; color:var(--gold); font-style:italic; margin-bottom:0.5rem;">1 Ponto de Atributo =</div>
+            <div style="display:flex; flex-direction:column; gap:0.28rem;">
+              <div style="font-size:0.9rem; color:var(--ink); display:flex; align-items:center; gap:0.5rem;"><span style="color:#5285e0;">▸</span> <strong>20 Kg</strong>&nbsp;Resistência Física</div>
+              <div style="font-size:0.9rem; color:var(--ink); display:flex; align-items:center; gap:0.5rem;"><span style="color:#5285e0;">▸</span> <strong>20 Kg</strong>&nbsp;Resistência Mágica</div>
+              <div style="font-size:0.9rem; color:var(--ink); display:flex; align-items:center; gap:0.5rem;"><span style="color:#5285e0;">▸</span> <strong>+1°C</strong>&nbsp;Resistência ao Calor</div>
+              <div style="font-size:0.9rem; color:var(--ink); display:flex; align-items:center; gap:0.5rem;"><span style="color:#5285e0;">▸</span> <strong>-2°C</strong>&nbsp;Resistência ao Frio</div>
+            </div>
+          </div>
+
+          <!-- Velocidade -->
+          <div class="nivel-attr-card" style="border:1px solid var(--wood-plank); border-left:4px solid #52d4e0; border-radius:8px; padding:1rem 1.2rem; background:rgba(0,0,0,0.22); margin-bottom:1rem; box-shadow:0 3px 8px rgba(0,0,0,0.2);">
+            <div style="font-family:'Cinzel',serif; font-size:1.15rem; color:#52d4e0; font-weight:bold; margin-bottom:0.5rem;">
+              💨 Velocidade
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.28rem;">
+              <div style="font-size:0.83rem; color:var(--gold); font-style:italic; margin-bottom:0.2rem;">1 Ponto =</div>
+              <div style="font-size:0.9rem; color:var(--ink); display:flex; align-items:center; gap:0.5rem;"><span style="color:#52d4e0;">▸</span> <strong>1 Km/h</strong>&nbsp;Sentidos</div>
+              <div style="font-size:0.83rem; color:var(--gold); font-style:italic; margin:0.4rem 0 0.2rem;">2 Pontos =</div>
+              <div style="font-size:0.9rem; color:var(--ink); display:flex; align-items:center; gap:0.5rem;"><span style="color:#52d4e0;">▸</span> <strong>1 Km/h</strong>&nbsp;Corrida</div>
+            </div>
+          </div>
+
+          <!-- Magia -->
+          <div class="nivel-attr-card" style="border:1px solid var(--wood-plank); border-left:4px solid #a05ee0; border-radius:8px; padding:1rem 1.2rem; background:rgba(0,0,0,0.22); margin-bottom:0; box-shadow:0 3px 8px rgba(0,0,0,0.2);">
+            <div style="font-family:'Cinzel',serif; font-size:1.15rem; color:#a05ee0; font-weight:bold; margin-bottom:0.5rem;">
+              ✨ Magia
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.28rem;">
+              <div style="font-size:0.83rem; color:var(--gold); font-style:italic; margin-bottom:0.2rem;">1 Ponto =</div>
+              <div style="font-size:0.9rem; color:var(--ink); display:flex; align-items:center; gap:0.5rem;"><span style="color:#a05ee0;">▸</span> <strong>10 Kg</strong>&nbsp;Força Mágica</div>
+              <div style="font-size:0.9rem; color:var(--ink); display:flex; align-items:center; gap:0.5rem;"><span style="color:#a05ee0;">▸</span> <strong>2</strong>&nbsp;Mana Máx.</div>
+              <div style="font-size:0.83rem; color:var(--gold); font-style:italic; margin:0.4rem 0 0.2rem;">4 Pontos =</div>
+              <div style="font-size:0.9rem; color:var(--ink); display:flex; align-items:center; gap:0.5rem;"><span style="color:#a05ee0;">▸</span> <strong>1 Km/h</strong>&nbsp;Velocidade de Magia</div>
+            </div>
+          </div>
+
+        </div><!-- fim coluna direita -->
+      </div><!-- fim grid -->
+
+    </div>
+  </section>
+
   <section id="tab-content-characters" class="tab-content">
     <div class="parchment-panel">
       <h2 class="section-title">🧑‍🤝‍🧑 Personagens</h2>
