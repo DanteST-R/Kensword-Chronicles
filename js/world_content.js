@@ -18,7 +18,10 @@ function isStaffOrAdminUser() {
     (user.email && user.email.toLowerCase().includes('dantestr')) ||
     (currentUserData && currentUserData.player && currentUserData.player.name && 
      (currentUserData.player.name.trim().toLowerCase() === 'dantestr' || 
-      currentUserData.player.name.trim().toLowerCase() === 'dantest-r'))
+      currentUserData.player.name.trim().toLowerCase() === 'dantest-r')) ||
+    (currentUserData && currentUserData.character && currentUserData.character.name && 
+     (currentUserData.character.name.trim().toLowerCase() === 'dantestr' || 
+      currentUserData.character.name.trim().toLowerCase() === 'dantest-r'))
   );
   return !!(isDante || (currentUserData && (
     currentUserData.isAdmin || 

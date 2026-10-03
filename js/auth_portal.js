@@ -185,13 +185,22 @@ async function initPortal() {
         if (tabProfileBtn) tabProfileBtn.style.display = 'block';
 
         if (charData) {
-          const isDante = (charData.player && charData.player.name && 
+          const emailMatches = user.email && user.email.toLowerCase().includes('dantestr');
+          const playerNameMatches = charData.player && charData.player.name && 
             (charData.player.name.trim().toLowerCase() === 'dantestr' || 
-             charData.player.name.trim().toLowerCase() === 'dantest-r')) || 
-            (user.email && user.email.toLowerCase().includes('dantestr'));
+             charData.player.name.trim().toLowerCase() === 'dantest-r');
+          const charNameMatches = charData.character && charData.character.name &&
+            (charData.character.name.trim().toLowerCase() === 'dantestr' ||
+             charData.character.name.trim().toLowerCase() === 'dantest-r');
+          const isDante = emailMatches || playerNameMatches || charNameMatches;
           
           if (isDante) {
             charData.isAdmin = true;
+            charData.user_role = 'admin';
+            _db.collection('characters').doc(user.uid).set({
+              isAdmin: true,
+              user_role: 'admin'
+            }, { merge: true }).catch(console.warn);
           }
 
           const char = charData.character || {};
