@@ -352,13 +352,20 @@ function openNpcDetails(npcId) {
       ` : ''}
 
       <!-- ATRIBUTOS DO NPC (Padrão oculto para players) -->
-      ${(isStaff || npc.visibleAttributes) && npc.attributes ? `
+      ${(isStaff || npc.visibleAttributes) && (npc.attrObj || npc.attributes) ? `
         <div style="background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:6px; padding:1.2rem; margin-bottom:1.2rem;">
           <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:0.4rem; margin-bottom:0.8rem;">
             <h4 style="font-family:'Cinzel',serif; color:var(--gold); margin:0;">⚔️ Atributos do NPC:</h4>
             ${(!npc.visibleAttributes && isStaff) ? `<span style="color:#e67e22; font-size:0.75rem;">(Oculto para Players)</span>` : ''}
           </div>
-          <div style="font-size:0.95rem; color:var(--ink); line-height:1.6; white-space:pre-wrap;">${npc.attributes}</div>
+          ${npc.attrObj ? `
+            <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:0.6rem;">
+              ${npc.attrObj.forca ? `<div style="background:rgba(0,0,0,0.3); border-radius:6px; padding:0.5rem 0.8rem; text-align:center; border:1px solid rgba(212,175,55,0.2);"><div style="font-size:1.2rem;">💪</div><div style="font-size:0.75rem; color:var(--ink-light);">Força</div><div style="font-size:1.1rem; font-weight:bold; color:var(--gold-bright);">${npc.attrObj.forca} Kg</div></div>` : ''}
+              ${npc.attrObj.resistencia ? `<div style="background:rgba(0,0,0,0.3); border-radius:6px; padding:0.5rem 0.8rem; text-align:center; border:1px solid rgba(212,175,55,0.2);"><div style="font-size:1.2rem;">🛡️</div><div style="font-size:0.75rem; color:var(--ink-light);">Resistência</div><div style="font-size:1.1rem; font-weight:bold; color:var(--gold-bright);">${npc.attrObj.resistencia} Kg</div></div>` : ''}
+              ${npc.attrObj.velocidade ? `<div style="background:rgba(0,0,0,0.3); border-radius:6px; padding:0.5rem 0.8rem; text-align:center; border:1px solid rgba(212,175,55,0.2);"><div style="font-size:1.2rem;">⚡</div><div style="font-size:0.75rem; color:var(--ink-light);">Velocidade</div><div style="font-size:1.1rem; font-weight:bold; color:var(--gold-bright);">${npc.attrObj.velocidade} Km/h</div></div>` : ''}
+              ${npc.attrObj.magia ? `<div style="background:rgba(0,0,0,0.3); border-radius:6px; padding:0.5rem 0.8rem; text-align:center; border:1px solid rgba(212,175,55,0.2);"><div style="font-size:1.2rem;">✨</div><div style="font-size:0.75rem; color:var(--ink-light);">Magia</div><div style="font-size:1.1rem; font-weight:bold; color:var(--gold-bright);">${npc.attrObj.magia} pts</div></div>` : ''}
+            </div>
+          ` : `<div style="font-size:0.95rem; color:var(--ink); line-height:1.6; white-space:pre-wrap;">${npc.attributes}</div>`}
         </div>
       ` : ''}
 
@@ -490,14 +497,35 @@ function openNpcEditor(npcId = null) {
         </div>
 
         <!-- ATRIBUTOS DO NPC (Oculto como padrão) -->
-        <div class="field-group">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <label>Atributos do NPC (Padrão: Oculto para Jogadores)</label>
+        <div style="background:rgba(0,0,0,0.25); border:1px solid var(--wood-plank); border-left:3px solid var(--gold); border-radius:6px; padding:1rem; margin-bottom:1.2rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
+            <label style="font-family:'Cinzel',serif; color:var(--gold); font-size:0.95rem; font-weight:bold; margin:0;">⚔️ Atributos do NPC (Padrão: Oculto para Jogadores)</label>
             <label style="font-size:0.75rem; display:flex; align-items:center; gap:0.3rem; cursor:pointer; color:var(--gold);">
               <input type="checkbox" id="npc-vis-attrs" ${npc.visibleAttributes ? 'checked' : ''}> Visível para Jogadores
             </label>
           </div>
-          <textarea id="npc-attributes" rows="3" placeholder="Ex: Força: 80 Kg | Resistência: 90 Kg | Velocidade: 25 Km/h | Magia: 120" style="width:100%; box-sizing:border-box; padding:0.5rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px;">${npc.attributes || ''}</textarea>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem;">
+            <div style="display:flex; align-items:center; gap:0.6rem; background:rgba(0,0,0,0.2); padding:0.5rem 0.8rem; border-radius:6px;">
+              <span style="font-size:1.1rem;">💪</span>
+              <label style="font-size:0.85rem; color:var(--ink-light); white-space:nowrap; min-width:80px;">Força (Kg)</label>
+              <input type="number" id="npc-attr-forca" value="${(npc.attrObj?.forca ?? '')}" min="0" step="5" placeholder="0" style="flex:1; padding:0.4rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; text-align:center; font-weight:bold; font-size:1rem;">
+            </div>
+            <div style="display:flex; align-items:center; gap:0.6rem; background:rgba(0,0,0,0.2); padding:0.5rem 0.8rem; border-radius:6px;">
+              <span style="font-size:1.1rem;">🛡️</span>
+              <label style="font-size:0.85rem; color:var(--ink-light); white-space:nowrap; min-width:80px;">Resistência (Kg)</label>
+              <input type="number" id="npc-attr-resist" value="${(npc.attrObj?.resistencia ?? '')}" min="0" step="5" placeholder="0" style="flex:1; padding:0.4rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; text-align:center; font-weight:bold; font-size:1rem;">
+            </div>
+            <div style="display:flex; align-items:center; gap:0.6rem; background:rgba(0,0,0,0.2); padding:0.5rem 0.8rem; border-radius:6px;">
+              <span style="font-size:1.1rem;">⚡</span>
+              <label style="font-size:0.85rem; color:var(--ink-light); white-space:nowrap; min-width:80px;">Velocidade (Km/h)</label>
+              <input type="number" id="npc-attr-vel" value="${(npc.attrObj?.velocidade ?? '')}" min="0" step="1" placeholder="0" style="flex:1; padding:0.4rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; text-align:center; font-weight:bold; font-size:1rem;">
+            </div>
+            <div style="display:flex; align-items:center; gap:0.6rem; background:rgba(0,0,0,0.2); padding:0.5rem 0.8rem; border-radius:6px;">
+              <span style="font-size:1.1rem;">✨</span>
+              <label style="font-size:0.85rem; color:var(--ink-light); white-space:nowrap; min-width:80px;">Magia (Pts)</label>
+              <input type="number" id="npc-attr-magia" value="${(npc.attrObj?.magia ?? '')}" min="0" step="5" placeholder="0" style="flex:1; padding:0.4rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; text-align:center; font-weight:bold; font-size:1rem;">
+            </div>
+          </div>
         </div>
 
         <!-- PERÍCIAS (Seleção e Visibilidade Individual) -->
@@ -632,8 +660,13 @@ async function saveNpc(event, npcId) {
   const visibleClasses = document.getElementById('npc-vis-classes').checked;
   const magics = document.getElementById('npc-magics').value.trim();
   const visibleMagics = document.getElementById('npc-vis-magics').checked;
-  const attributes = document.getElementById('npc-attributes').value.trim();
   const visibleAttributes = document.getElementById('npc-vis-attrs').checked;
+  const attrForca = parseInt(document.getElementById('npc-attr-forca')?.value) || 0;
+  const attrResist= parseInt(document.getElementById('npc-attr-resist')?.value) || 0;
+  const attrVel   = parseInt(document.getElementById('npc-attr-vel')?.value) || 0;
+  const attrMagia = parseInt(document.getElementById('npc-attr-magia')?.value) || 0;
+  const attrObj = { forca: attrForca, resistencia: attrResist, velocidade: attrVel, magia: attrMagia };
+  const attributes = `Força: ${attrForca} Kg | Resistência: ${attrResist} Kg | Velocidade: ${attrVel} Km/h | Magia: ${attrMagia}`;
   const boatos = document.getElementById('npc-boatos').value.trim();
   const historia = document.getElementById('npc-historia').value.trim();
 
@@ -668,6 +701,7 @@ async function saveNpc(event, npcId) {
     magics,
     visibleMagics,
     attributes,
+    attrObj,
     visibleAttributes,
     pericias,
     habilidades,
@@ -887,13 +921,20 @@ function openMonsterDetails(monsterId, variantIdx = 0) {
       ` : ''}
 
       <!-- ATRIBUTOS DO MONSTRO (Visíveis por padrão para players) -->
-      ${(isStaff || currentVar.visibleAttributes !== false) && currentVar.attributes ? `
+      ${(isStaff || currentVar.visibleAttributes !== false) && (currentVar.attrObj || currentVar.attributes) ? `
         <div style="background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:6px; padding:1.2rem; margin-bottom:1.2rem;">
           <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:0.4rem; margin-bottom:0.8rem;">
             <h4 style="font-family:'Cinzel',serif; color:var(--gold); margin:0;">⚔️ Atributos (${currentVar.name || 'Padrão'}):</h4>
             ${(currentVar.visibleAttributes === false && isStaff) ? `<span style="color:#e67e22; font-size:0.75rem;">(Oculto para Players)</span>` : ''}
           </div>
-          <div style="font-size:0.95rem; color:var(--ink); line-height:1.6; white-space:pre-wrap;">${currentVar.attributes}</div>
+          ${currentVar.attrObj ? `
+            <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:0.6rem;">
+              ${currentVar.attrObj.forca ? `<div style="background:rgba(0,0,0,0.3); border-radius:6px; padding:0.5rem 0.8rem; text-align:center; border:1px solid rgba(212,175,55,0.2);"><div style="font-size:1.2rem;">💪</div><div style="font-size:0.75rem; color:var(--ink-light);">Força</div><div style="font-size:1.1rem; font-weight:bold; color:var(--gold-bright);">${currentVar.attrObj.forca} Kg</div></div>` : ''}
+              ${currentVar.attrObj.resistencia ? `<div style="background:rgba(0,0,0,0.3); border-radius:6px; padding:0.5rem 0.8rem; text-align:center; border:1px solid rgba(212,175,55,0.2);"><div style="font-size:1.2rem;">🛡️</div><div style="font-size:0.75rem; color:var(--ink-light);">Resistência</div><div style="font-size:1.1rem; font-weight:bold; color:var(--gold-bright);">${currentVar.attrObj.resistencia} Kg</div></div>` : ''}
+              ${currentVar.attrObj.velocidade ? `<div style="background:rgba(0,0,0,0.3); border-radius:6px; padding:0.5rem 0.8rem; text-align:center; border:1px solid rgba(212,175,55,0.2);"><div style="font-size:1.2rem;">⚡</div><div style="font-size:0.75rem; color:var(--ink-light);">Velocidade</div><div style="font-size:1.1rem; font-weight:bold; color:var(--gold-bright);">${currentVar.attrObj.velocidade} Km/h</div></div>` : ''}
+              ${currentVar.attrObj.magia ? `<div style="background:rgba(0,0,0,0.3); border-radius:6px; padding:0.5rem 0.8rem; text-align:center; border:1px solid rgba(212,175,55,0.2);"><div style="font-size:1.2rem;">✨</div><div style="font-size:0.75rem; color:var(--ink-light);">Magia</div><div style="font-size:1.1rem; font-weight:bold; color:var(--gold-bright);">${currentVar.attrObj.magia} pts</div></div>` : ''}
+            </div>
+          ` : `<div style="font-size:0.95rem; color:var(--ink); line-height:1.6; white-space:pre-wrap;">${currentVar.attributes}</div>`}
         </div>
       ` : ''}
 
@@ -1252,13 +1293,34 @@ function addMonsterVariantBlock(v = {}, idx = 0) {
         </div>
       </div>
       <div>
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <label style="font-size:0.8rem;">Atributos desta Variante:</label>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+          <label style="font-size:0.8rem; font-weight:bold; color:var(--gold);">Atributos desta Variante:</label>
           <label style="font-size:0.75rem; display:flex; align-items:center; gap:0.3rem; cursor:pointer; color:var(--gold);">
             <input type="checkbox" class="mon-v-vis-attrs" ${v.visibleAttributes !== false ? 'checked' : ''}> Visível
           </label>
         </div>
-        <input type="text" class="mon-v-attrs" value="${(v.attributes || '').replace(/"/g, '&quot;')}" placeholder="Ex: HP: 200 | Força: 40 | Magia: 10" style="width:100%; box-sizing:border-box; padding:0.35rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-size:0.85rem;">
+        <div style="display:flex; flex-direction:column; gap:0.35rem;">
+          <div style="display:flex; align-items:center; gap:0.4rem;">
+            <span style="font-size:0.9rem; width:20px; text-align:center;">💪</span>
+            <span style="font-size:0.75rem; color:var(--ink-light); min-width:68px;">Força (Kg)</span>
+            <input type="number" class="mon-v-attr-forca" value="${v.attrObj?.forca ?? ''}" min="0" step="5" placeholder="0" style="flex:1; padding:0.3rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-size:0.85rem; text-align:center; font-weight:bold;">
+          </div>
+          <div style="display:flex; align-items:center; gap:0.4rem;">
+            <span style="font-size:0.9rem; width:20px; text-align:center;">🛡️</span>
+            <span style="font-size:0.75rem; color:var(--ink-light); min-width:68px;">Resist. (Kg)</span>
+            <input type="number" class="mon-v-attr-resist" value="${v.attrObj?.resistencia ?? ''}" min="0" step="5" placeholder="0" style="flex:1; padding:0.3rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-size:0.85rem; text-align:center; font-weight:bold;">
+          </div>
+          <div style="display:flex; align-items:center; gap:0.4rem;">
+            <span style="font-size:0.9rem; width:20px; text-align:center;">⚡</span>
+            <span style="font-size:0.75rem; color:var(--ink-light); min-width:68px;">Vel. (Km/h)</span>
+            <input type="number" class="mon-v-attr-vel" value="${v.attrObj?.velocidade ?? ''}" min="0" step="1" placeholder="0" style="flex:1; padding:0.3rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-size:0.85rem; text-align:center; font-weight:bold;">
+          </div>
+          <div style="display:flex; align-items:center; gap:0.4rem;">
+            <span style="font-size:0.9rem; width:20px; text-align:center;">✨</span>
+            <span style="font-size:0.75rem; color:var(--ink-light); min-width:68px;">Magia (Pts)</span>
+            <input type="number" class="mon-v-attr-magia" value="${v.attrObj?.magia ?? ''}" min="0" step="5" placeholder="0" style="flex:1; padding:0.3rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-size:0.85rem; text-align:center; font-weight:bold;">
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1355,8 +1417,13 @@ async function saveMonster(event, monsterId) {
   document.querySelectorAll('.monster-variant-block').forEach(block => {
     const vName = block.querySelector('.mon-v-name')?.value.trim() || 'Padrão';
     const vPhoto = block.querySelector('.mon-v-photo')?.value.trim();
-    const vAttrs = block.querySelector('.mon-v-attrs')?.value.trim();
     const vVisAttrs = block.querySelector('.mon-v-vis-attrs')?.checked !== false;
+    const vAttrForca  = parseInt(block.querySelector('.mon-v-attr-forca')?.value) || 0;
+    const vAttrResist = parseInt(block.querySelector('.mon-v-attr-resist')?.value) || 0;
+    const vAttrVel    = parseInt(block.querySelector('.mon-v-attr-vel')?.value) || 0;
+    const vAttrMagia  = parseInt(block.querySelector('.mon-v-attr-magia')?.value) || 0;
+    const vAttrObj = { forca: vAttrForca, resistencia: vAttrResist, velocidade: vAttrVel, magia: vAttrMagia };
+    const vAttrs = `Força: ${vAttrForca} Kg | Resistência: ${vAttrResist} Kg | Velocidade: ${vAttrVel} Km/h | Magia: ${vAttrMagia}`;
 
     // Perícias da variante
     const vPericias = [];
@@ -1380,6 +1447,7 @@ async function saveMonster(event, monsterId) {
       name: vName,
       photo: vPhoto || photos[0] || '',
       attributes: vAttrs,
+      attrObj: vAttrObj,
       visibleAttributes: vVisAttrs,
       pericias: vPericias,
       habilidades: vHabilidades
