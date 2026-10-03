@@ -754,3 +754,44 @@ footer {
   color: var(--ink);
   font-weight: bold;
 }
+
+/* ===== SUBTABS DE LOCALIZAÇÕES ===== */
+.location-subtabs-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  border-bottom: 2px solid var(--wood-plank);
+  padding-bottom: 0.4rem;
+  margin: 2rem 0 1.8rem;
+  justify-content: center;
+}
+
+.location-subtab-btn {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--wood-plank);
+  border-bottom: none;
+  padding: 0.6rem 1.4rem;
+  font-family: 'Cinzel', serif;
+  font-size: 0.92rem;
+  color: #c9b49a;
+  cursor: pointer;
+  border-radius: 6px 6px 0 0;
+  transition: all 0.2s ease;
+  position: relative;
+  top: 2px;
+}
+
+.location-subtab-btn:hover {
+  background: rgba(0, 0, 0, 0.6);
+  color: var(--gold-light);
+  border-color: var(--gold);
+}
+
+.location-subtab-btn.active {
+  border-color: var(--gold) var(--gold) transparent;
+  background: linear-gradient(180deg, #2d1c10 0%, #1a0f08 100%);
+  color: var(--gold-bright);
+  font-weight: bold;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.5), inset 0 2px 0 var(--gold-bright);
+}
+

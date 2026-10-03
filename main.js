@@ -22,6 +22,17 @@ function showTab(name) {
   }
 }
 
+// Sub-abas de Localizações (Balistia, etc.)
+function showLocationSubtab(locName) {
+  document.querySelectorAll('.location-subtab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.location-subtab-content').forEach(panel => panel.style.display = 'none');
+
+  const btn = document.getElementById('location-subtab-btn-' + locName);
+  const panel = document.getElementById('location-subtab-' + locName);
+  if (btn) btn.classList.add('active');
+  if (panel) panel.style.display = 'block';
+}
+
 // Build race cards
 function buildRaces() {
   const container = document.getElementById('races-container');

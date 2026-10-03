@@ -44,7 +44,236 @@ window.KENSWORD_TEMPLATES.tabContents = `
         <img src="Photos/Kensword_Map.jpeg?v=2" alt="Mapa Oficial do Continente de Kensword">
         <p style="font-family:'Cinzel',serif;font-size:0.85rem;color:var(--gold);margin-top:0.8rem;letter-spacing:0.12em;">MAPA OFICIAL DO CONTINENTE DE KENSWORD</p>
       </div>
-      <div class="coming-soon"><p>Detalhes sobre cada continente e região serão adicionados em breve.</p></div>
+      <!-- Navegação de Sub-Abas de Regiões -->
+      <div class="location-subtabs-nav">
+        <button class="location-subtab-btn active" id="location-subtab-btn-balistia" onclick="showLocationSubtab('balistia')">
+          🏰 Balistia
+        </button>
+      </div>
+
+      <!-- Conteúdo da Sub-Aba: Balistia -->
+      <div id="location-subtab-balistia" class="location-subtab-content" style="display:block; animation:fadeIn 0.3s ease;">
+        
+        <div style="text-align:center; margin-bottom:2rem;">
+          <h3 style="font-family:'Cinzel Decorative',serif; font-size:1.6rem; color:var(--gold-bright); margin-bottom:0.4rem;">
+            🏰 Reino de Balistia
+          </h3>
+          <p style="font-style:italic; color:var(--ink-light); font-size:0.95rem;">
+            A grande metrópole central do continente. Conheça as oportunidades imobiliárias e comerciais da cidade.
+          </p>
+        </div>
+
+        <div style="background:rgba(212,167,84,0.08); border-left:4px solid var(--gold); border-radius:8px; padding:1.2rem 1.5rem; margin-bottom:2.5rem; max-width:980px; margin-left:auto; margin-right:auto;">
+          <h4 style="font-family:'Cinzel',serif; color:var(--gold-bright); font-size:1.15rem; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem;">
+            <span>💰</span> Moradias e Investimentos
+          </h4>
+          <p style="font-size:0.92rem; color:var(--ink); line-height:1.6;">
+            Adquira propriedades residenciais ou invista em comércios e estabelecimentos de serviços para gerar renda semanal para seu personagem ou grupo.
+          </p>
+        </div>
+
+        <!-- SEÇÃO 1: ESTABELECIMENTOS BAIRRO PLEBEU -->
+        <div style="margin-bottom:3rem;">
+          <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:1.2rem; border-bottom:1px solid rgba(212,167,84,0.25); padding-bottom:0.5rem;">
+            <span style="font-size:1.4rem;">🌾</span>
+            <h4 style="font-family:'Cinzel',serif; font-size:1.25rem; color:#e09855;">Estabelecimentos Bairro Plebeu</h4>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:1.2rem;">
+            
+            <!-- Casa -->
+            <div style="background:rgba(0,0,0,0.45); border:1px solid var(--wood-plank); border-top:3px solid #e09855; border-radius:8px; padding:1.1rem; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.6rem;">
+                  <span style="font-family:'Cinzel',serif; font-weight:bold; font-size:1.1rem; color:var(--gold-bright);">🏚️ Casa</span>
+                  <span style="background:rgba(212,167,84,0.18); border:1px solid rgba(212,167,84,0.4); color:var(--gold-bright); padding:2px 8px; border-radius:4px; font-size:0.85rem; font-weight:bold;">5.000 moedas</span>
+                </div>
+                <p style="font-size:0.9rem; color:var(--ink); line-height:1.5;">Casa simples, 2 quartos, 1 cozinha e 1 sala.</p>
+              </div>
+            </div>
+
+            <!-- Casarão -->
+            <div style="background:rgba(0,0,0,0.45); border:1px solid var(--wood-plank); border-top:3px solid #e09855; border-radius:8px; padding:1.1rem; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.6rem;">
+                  <span style="font-family:'Cinzel',serif; font-weight:bold; font-size:1.1rem; color:var(--gold-bright);">💒 Casarão</span>
+                  <span style="background:rgba(212,167,84,0.18); border:1px solid rgba(212,167,84,0.4); color:var(--gold-bright); padding:2px 8px; border-radius:4px; font-size:0.85rem; font-weight:bold;">10.000 moedas</span>
+                </div>
+                <p style="font-size:0.9rem; color:var(--ink); line-height:1.5;">Casa de 3 quartos, 1 cozinha e 2 salas.</p>
+              </div>
+            </div>
+
+            <!-- Taverna -->
+            <div style="background:rgba(0,0,0,0.45); border:1px solid var(--wood-plank); border-top:3px solid #f0a050; border-radius:8px; padding:1.1rem; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.6rem;">
+                  <span style="font-family:'Cinzel',serif; font-weight:bold; font-size:1.1rem; color:var(--gold-bright);">🍻 Taverna</span>
+                  <span style="background:rgba(212,167,84,0.18); border:1px solid rgba(212,167,84,0.4); color:var(--gold-bright); padding:2px 8px; border-radius:4px; font-size:0.85rem; font-weight:bold;">7.500 moedas</span>
+                </div>
+                <div style="font-size:0.9rem; color:#8bc34a; font-weight:bold; margin-bottom:0.4rem;">💰 Rende 500 moedas / semana</div>
+                <div style="font-size:0.85rem; color:var(--ink-light);">👥 <strong>Mínimo:</strong> 2 funcionários</div>
+              </div>
+            </div>
+
+            <!-- Restaurante -->
+            <div style="background:rgba(0,0,0,0.45); border:1px solid var(--wood-plank); border-top:3px solid #f0a050; border-radius:8px; padding:1.1rem; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.6rem;">
+                  <span style="font-family:'Cinzel',serif; font-weight:bold; font-size:1.1rem; color:var(--gold-bright);">🍝 Restaurante</span>
+                  <span style="background:rgba(212,167,84,0.18); border:1px solid rgba(212,167,84,0.4); color:var(--gold-bright); padding:2px 8px; border-radius:4px; font-size:0.85rem; font-weight:bold;">7.500 moedas</span>
+                </div>
+                <div style="font-size:0.9rem; color:#8bc34a; font-weight:bold; margin-bottom:0.4rem;">💰 Rende 500 moedas / semana</div>
+                <div style="font-size:0.85rem; color:var(--ink-light);">👥 <strong>Mínimo:</strong> 2 funcionários</div>
+              </div>
+            </div>
+
+            <!-- Comércio -->
+            <div style="background:rgba(0,0,0,0.45); border:1px solid var(--wood-plank); border-top:3px solid #52d4e0; border-radius:8px; padding:1.1rem; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.6rem;">
+                  <span style="font-family:'Cinzel',serif; font-weight:bold; font-size:1.1rem; color:var(--gold-bright);">🏪 Comércio</span>
+                  <span style="background:rgba(212,167,84,0.18); border:1px solid rgba(212,167,84,0.4); color:var(--gold-bright); padding:2px 8px; border-radius:4px; font-size:0.85rem; font-weight:bold;">5.000 moedas</span>
+                </div>
+                <div style="font-size:0.9rem; color:#8bc34a; font-weight:bold; margin-bottom:0.4rem;">💰 Rende 250 moedas / semana</div>
+                <div style="font-size:0.85rem; color:var(--ink-light);">👤 <strong>Mínimo:</strong> 1 funcionário</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SEÇÃO 2: MORADIAS BAIRRO NOBRE -->
+        <div style="margin-bottom:3rem;">
+          <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:1.2rem; border-bottom:1px solid rgba(212,167,84,0.25); padding-bottom:0.5rem;">
+            <span style="font-size:1.4rem;">👑</span>
+            <h4 style="font-family:'Cinzel',serif; font-size:1.25rem; color:var(--gold-bright);">Moradias Bairro Nobre</h4>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:1.2rem;">
+            
+            <!-- Casa de Luxo -->
+            <div style="background:rgba(0,0,0,0.45); border:1px solid var(--wood-plank); border-top:3px solid var(--gold); border-radius:8px; padding:1.1rem; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.6rem;">
+                  <span style="font-family:'Cinzel',serif; font-weight:bold; font-size:1.1rem; color:var(--gold-bright);">⛪ Casa de Luxo</span>
+                  <span style="background:rgba(212,167,84,0.22); border:1px solid var(--gold); color:var(--gold-bright); padding:2px 8px; border-radius:4px; font-size:0.85rem; font-weight:bold;">15.000 moedas</span>
+                </div>
+                <p style="font-size:0.9rem; color:var(--ink); line-height:1.5;">Uma casa linda de 5 cômodos!</p>
+              </div>
+            </div>
+
+            <!-- Casarão de Luxo -->
+            <div style="background:rgba(0,0,0,0.45); border:1px solid var(--wood-plank); border-top:3px solid var(--gold); border-radius:8px; padding:1.1rem; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.6rem;">
+                  <span style="font-family:'Cinzel',serif; font-weight:bold; font-size:1.1rem; color:var(--gold-bright);">🏨 Casarão de Luxo</span>
+                  <span style="background:rgba(212,167,84,0.22); border:1px solid var(--gold); color:var(--gold-bright); padding:2px 8px; border-radius:4px; font-size:0.85rem; font-weight:bold;">20.000 moedas</span>
+                </div>
+                <p style="font-size:0.9rem; color:var(--ink); line-height:1.5;">Um casarão top de 10 cômodos!</p>
+              </div>
+            </div>
+
+            <!-- Mansão -->
+            <div style="background:rgba(0,0,0,0.45); border:1px solid var(--wood-plank); border-top:3px solid #ffdd88; border-radius:8px; padding:1.1rem; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.6rem;">
+                  <span style="font-family:'Cinzel',serif; font-weight:bold; font-size:1.1rem; color:var(--gold-bright);">🏫 Mansão</span>
+                  <span style="background:rgba(212,167,84,0.22); border:1px solid var(--gold); color:var(--gold-bright); padding:2px 8px; border-radius:4px; font-size:0.85rem; font-weight:bold;">30.000 moedas</span>
+                </div>
+                <p style="font-size:0.9rem; color:var(--ink); line-height:1.5;">Uma mansão espetacular com acabamento real!</p>
+              </div>
+            </div>
+
+            <!-- Taverna de Luxo -->
+            <div style="background:rgba(0,0,0,0.45); border:1px solid var(--wood-plank); border-top:3px solid var(--gold); border-radius:8px; padding:1.1rem; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.6rem;">
+                  <span style="font-family:'Cinzel',serif; font-weight:bold; font-size:1.1rem; color:var(--gold-bright);">🍻 Taverna de Luxo</span>
+                  <span style="background:rgba(212,167,84,0.22); border:1px solid var(--gold); color:var(--gold-bright); padding:2px 8px; border-radius:4px; font-size:0.85rem; font-weight:bold;">15.000 moedas</span>
+                </div>
+                <div style="font-size:0.9rem; color:#8bc34a; font-weight:bold; margin-bottom:0.4rem;">💰 Rende 700 moedas / semana</div>
+                <div style="font-size:0.85rem; color:var(--ink-light);">👥 <strong>Mínimo:</strong> 3 funcionários</div>
+              </div>
+            </div>
+
+            <!-- Restaurante de Luxo -->
+            <div style="background:rgba(0,0,0,0.45); border:1px solid var(--wood-plank); border-top:3px solid var(--gold); border-radius:8px; padding:1.1rem; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.6rem;">
+                  <span style="font-family:'Cinzel',serif; font-weight:bold; font-size:1.1rem; color:var(--gold-bright);">🍝 Restaurante de Luxo</span>
+                  <span style="background:rgba(212,167,84,0.22); border:1px solid var(--gold); color:var(--gold-bright); padding:2px 8px; border-radius:4px; font-size:0.85rem; font-weight:bold;">15.000 moedas</span>
+                </div>
+                <div style="font-size:0.9rem; color:#8bc34a; font-weight:bold; margin-bottom:0.4rem;">💰 Rende 700 moedas / semana</div>
+                <div style="font-size:0.85rem; color:var(--ink-light);">👥 <strong>Mínimo:</strong> 3 funcionários</div>
+              </div>
+            </div>
+
+            <!-- Comércio de Luxo -->
+            <div style="background:rgba(0,0,0,0.45); border:1px solid var(--wood-plank); border-top:3px solid var(--gold); border-radius:8px; padding:1.1rem; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.6rem;">
+                  <span style="font-family:'Cinzel',serif; font-weight:bold; font-size:1.1rem; color:var(--gold-bright);">🏪 Comércio de Luxo</span>
+                  <span style="background:rgba(212,167,84,0.22); border:1px solid var(--gold); color:var(--gold-bright); padding:2px 8px; border-radius:4px; font-size:0.85rem; font-weight:bold;">10.000 moedas</span>
+                </div>
+                <div style="font-size:0.9rem; color:#8bc34a; font-weight:bold; margin-bottom:0.4rem;">💰 Rende 500 moedas / semana</div>
+                <div style="font-size:0.85rem; color:var(--ink-light);">👥 <strong>Mínimo:</strong> 2 funcionários</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SEÇÃO 3: GRANDES INSTITUIÇÕES -->
+        <div style="margin-bottom:2.5rem;">
+          <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:1.2rem; border-bottom:1px solid rgba(212,167,84,0.25); padding-bottom:0.5rem;">
+            <span style="font-size:1.4rem;">🏛️</span>
+            <h4 style="font-family:'Cinzel',serif; font-size:1.25rem; color:#52d4e0;">Grandes Instituições & Serviços Públicos</h4>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:1.5rem;">
+            
+            <!-- Escola -->
+            <div style="background:rgba(0,0,0,0.5); border:1px solid var(--wood-plank); border-left:4px solid #a05ee0; border-radius:8px; padding:1.3rem; box-shadow:0 4px 14px rgba(0,0,0,0.45); display:flex; flex-direction:column; gap:0.8rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-family:'Cinzel',serif; font-weight:bold; font-size:1.2rem; color:#a05ee0;">📚 Escola</span>
+                <span style="background:rgba(160,94,224,0.2); border:1px solid #a05ee0; color:var(--gold-bright); padding:3px 10px; border-radius:4px; font-weight:bold; font-size:0.9rem;">10.000 moedas</span>
+              </div>
+              <p style="font-size:0.92rem; color:var(--ink); line-height:1.5;">
+                Uma escola pequena para aprender! Ela prepara funcionários capacitados para o reino.
+              </p>
+              <div style="background:rgba(0,0,0,0.35); border-radius:6px; padding:0.8rem; border:1px solid rgba(255,255,255,0.06); display:flex; flex-direction:column; gap:0.4rem; font-size:0.88rem;">
+                <div style="color:#52d4e0;">🎓 <strong>Capacitação:</strong> Prepara 2 funcionários por semana (1 livre e 1 trabalha na escola).</div>
+                <div style="color:#8bc34a; font-weight:bold;">💰 <strong>Rendimento:</strong> Rende 500 moedas por semana.</div>
+                <div style="color:var(--ink-light);">👥 <strong>Equipe:</strong> Mínimo de 3 funcionários • Máximo de 5 funcionários.</div>
+                <div style="color:var(--gold); font-style:italic; margin-top:0.2rem;">⭐ <em>Pode evoluir!</em></div>
+              </div>
+            </div>
+
+            <!-- Hospital -->
+            <div style="background:rgba(0,0,0,0.5); border:1px solid var(--wood-plank); border-left:4px solid #e05252; border-radius:8px; padding:1.3rem; box-shadow:0 4px 14px rgba(0,0,0,0.45); display:flex; flex-direction:column; gap:0.8rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-family:'Cinzel',serif; font-weight:bold; font-size:1.2rem; color:#e05252;">🏥 Hospital</span>
+                <span style="background:rgba(224,82,82,0.2); border:1px solid #e05252; color:var(--gold-bright); padding:3px 10px; border-radius:4px; font-weight:bold; font-size:0.9rem;">15.000 moedas</span>
+              </div>
+              <p style="font-size:0.92rem; color:var(--ink); line-height:1.5;">
+                É necessário um hospital para todo o povo receber apoio! Só clínicas não bastam!
+              </p>
+              <div style="background:rgba(0,0,0,0.35); border-radius:6px; padding:0.8rem; border:1px solid rgba(255,255,255,0.06); display:flex; flex-direction:column; gap:0.4rem; font-size:0.88rem;">
+                <div style="color:#8bc34a; font-weight:bold;">💰 <strong>Verba:</strong> Recebe 50 moedas por funcionário por semana.</div>
+                <div style="color:var(--ink-light);">👥 <strong>Equipe Mínima:</strong> 5 funcionários e 5 médicos.</div>
+                <div style="color:var(--ink-light);">👥 <strong>Equipe Máxima:</strong> 20 funcionários e 20 médicos.</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div style="text-align:center; padding:1.5rem; font-style:italic; color:var(--ink-light); font-size:0.9rem; border-top:1px dashed rgba(212,167,84,0.2);">
+          ✨ Continua em breve... Novas regiões e propriedades serão adicionadas!
+        </div>
+
+      </div>
+
     </div>
   </section>
 
