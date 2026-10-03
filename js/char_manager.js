@@ -431,14 +431,49 @@ function openCharacterSheet(uid) {
   const currentUser = _auth ? _auth.currentUser : null;
   const currentUserData = currentUser ? ALL_CHARACTERS[currentUser.uid] : null;
 
+  const isOwner = currentUser && currentUser.uid === uid;
   const isDante = currentUser && (
     (currentUser.email && currentUser.email.toLowerCase().includes('dantestr')) ||
     (currentUserData && currentUserData.player && currentUserData.player.name && 
      (currentUserData.player.name.trim().toLowerCase() === 'dantestr' || 
-      currentUserData.player.name.trim().toLowerCase() === 'dantest-r'))
+      currentUserData.player.name.trim().toLowerCase() === 'dantest-r')) ||
+    (currentUserData && currentUserData.character && currentUserData.character.name && 
+     (currentUserData.character.name.trim().toLowerCase() === 'dantestr' || 
+      currentUserData.character.name.trim().toLowerCase() === 'dantest-r'))
   );
   const isStaff = isDante || (currentUserData && (currentUserData.isAdmin || currentUserData.isSubAdmin || currentUserData.user_role === 'admin' || currentUserData.user_role === 'sub-admin'));
   const isPending = data.status === 'pending';
+
+  // REGRA ESTRITA: Visualização de outros jogadores (somente Nome, Altura, Peso, Raça e Classe)
+  if (!isStaff && !isOwner) {
+    const heightStr = char.height ? (char.height > 3 ? (char.height / 100).toFixed(2).replace('.', ',') + ' m' : char.height + ' m') : '—';
+    const weightStr = char.weight ? char.weight + ' kg' : '—';
+    const displayClass = char.displayClass || (char.classes && char.classes.length > 0 ? char.classes[0] : '—');
+
+    const restrictedHtml = `
+      <div style="text-align:center; padding:1rem 0;">
+        <h2 style="font-family:'Cinzel Decorative',serif; color:var(--gold-bright); margin-bottom:1.5rem; border-bottom:1px solid var(--wood-plank); padding-bottom:0.5rem;">${char.name || 'Aventureiro'}</h2>
+        <div style="display:flex; gap:1.5rem; margin-bottom:1.5rem; flex-wrap:wrap; justify-content:center; align-items:center;">
+          <img src="${char.avatar || 'kensword_database/kensword_photos/demihuman.webp'}" alt="${char.name}" style="width:180px; height:180px; object-fit:cover; object-position:top; border-radius:8px; border:2px solid var(--gold); box-shadow:0 4px 10px rgba(0,0,0,0.5);">
+          <div style="text-align:left; min-width:200px; display:flex; flex-direction:column; gap:0.6rem; background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:8px; padding:1.2rem;">
+            <p style="margin:0; font-size:1rem; color:var(--ink);"><strong>Nome:</strong> <span style="color:var(--gold-bright);">${char.name || '—'}</span></p>
+            <p style="margin:0; font-size:1rem; color:var(--ink);"><strong>Altura:</strong> ${heightStr}</p>
+            <p style="margin:0; font-size:1rem; color:var(--ink);"><strong>Peso:</strong> ${weightStr}</p>
+            <p style="margin:0; font-size:1rem; color:var(--ink);"><strong>Raça:</strong> ${char.race || '—'}</p>
+            <p style="margin:0; font-size:1rem; color:var(--ink);"><strong>Classe:</strong> ${displayClass}</p>
+          </div>
+        </div>
+        <div style="margin-top:1.5rem;">
+          <button onclick="closeCharacterSheet()" class="form-submit-btn" style="width:auto; padding:0.6rem 2.5rem;">Fechar</button>
+        </div>
+      </div>
+    `;
+    const body = document.getElementById('char-sheet-body');
+    if (body) body.innerHTML = restrictedHtml;
+    const modal = document.getElementById('char-sheet-modal');
+    if (modal) modal.style.display = 'flex';
+    return;
+  }
 
   let editButtonHtml = '<div style="display:flex; justify-content:flex-end; gap:0.8rem; margin-bottom:1rem; margin-top:-0.5rem; position:relative; z-index:10; flex-wrap:wrap;">';
   let hasActions = false;

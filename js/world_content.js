@@ -1,15 +1,28 @@
 // =====================================================================
 // KENSWORD CHRONICLES - WORLD CONTENT MODULE
-// Gerencia Histórias/Missões, NPCs, Monstros (Bestiário) e Organizações
-// Com suporte a criação/edição/exclusão pelo Mestre Supremo (Admin)
+// Módulo de Gerenciamento do Mestre Supremo (Admin DanteSTR)
+// Sistema exclusivo para criação, edição e exclusão de:
+// - NPCs (com controle granular de visibilidade para players)
+// - Monstros / Bestiário (com variantes, tipos, atributos por variante e visibilidade)
+// - Organizações (com líder, índole, logo, descrição e membros em carrossel)
+// - Histórias / Missões (com fotos 140x140px, entidades vinculadas e visibilidade)
 // =====================================================================
 
 let ALL_STORIES = [];
 let ALL_MONSTERS = [];
 let ALL_ORGS = [];
-let ALL_NPCS_CACHE = {};
+let ALL_NPCS = [];
 
-// Helper: Verifica se o usuário atual é Mestre Supremo ou Staff
+// Lista Oficial de Perícias do RPG Kensword para seleção
+const KENSWORD_PERICIAS = [
+  "Combate", "Arte Marcial", "Vitalidade", "Resistência", "Resiliência", "Bloqueio", "Esquiva", "Agilidade",
+  "Adaga", "Espada", "Katana", "Lança", "Alabarda", "Espadão", "Machado", "Foice", "Martelo", "Maça", "Escudo", "Ioiô", "Cajado", "Grimório", "Arco e flecha",
+  "Magia", "Inteligência", "Magia de apoio", "Concentração", "Percepção", "Furtividade", "Manuseio", "Precaução", "Encantar",
+  "Agricultura", "Pecuária", "Culinária", "Mineração", "Artesanato", "Metalurgia", "Síntese", "Estilismo", "Caça", "Monstros", "Ciência", "Alquimia", "Masmorra", "Conhecimento da Flora", "Conhecimento da Fauna",
+  "Comunicação", "Negociação", "Sedução", "Drenagem Vital", "Manipulação"
+];
+
+// Helper: Verifica se o usuário atual é DanteSTR / Mestre Supremo
 function isStaffOrAdminUser() {
   if (!_auth || !_auth.currentUser) return false;
   const user = _auth.currentUser;
@@ -32,9 +45,9 @@ function isStaffOrAdminUser() {
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// MODAL GERAL DE CONTEÚDO DO MUNDO
+// MODAL GERAL
 // ─────────────────────────────────────────────────────────────────────
-function openWorldContentModal(htmlContent, title = '') {
+function openWorldContentModal(htmlContent) {
   let modal = document.getElementById('world-content-modal');
   if (!modal) {
     modal = document.createElement('div');
@@ -42,7 +55,7 @@ function openWorldContentModal(htmlContent, title = '') {
     modal.className = 'modal-overlay';
     modal.style.display = 'none';
     modal.innerHTML = `
-      <div class="modal-content parchment-panel" style="max-width:760px; position:relative; max-height:92vh; overflow-y:auto; padding:2rem 1.8rem;">
+      <div class="modal-content parchment-panel" style="max-width:820px; position:relative; max-height:92vh; overflow-y:auto; padding:2rem 1.8rem;">
         <button onclick="closeWorldContentModal()" class="close-btn" style="position:absolute; top:12px; right:18px; font-size:1.8rem; background:none; border:none; cursor:pointer; color:var(--red-wax); z-index:20;">&times;</button>
         <div id="world-content-modal-body"></div>
       </div>
@@ -85,11 +98,10 @@ function zoomPhoto(url, caption = '') {
   zoomModal.style.display = 'flex';
 }
 
-// Visualizador de Entidade Customizada (NPC/Monstro/Organização que foi descrito diretamente na missão)
+// Visualizador de Entidade Vinculada Customizada
 function openCustomEntityViewer(name, type, details, image) {
   const icon = type === 'npc' ? '🎭' : type === 'monster' ? '👾' : '🏰';
   const typeLabel = type === 'npc' ? 'NPC da Missão' : type === 'monster' ? 'Monstro da Missão' : 'Organização da Missão';
-  const defaultImg = type === 'npc' ? 'Photos/demihuman.webp' : type === 'monster' ? 'Photos/Goblin.jpg' : 'Photos/Angel.jpg';
 
   const html = `
     <div style="text-align:center; margin-bottom:1.5rem;">
@@ -109,712 +121,8 @@ function openCustomEntityViewer(name, type, details, image) {
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// 1. ABA HISTÓRIAS & MISSÕES
+// 1. ABA NPCS (Personagens Não-Jogáveis)
 // ─────────────────────────────────────────────────────────────────────
-
-async function loadHistoryTab() {
-  const container = document.getElementById('history-container');
-  const adminActions = document.getElementById('history-admin-actions');
-  if (!container) return;
-
-  const isStaff = isStaffOrAdminUser();
-  if (adminActions) {
-    adminActions.innerHTML = isStaff ? `
-      <button onclick="openStoryEditor()" class="admin-action-btn">
-        <span>➕</span> Nova História / Missão
-      </button>
-    ` : '';
-  }
-
-  container.innerHTML = '<div class="auth-loading active" style="margin:2rem auto;"><div class="auth-spinner"></div></div>';
-
-  try {
-    let stories = [];
-    if (_db) {
-      const snap = await _db.collection('stories').get();
-      snap.forEach(doc => {
-        stories.push({ id: doc.id, ...doc.data() });
-      });
-    }
-
-    // Se ainda não houver nenhuma no banco, carrega missão starter inicial
-    if (stories.length === 0) {
-      stories = getStarterStories();
-    }
-
-    // Ordena mais recentes primeiro
-    stories.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-    ALL_STORIES = stories;
-
-    renderStoriesList(stories);
-  } catch (err) {
-    console.error('Erro ao carregar histórias:', err);
-    container.innerHTML = '<p style="text-align:center; color:var(--red-wax);">Erro ao carregar histórias e missões.</p>';
-  }
-}
-
-function getStarterStories() {
-  return [
-    {
-      id: 'starter_mission_1',
-      title: 'A Queda do Posto Avançado de Balistia',
-      category: 'Missão Oficial de Guilda',
-      status: 'Em Andamento',
-      date: 'Ano 42 — Era da Lâmina',
-      location: 'Arredores de Balistia (Bairro Plebeu & Muralhas Externas)',
-      summary: 'Estranhas movimentações de criaturas do subsolo foram detectadas próximo ao perímetro de Balistia. A Guilda convoca aventureiros habilitados para investigar o desaparecimento de mercadores e patrulheiros.',
-      content: `Relatório oficial emitido pela Guilda dos Aventureiros sob supervisão do Mestre Supremo DanteSTR.\n\nNas últimas luas, relatos de fazendeiros do Bairro Plebeu indicam que matilhas de Goblins e batedores Kobolds estão atacando rotas de comércio ao anoitecer. Testemunhas afirmam ter visto figuras encapuzadas portando símbolos desconhecidos operando nas sombras das ruínas vizinhas.\n\nObjetivos da Missão:\n1. Patrulhar o perímetro leste de Balistia e resgatar sobreviventes.\n2. Localizar o ninho subterrâneo das criaturas e eliminar a ameaça.\n3. Descobrir se há envolvimento de alguma facção herética ou do culto secreto.\n\nRecompensa da Missão:\n• 100 XP por aventureiro participante\n• 3.500 Moedas divididas entre os membros do grupo\n• Reconhecimento da Guilda e acesso a contratos de Rank Superior.`,
-      photos: [
-        'Photos/Kensword_Map.jpeg',
-        'Photos/Goblin.jpg',
-        'Photos/Kobold.webp'
-      ],
-      npcs: [
-        { name: 'Mestre DanteSTR', details: 'Líder Supremo da Guilda e Mestre do Continente de Kensword.', avatar: 'Photos/demihuman.webp' }
-      ],
-      monsters: [
-        { name: 'Goblin Espreitador', rank: 'Rank E', details: 'Criaturas ágeis que atacam em bando usando adagas envenenadas.', avatar: 'Photos/Goblin.jpg' },
-        { name: 'Kobold Caçador', rank: 'Rank D', details: 'Especialistas em emboscadas armadas com arcos e lanças.', avatar: 'Photos/Kobold.webp' }
-      ],
-      orgs: [
-        { name: 'Guilda dos Aventureiros de Balistia', details: 'Sede central de expedições e contratos de Kensword.', avatar: 'Photos/Angel.jpg' }
-      ],
-      createdAt: Date.now()
-    }
-  ];
-}
-
-function renderStoriesList(stories) {
-  const container = document.getElementById('history-container');
-  if (!container) return;
-
-  if (stories.length === 0) {
-    container.innerHTML = `
-      <div class="coming-soon">
-        <div class="cs-icon">📖</div>
-        <h3>Nenhuma História ou Missão Registrada</h3>
-        <p>O Mestre Supremo ainda não cadastrou crônicas para esta era.</p>
-      </div>
-    `;
-    return;
-  }
-
-  const isStaff = isStaffOrAdminUser();
-  let html = '';
-
-  stories.forEach(story => {
-    const statusClass = story.status === 'Ativa' ? 'badge-status-active' :
-                        story.status === 'Em Andamento' ? 'badge-status-ongoing' :
-                        story.status === 'Concluída' ? 'badge-status-completed' : 'badge-status-historic';
-
-    // Fotos relacionadas (140x140px)
-    const photos = story.photos || [];
-    let photosHtml = '';
-    if (photos.length > 0) {
-      photosHtml = `
-        <div style="margin-top:1rem;">
-          <div style="font-family:'Cinzel',serif; font-size:0.85rem; color:var(--gold-bright); font-weight:bold; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.4rem;">
-            <span>📸</span> Fotos Relacionadas com a Missão (${photos.length}):
-          </div>
-          <div class="story-photo-gallery">
-            ${photos.map((pUrl, idx) => `
-              <div class="story-photo-item" onclick="zoomPhoto('${pUrl}', '${story.title.replace(/'/g, "\\'")} - Foto #${idx+1}')" title="Clique para ampliar">
-                <img src="${pUrl}" alt="Foto da Missão">
-                <div class="photo-zoom-hint">🔍 Ampliar</div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      `;
-    }
-
-    // NPCs Relacionados
-    const npcs = story.npcs || [];
-    let npcsHtml = '';
-    if (npcs.length > 0) {
-      npcsHtml = `
-        <div class="story-entity-row">
-          <div class="story-entity-label"><span>🎭</span> NPCs:</div>
-          <div class="story-chips-container">
-            ${npcs.map(npc => {
-              const name = typeof npc === 'string' ? npc : (npc.name || 'NPC');
-              const details = (typeof npc === 'object' && npc.details) ? npc.details.replace(/"/g, '&quot;') : '';
-              const avatar = (typeof npc === 'object' && npc.avatar) ? npc.avatar : 'Photos/demihuman.webp';
-              const npcId = typeof npc === 'object' ? npc.id : null;
-              
-              if (npcId && ALL_CHARACTERS && ALL_CHARACTERS[npcId]) {
-                return `
-                  <div class="entity-chip" onclick="openCharacterSheet('${npcId}')" title="Clique para ver a ficha completa">
-                    <img src="${avatar}" class="entity-chip-avatar" alt="${name}">
-                    <strong>${name}</strong>
-                  </div>
-                `;
-              }
-              return `
-                <div class="entity-chip" onclick="openCustomEntityViewer('${name}', 'npc', '${details}', '${avatar}')" title="Clique para ver detalhes do NPC">
-                  <img src="${avatar}" class="entity-chip-avatar" alt="${name}">
-                  <strong>${name}</strong>
-                </div>
-              `;
-            }).join('')}
-          </div>
-        </div>
-      `;
-    }
-
-    // Monstros na Missão
-    const monsters = story.monsters || [];
-    let monstersHtml = '';
-    if (monsters.length > 0) {
-      monstersHtml = `
-        <div class="story-entity-row">
-          <div class="story-entity-label"><span>👾</span> Monstros:</div>
-          <div class="story-chips-container">
-            ${monsters.map(mon => {
-              const name = typeof mon === 'string' ? mon : (mon.name || 'Monstro');
-              const rank = (typeof mon === 'object' && mon.rank) ? mon.rank : '';
-              const details = (typeof mon === 'object' && mon.details) ? mon.details.replace(/"/g, '&quot;') : '';
-              const avatar = (typeof mon === 'object' && mon.avatar) ? mon.avatar : 'Photos/Goblin.jpg';
-              const monId = typeof mon === 'object' ? mon.id : null;
-
-              if (monId && ALL_MONSTERS.some(m => m.id === monId)) {
-                return `
-                  <div class="entity-chip" onclick="openMonsterDetails('${monId}')" title="Clique para ver a ficha do Monstro">
-                    <img src="${avatar}" class="entity-chip-avatar" alt="${name}">
-                    <strong>${name}</strong>
-                    ${rank ? `<span class="rank-badge rank-c">${rank}</span>` : ''}
-                  </div>
-                `;
-              }
-              return `
-                <div class="entity-chip" onclick="openCustomEntityViewer('${name}', 'monster', '${details}', '${avatar}')" title="Clique para ver a ficha do Monstro">
-                  <img src="${avatar}" class="entity-chip-avatar" alt="${name}">
-                  <strong>${name}</strong>
-                  ${rank ? `<span class="rank-badge rank-c">${rank}</span>` : ''}
-                </div>
-              `;
-            }).join('')}
-          </div>
-        </div>
-      `;
-    }
-
-    // Organizações Relacionadas
-    const orgs = story.orgs || [];
-    let orgsHtml = '';
-    if (orgs.length > 0) {
-      orgsHtml = `
-        <div class="story-entity-row">
-          <div class="story-entity-label"><span>🏰</span> Organizações:</div>
-          <div class="story-chips-container">
-            ${orgs.map(org => {
-              const name = typeof org === 'string' ? org : (org.name || 'Organização');
-              const details = (typeof org === 'object' && org.details) ? org.details.replace(/"/g, '&quot;') : '';
-              const avatar = (typeof org === 'object' && org.avatar) ? org.avatar : 'Photos/Angel.jpg';
-              const orgId = typeof org === 'object' ? org.id : null;
-
-              if (orgId && ALL_ORGS.some(o => o.id === orgId)) {
-                return `
-                  <div class="entity-chip" onclick="openOrgDetails('${orgId}')" title="Clique para ver a ficha da Organização">
-                    <img src="${avatar}" class="entity-chip-avatar" alt="${name}">
-                    <strong>${name}</strong>
-                  </div>
-                `;
-              }
-              return `
-                <div class="entity-chip" onclick="openCustomEntityViewer('${name}', 'org', '${details}', '${avatar}')" title="Clique para ver detalhes da Organização">
-                  <img src="${avatar}" class="entity-chip-avatar" alt="${name}">
-                  <strong>${name}</strong>
-                </div>
-              `;
-            }).join('')}
-          </div>
-        </div>
-      `;
-    }
-
-    // Botões de administração
-    let adminControls = '';
-    if (isStaff) {
-      adminControls = `
-        <div style="display:flex; gap:0.5rem; margin-top:0.4rem;">
-          <button onclick="openStoryEditor('${story.id}')" class="admin-action-btn" style="padding:0.3rem 0.8rem; font-size:0.75rem;">
-            ✏️ Editar
-          </button>
-          <button onclick="deleteStory('${story.id}')" class="admin-action-btn" style="padding:0.3rem 0.8rem; font-size:0.75rem; border-color:var(--red-wax); color:#ff6b6b;">
-            🗑️ Excluir
-          </button>
-        </div>
-      `;
-    }
-
-    html += `
-      <div class="story-card" id="story-card-${story.id}">
-        <div class="story-header">
-          <div>
-            <h3 class="story-title">${story.title}</h3>
-            <div class="story-meta">
-              ${story.date ? `<span>📅 ${story.date}</span>` : ''}
-              ${story.location ? `<span>📍 ${story.location}</span>` : ''}
-            </div>
-          </div>
-          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.4rem;">
-            <div class="story-badges">
-              ${story.category ? `<span class="story-badge badge-type">${story.category}</span>` : ''}
-              <span class="story-badge ${statusClass}">${story.status || 'Ativa'}</span>
-            </div>
-            ${adminControls}
-          </div>
-        </div>
-
-        <div class="story-summary">
-          ${story.summary}
-        </div>
-
-        ${photosHtml}
-
-        <div class="story-entities-section">
-          ${npcsHtml}
-          ${monstersHtml}
-          ${orgsHtml}
-        </div>
-
-        <div style="margin-top:1.5rem; text-align:right;">
-          <button onclick="openStoryDetails('${story.id}')" class="form-submit-btn" style="width:auto; padding:0.5rem 1.5rem; font-family:'Cinzel',serif; font-size:0.85rem; background:rgba(212,175,55,0.15); border-color:var(--gold); color:var(--gold-bright);">
-            📜 Ler Relato Completo &amp; Detalhes
-          </button>
-        </div>
-      </div>
-    `;
-  });
-
-  container.innerHTML = html;
-}
-
-// Detalhes Completos da História / Missão
-function openStoryDetails(storyId) {
-  const story = ALL_STORIES.find(s => s.id === storyId);
-  if (!story) return;
-
-  const photos = story.photos || [];
-  const statusClass = story.status === 'Ativa' ? 'badge-status-active' :
-                      story.status === 'Em Andamento' ? 'badge-status-ongoing' :
-                      story.status === 'Concluída' ? 'badge-status-completed' : 'badge-status-historic';
-
-  const html = `
-    <div>
-      <div style="text-align:center; margin-bottom:1.5rem; border-bottom:1px solid var(--wood-plank); padding-bottom:1rem;">
-        <span class="story-badge ${statusClass}" style="margin-bottom:0.5rem; display:inline-block;">${story.status || 'Ativa'}</span>
-        <h2 style="font-family:'Cinzel Decorative',serif; color:var(--gold-bright); margin:0.3rem 0 0.5rem;">${story.title}</h2>
-        <div style="font-size:0.9rem; color:var(--ink-light); display:flex; justify-content:center; gap:1.5rem; flex-wrap:wrap;">
-          ${story.category ? `<span>🏷️ <strong>Categoria:</strong> ${story.category}</span>` : ''}
-          ${story.date ? `<span>📅 <strong>Data:</strong> ${story.date}</span>` : ''}
-          ${story.location ? `<span>📍 <strong>Local:</strong> ${story.location}</span>` : ''}
-        </div>
-      </div>
-
-      ${photos.length > 0 ? `
-        <div style="margin-bottom:1.5rem;">
-          <h4 style="font-family:'Cinzel',serif; color:var(--gold); margin-bottom:0.6rem;">📸 Fotos e Registros da Missão:</h4>
-          <div class="story-photo-gallery">
-            ${photos.map((p, idx) => `
-              <div class="story-photo-item" onclick="zoomPhoto('${p}', '${story.title.replace(/'/g, "\\'")} - Foto #${idx+1}')" title="Clique para ampliar">
-                <img src="${p}" alt="Foto">
-                <div class="photo-zoom-hint">🔍 Ampliar</div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      ` : ''}
-
-      <div style="background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:8px; padding:1.5rem; margin-bottom:1.5rem;">
-        <h4 style="font-family:'Cinzel',serif; color:var(--gold); margin-top:0; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:0.4rem;">📖 Relato Oficial dos Fatos:</h4>
-        <div style="font-size:0.95rem; color:var(--ink); line-height:1.7; white-space:pre-wrap;">${story.content || story.summary}</div>
-      </div>
-
-      <div style="display:flex; justify-content:center; gap:1rem; margin-top:1.5rem;">
-        <button onclick="closeWorldContentModal()" class="form-submit-btn" style="width:auto; padding:0.6rem 2rem;">
-          Fechar
-        </button>
-      </div>
-    </div>
-  `;
-
-  openWorldContentModal(html);
-}
-
-// Editor de História / Missão (Mestre Supremo)
-async function openStoryEditor(storyId = null) {
-  if (!isStaffOrAdminUser()) {
-    showToast('⚠️ Apenas o Administrador/Mestre Supremo pode adicionar ou editar histórias.', 'error');
-    return;
-  }
-
-  const isEdit = !!storyId;
-  const story = isEdit ? ALL_STORIES.find(s => s.id === storyId) || {} : {};
-
-  // Carrega listas para vincular
-  await refreshNpcCache();
-  await refreshMonsterCache();
-  await refreshOrgCache();
-
-  const allNpcKeys = Object.keys(ALL_NPCS_CACHE);
-  const selectedNpcIds = (story.npcs || []).map(n => typeof n === 'object' ? n.id : n).filter(Boolean);
-  const selectedMonIds = (story.monsters || []).map(m => typeof m === 'object' ? m.id : m).filter(Boolean);
-  const selectedOrgIds = (story.orgs || []).map(o => typeof o === 'object' ? o.id : o).filter(Boolean);
-
-  const existingPhotosStr = (story.photos || []).join('\n');
-
-  const html = `
-    <div>
-      <h2 style="font-family:'Cinzel',serif; text-align:center; color:var(--gold-bright); margin-bottom:1.5rem; border-bottom:1px solid var(--wood-plank); padding-bottom:0.5rem;">
-        ${isEdit ? '✏️ Editar História / Missão' : '📜 Registrar Nova História / Missão'}
-      </h2>
-
-      <form id="story-editor-form" onsubmit="saveStory(event, '${storyId || ''}')">
-        
-        <div class="field-group">
-          <label>Título da História / Missão *</label>
-          <input type="text" id="se-title" value="${(story.title || '').replace(/"/g, '&quot;')}" required placeholder="Ex: A Batalha das Minas de Balistia">
-        </div>
-
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-          <div class="field-group">
-            <label>Categoria</label>
-            <select id="se-category" style="width:100%; padding:0.6rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px;">
-              <option value="Missão Oficial de Guilda" ${story.category === 'Missão Oficial de Guilda' ? 'selected' : ''}>Missão Oficial de Guilda</option>
-              <option value="Crônica Histórica" ${story.category === 'Crônica Histórica' ? 'selected' : ''}>Crônica Histórica</option>
-              <option value="Evento Global" ${story.category === 'Evento Global' ? 'selected' : ''}>Evento Global</option>
-              <option value="Exploração de Andar" ${story.category === 'Exploração de Andar' ? 'selected' : ''}>Exploração de Andar</option>
-            </select>
-          </div>
-          <div class="field-group">
-            <label>Status</label>
-            <select id="se-status" style="width:100%; padding:0.6rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px;">
-              <option value="Ativa" ${story.status === 'Ativa' ? 'selected' : ''}>Ativa</option>
-              <option value="Em Andamento" ${story.status === 'Em Andamento' ? 'selected' : ''}>Em Andamento</option>
-              <option value="Concluída" ${story.status === 'Concluída' ? 'selected' : ''}>Concluída</option>
-              <option value="Histórica" ${story.status === 'Histórica' ? 'selected' : ''}>Histórica</option>
-            </select>
-          </div>
-        </div>
-
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-          <div class="field-group">
-            <label>Data / Era</label>
-            <input type="text" id="se-date" value="${(story.date || '').replace(/"/g, '&quot;')}" placeholder="Ex: Ano 42 da Era da Lâmina">
-          </div>
-          <div class="field-group">
-            <label>Localização</label>
-            <input type="text" id="se-location" value="${(story.location || '').replace(/"/g, '&quot;')}" placeholder="Ex: Balistia - Bairro Plebeu">
-          </div>
-        </div>
-
-        <div class="field-group">
-          <label>Resumo / Sinopse da Missão *</label>
-          <textarea id="se-summary" rows="3" required placeholder="Breve resumo da missão que aparece no card..." style="width:100%; box-sizing:border-box; padding:0.6rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-family:sans-serif;">${story.summary || ''}</textarea>
-        </div>
-
-        <div class="field-group">
-          <label>Conteúdo Completo &amp; Relato Detalhado *</label>
-          <textarea id="se-content" rows="6" required placeholder="Escreva os detalhes completos, objetivos, diálogos e recompensas da história..." style="width:100%; box-sizing:border-box; padding:0.6rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-family:sans-serif;">${story.content || ''}</textarea>
-        </div>
-
-        <!-- FOTOS RELACIONADAS (140x140px) -->
-        <div style="background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.3); border-radius:8px; padding:1.2rem; margin-bottom:1.5rem;">
-          <label style="font-family:'Cinzel',serif; font-size:1rem; color:var(--gold-bright); font-weight:bold; display:block; margin-bottom:0.4rem;">
-            📸 Fotos Relacionadas com a Missão (Miniaturas 140x140px):
-          </label>
-          <span style="font-size:0.82rem; color:var(--ink-light); display:block; margin-bottom:0.6rem;">
-            Insira as URLs das imagens (uma por linha) ou escolha um arquivo do computador. Elas ficarão quadradas em 140x140px como as raças do site.
-          </span>
-          <textarea id="se-photos" rows="3" placeholder="https://exemplo.com/foto1.jpg&#10;Photos/Goblin.jpg&#10;Photos/Kobold.webp" style="width:100%; box-sizing:border-box; padding:0.6rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-family:monospace; font-size:0.85rem;">${existingPhotosStr}</textarea>
-          
-          <div style="margin-top:0.6rem; display:flex; gap:0.8rem; align-items:center;">
-            <input type="file" id="se-photo-file" accept="image/*" style="display:none;" onchange="handleStoryPhotoUpload(event)">
-            <button type="button" onclick="document.getElementById('se-photo-file').click()" class="admin-action-btn" style="font-size:0.8rem; padding:0.35rem 0.8rem;">
-              📁 Upload de Foto do PC
-            </button>
-            <span style="font-size:0.8rem; color:var(--ink-light);">Sugestões locais: Photos/Goblin.jpg, Photos/Kobold.webp, Photos/Ghoul.jpg</span>
-          </div>
-        </div>
-
-        <!-- NPCS RELACIONADOS -->
-        <div style="background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:8px; padding:1.2rem; margin-bottom:1.5rem;">
-          <label style="font-family:'Cinzel',serif; font-size:0.95rem; color:var(--gold); font-weight:bold; display:block; margin-bottom:0.4rem;">
-            🎭 NPCs Relacionados com a Missão:
-          </label>
-          <span style="font-size:0.82rem; color:var(--ink-light); display:block; margin-bottom:0.8rem;">
-            Marque os NPCs existentes na aba NPCs ou adicione novos NPCs específicos para este evento:
-          </span>
-
-          <div style="display:flex; flex-wrap:wrap; gap:0.6rem; max-height:140px; overflow-y:auto; padding:0.5rem; background:rgba(0,0,0,0.2); border-radius:4px; margin-bottom:0.8rem;">
-            ${allNpcKeys.length > 0 ? allNpcKeys.map(k => {
-              const npcDoc = ALL_NPCS_CACHE[k];
-              const char = npcDoc.character || {};
-              const isChecked = selectedNpcIds.includes(k);
-              return `
-                <label style="display:inline-flex; align-items:center; gap:0.4rem; background:rgba(255,255,255,0.05); padding:3px 8px; border-radius:4px; font-size:0.85rem; cursor:pointer;">
-                  <input type="checkbox" name="se-npcs-checkbox" value="${k}" ${isChecked ? 'checked' : ''}>
-                  ${char.name || 'NPC'}
-                </label>
-              `;
-            }).join('') : '<span style="font-size:0.85rem; color:#888; font-style:italic;">Nenhum NPC cadastrado no sistema ainda. Você pode adicionar abaixo!</span>'}
-          </div>
-
-          <div class="field-group" style="margin-bottom:0;">
-            <label style="font-size:0.85rem;">Adicionar Outro NPC (Nome e Ficha rápida):</label>
-            <input type="text" id="se-custom-npc-name" placeholder="Nome do NPC Adicional" style="margin-bottom:0.4rem;">
-            <textarea id="se-custom-npc-desc" rows="2" placeholder="Ficha e detalhes deste NPC na missão..." style="width:100%; box-sizing:border-box; padding:0.5rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-size:0.85rem;"></textarea>
-          </div>
-        </div>
-
-        <!-- MONSTROS NA MISSÃO -->
-        <div style="background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:8px; padding:1.2rem; margin-bottom:1.5rem;">
-          <label style="font-family:'Cinzel',serif; font-size:0.95rem; color:var(--gold); font-weight:bold; display:block; margin-bottom:0.4rem;">
-            👾 Monstros Presentes na Missão:
-          </label>
-          <span style="font-size:0.82rem; color:var(--ink-light); display:block; margin-bottom:0.8rem;">
-            Marque os monstros da aba Monstros/Bestiário ou insira um monstro novo:
-          </span>
-
-          <div style="display:flex; flex-wrap:wrap; gap:0.6rem; max-height:140px; overflow-y:auto; padding:0.5rem; background:rgba(0,0,0,0.2); border-radius:4px; margin-bottom:0.8rem;">
-            ${ALL_MONSTERS.map(m => {
-              const isChecked = selectedMonIds.includes(m.id);
-              return `
-                <label style="display:inline-flex; align-items:center; gap:0.4rem; background:rgba(255,255,255,0.05); padding:3px 8px; border-radius:4px; font-size:0.85rem; cursor:pointer;">
-                  <input type="checkbox" name="se-monsters-checkbox" value="${m.id}" ${isChecked ? 'checked' : ''}>
-                  ${m.name} (${m.rank || 'Rank D'})
-                </label>
-              `;
-            }).join('')}
-          </div>
-
-          <div class="field-group" style="margin-bottom:0;">
-            <label style="font-size:0.85rem;">Adicionar Outro Monstro (Nome e Ficha rápida):</label>
-            <input type="text" id="se-custom-mon-name" placeholder="Nome do Monstro / Chefe" style="margin-bottom:0.4rem;">
-            <textarea id="se-custom-mon-desc" rows="2" placeholder="Ficha, atributos e habilidades deste monstro na missão..." style="width:100%; box-sizing:border-box; padding:0.5rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-size:0.85rem;"></textarea>
-          </div>
-        </div>
-
-        <!-- ORGANIZAÇÕES RELACIONADAS -->
-        <div style="background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:8px; padding:1.2rem; margin-bottom:1.5rem;">
-          <label style="font-family:'Cinzel',serif; font-size:0.95rem; color:var(--gold); font-weight:bold; display:block; margin-bottom:0.4rem;">
-            🏰 Organizações Relacionadas com a Missão:
-          </label>
-          <span style="font-size:0.82rem; color:var(--ink-light); display:block; margin-bottom:0.8rem;">
-            Marque as organizações da aba Organizações ou descreva uma nova facção participante:
-          </span>
-
-          <div style="display:flex; flex-wrap:wrap; gap:0.6rem; max-height:140px; overflow-y:auto; padding:0.5rem; background:rgba(0,0,0,0.2); border-radius:4px; margin-bottom:0.8rem;">
-            ${ALL_ORGS.map(o => {
-              const isChecked = selectedOrgIds.includes(o.id);
-              return `
-                <label style="display:inline-flex; align-items:center; gap:0.4rem; background:rgba(255,255,255,0.05); padding:3px 8px; border-radius:4px; font-size:0.85rem; cursor:pointer;">
-                  <input type="checkbox" name="se-orgs-checkbox" value="${o.id}" ${isChecked ? 'checked' : ''}>
-                  ${o.name}
-                </label>
-              `;
-            }).join('')}
-          </div>
-
-          <div class="field-group" style="margin-bottom:0;">
-            <label style="font-size:0.85rem;">Adicionar Outra Organização (Nome e Ficha rápida):</label>
-            <input type="text" id="se-custom-org-name" placeholder="Nome da Organização / Facção" style="margin-bottom:0.4rem;">
-            <textarea id="se-custom-org-desc" rows="2" placeholder="Objetivos e papel desta organização no evento..." style="width:100%; box-sizing:border-box; padding:0.5rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-size:0.85rem;"></textarea>
-          </div>
-        </div>
-
-        <div style="display:flex; justify-content:center; gap:1.2rem; margin-top:2rem;">
-          <button type="button" onclick="closeWorldContentModal()" class="form-submit-btn" style="width:auto; padding:0.8rem 2rem; background:rgba(0,0,0,0.4); border-color:var(--wood-plank);">
-            Cancelar
-          </button>
-          <button type="submit" class="form-submit-btn" style="width:auto; padding:0.8rem 2.5rem; background:var(--gold); border-color:var(--gold); color:#1a0f08; font-weight:bold;">
-            💾 ${isEdit ? 'Atualizar História' : 'Salvar História / Missão'}
-          </button>
-        </div>
-
-      </form>
-    </div>
-  `;
-
-  openWorldContentModal(html);
-}
-
-function handleStoryPhotoUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const dataUrl = e.target.result;
-    const txtArea = document.getElementById('se-photos');
-    if (txtArea) {
-      const current = txtArea.value.trim();
-      txtArea.value = current ? current + '\n' + dataUrl : dataUrl;
-      showToast('📸 Foto carregada com sucesso!', 'success');
-    }
-  };
-  reader.readAsDataURL(file);
-}
-
-async function saveStory(event, storyId) {
-  event.preventDefault();
-  if (!isStaffOrAdminUser()) {
-    showToast('⚠️ Operação não permitida.', 'error');
-    return;
-  }
-
-  const title = document.getElementById('se-title').value.trim();
-  const category = document.getElementById('se-category').value;
-  const status = document.getElementById('se-status').value;
-  const date = document.getElementById('se-date').value.trim();
-  const location = document.getElementById('se-location').value.trim();
-  const summary = document.getElementById('se-summary').value.trim();
-  const content = document.getElementById('se-content').value.trim();
-
-  // Fotos
-  const photosRaw = document.getElementById('se-photos').value.split('\n');
-  const photos = photosRaw.map(p => p.trim()).filter(Boolean);
-
-  // NPCs selecionados
-  const npcs = [];
-  document.querySelectorAll('input[name="se-npcs-checkbox"]:checked').forEach(cb => {
-    const npcDoc = ALL_NPCS_CACHE[cb.value];
-    if (npcDoc) {
-      npcs.push({
-        id: cb.value,
-        name: npcDoc.character?.name || 'NPC',
-        avatar: npcDoc.character?.avatar || 'Photos/demihuman.webp',
-        details: npcDoc.character?.description || ''
-      });
-    }
-  });
-
-  const customNpcName = document.getElementById('se-custom-npc-name').value.trim();
-  const customNpcDesc = document.getElementById('se-custom-npc-desc').value.trim();
-  if (customNpcName) {
-    npcs.push({
-      name: customNpcName,
-      details: customNpcDesc,
-      avatar: 'Photos/demihuman.webp'
-    });
-  }
-
-  // Monstros selecionados
-  const monsters = [];
-  document.querySelectorAll('input[name="se-monsters-checkbox"]:checked').forEach(cb => {
-    const mon = ALL_MONSTERS.find(m => m.id === cb.value);
-    if (mon) {
-      monsters.push({
-        id: mon.id,
-        name: mon.name,
-        rank: mon.rank || 'Rank D',
-        avatar: mon.image || 'Photos/Goblin.jpg',
-        details: mon.description || ''
-      });
-    }
-  });
-
-  const customMonName = document.getElementById('se-custom-mon-name').value.trim();
-  const customMonDesc = document.getElementById('se-custom-mon-desc').value.trim();
-  if (customMonName) {
-    monsters.push({
-      name: customMonName,
-      details: customMonDesc,
-      rank: 'Rank Especial',
-      avatar: 'Photos/Goblin.jpg'
-    });
-  }
-
-  // Organizações selecionadas
-  const orgs = [];
-  document.querySelectorAll('input[name="se-orgs-checkbox"]:checked').forEach(cb => {
-    const org = ALL_ORGS.find(o => o.id === cb.value);
-    if (org) {
-      orgs.push({
-        id: org.id,
-        name: org.name,
-        avatar: org.image || 'Photos/Angel.jpg',
-        details: org.description || ''
-      });
-    }
-  });
-
-  const customOrgName = document.getElementById('se-custom-org-name').value.trim();
-  const customOrgDesc = document.getElementById('se-custom-org-desc').value.trim();
-  if (customOrgName) {
-    orgs.push({
-      name: customOrgName,
-      details: customOrgDesc,
-      avatar: 'Photos/Angel.jpg'
-    });
-  }
-
-  const storyData = {
-    title,
-    category,
-    status,
-    date,
-    location,
-    summary,
-    content,
-    photos,
-    npcs,
-    monsters,
-    orgs,
-    updatedAt: Date.now()
-  };
-
-  try {
-    showToast('💾 Salvando história...', 'info');
-
-    if (storyId) {
-      await _db.collection('stories').doc(storyId).set(storyData, { merge: true });
-    } else {
-      storyData.createdAt = Date.now();
-      await _db.collection('stories').add(storyData);
-    }
-
-    showToast('✅ História salva com sucesso!', 'success');
-    closeWorldContentModal();
-    await loadHistoryTab();
-  } catch (err) {
-    console.error('Erro ao salvar história:', err);
-    showToast('❌ Falha ao salvar história.', 'error');
-  }
-}
-
-async function deleteStory(storyId) {
-  if (!isStaffOrAdminUser()) return;
-  if (!confirm('⚠️ Tem certeza que deseja excluir esta história/missão permanentemente?')) return;
-
-  try {
-    showToast('🗑️ Excluindo história...', 'info');
-    await _db.collection('stories').doc(storyId).delete();
-    showToast('✅ História excluída com sucesso!', 'success');
-    await loadHistoryTab();
-  } catch (err) {
-    console.error('Erro ao excluir história:', err);
-    showToast('❌ Falha ao excluir história.', 'error');
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────
-// 2. ABA NPCS (Personagens Não-Jogáveis)
-// ─────────────────────────────────────────────────────────────────────
-
-async function refreshNpcCache() {
-  ALL_NPCS_CACHE = {};
-  if (typeof getAllCharacters === 'function') {
-    const chars = await getAllCharacters();
-    Object.keys(chars).forEach(k => {
-      if (chars[k].type === 'NPC') {
-        ALL_NPCS_CACHE[k] = chars[k];
-      }
-    });
-  }
-}
 
 async function loadNpcsTab() {
   const container = document.getElementById('npcs-grid');
@@ -833,112 +141,183 @@ async function loadNpcsTab() {
   container.innerHTML = '<div class="auth-loading active" style="margin:2rem auto;"><div class="auth-spinner"></div></div>';
 
   try {
-    ALL_CHARACTERS = await getAllCharacters();
-    await refreshNpcCache();
-
-    const keys = Object.keys(ALL_NPCS_CACHE);
-    let html = '';
-    let npcCount = 0;
-
-    keys.forEach(uid => {
-      const doc = ALL_NPCS_CACHE[uid];
-      if (doc.status !== 'approved') return;
-      if (!doc.character || !doc.character.name) return;
-
-      npcCount++;
-      const char = doc.character;
-      const name = char.name;
-      const avatar = char.avatar || 'Photos/demihuman.webp';
-      const role = char.title || char.class || char.race || 'NPC';
-
-      html += `
-        <div class="character-card" style="position:relative;">
-          <div onclick="openNpcDetails('${uid}')">
-            <img src="${avatar}" alt="${name}">
-            <div class="char-card-name" style="padding-bottom:0.2rem;">${name}</div>
-            <div style="font-size:0.78rem; color:var(--gold); padding-bottom:0.6rem; font-family:'Cinzel',serif;">${role}</div>
-          </div>
-          ${isStaff ? `
-            <div style="display:flex; justify-content:center; gap:0.4rem; padding:0.4rem; border-top:1px solid var(--wood-plank); background:rgba(0,0,0,0.3);">
-              <button onclick="openNpcEditor('${uid}')" style="background:none; border:none; cursor:pointer; font-size:0.85rem;" title="Editar NPC">✏️</button>
-              <button onclick="deleteNpc('${uid}')" style="background:none; border:none; cursor:pointer; font-size:0.85rem;" title="Excluir NPC">🗑️</button>
-            </div>
-          ` : ''}
-        </div>
-      `;
-    });
-
-    if (npcCount === 0) {
-      container.innerHTML = `
-        <div class="coming-soon" style="grid-column: 1 / -1;">
-          <div class="cs-icon">🎭</div>
-          <h3>Nenhum NPC Cadastrado</h3>
-          <p>O Administrador pode adicionar novos NPCs usando o botão acima.</p>
-        </div>
-      `;
-      return;
+    ALL_NPCS = [];
+    if (_db) {
+      const snap = await _db.collection('npcs').get();
+      snap.forEach(doc => ALL_NPCS.push({ id: doc.id, ...doc.data() }));
     }
 
-    container.innerHTML = html;
+    renderNpcsGrid(ALL_NPCS);
   } catch (err) {
     console.error('Erro ao carregar NPCs:', err);
     container.innerHTML = '<p style="text-align:center; color:var(--red-wax);">Erro ao carregar NPCs.</p>';
   }
 }
 
-// Modal Detalhes do NPC
-function openNpcDetails(uid) {
-  const doc = ALL_NPCS_CACHE[uid] || (ALL_CHARACTERS ? ALL_CHARACTERS[uid] : null);
-  if (!doc) {
-    if (typeof openCharacterSheet === 'function') openCharacterSheet(uid);
+function renderNpcsGrid(npcs) {
+  const container = document.getElementById('npcs-grid');
+  if (!container) return;
+
+  const isStaff = isStaffOrAdminUser();
+  const visibleList = npcs.filter(n => isStaff || n.isVisible !== false);
+
+  if (visibleList.length === 0) {
+    container.innerHTML = `
+      <div class="coming-soon" style="grid-column: 1 / -1;">
+        <div class="cs-icon">🎭</div>
+        <h3>Nenhum NPC Registrado Ainda</h3>
+        <p>${isStaff ? 'Clique em "➕ Adicionar NPC" para cadastrar o primeiro NPC do RPG.' : 'Nenhum NPC público foi registrado até o momento.'}</p>
+      </div>
+    `;
     return;
   }
 
-  const char = doc.character || {};
+  let html = '';
+  visibleList.forEach(npc => {
+    const mainPhoto = (npc.photos && npc.photos.length > 0) ? npc.photos[0] : (npc.photo || 'Photos/demihuman.webp');
+    const isInvisible = npc.isVisible === false;
+
+    html += `
+      <div class="character-card" style="position:relative; ${isInvisible ? 'opacity:0.75; border:1px dashed #e67e22;' : ''}">
+        ${isInvisible ? `<span style="position:absolute; top:4px; left:4px; z-index:3; background:#e67e22; color:#fff; font-size:0.6rem; padding:1px 5px; border-radius:3px; font-weight:bold;">INVISÍVEL</span>` : ''}
+        <div onclick="openNpcDetails('${npc.id}')">
+          <img src="${mainPhoto}" alt="${npc.name || 'NPC'}">
+          <div class="char-card-name" style="padding-bottom:0.2rem;">${npc.name || 'NPC'}</div>
+          ${(npc.classes && (isStaff || npc.visibleClasses)) ? `<div style="font-size:0.75rem; color:var(--gold); padding-bottom:0.6rem;">${npc.classes}</div>` : ''}
+        </div>
+        ${isStaff ? `
+          <div style="display:flex; justify-content:center; gap:0.4rem; padding:0.4rem; border-top:1px solid var(--wood-plank); background:rgba(0,0,0,0.3);">
+            <button onclick="openNpcEditor('${npc.id}')" style="background:none; border:none; cursor:pointer; font-size:0.85rem;" title="Editar NPC">✏️</button>
+            <button onclick="toggleEntityVisibility('npcs', '${npc.id}', ${!isInvisible})" style="background:none; border:none; cursor:pointer; font-size:0.85rem;" title="${isInvisible ? 'Tornar Visível' : 'Tornar Invisível'}">${isInvisible ? '👁️' : '🙈'}</button>
+            <button onclick="deleteNpc('${npc.id}')" style="background:none; border:none; cursor:pointer; font-size:0.85rem; color:var(--red-wax);" title="Excluir NPC">🗑️</button>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+// Modal Detalhes do NPC (Visão Player vs Visão Admin)
+function openNpcDetails(npcId) {
+  const npc = ALL_NPCS.find(n => n.id === npcId);
+  if (!npc) return;
+
   const isStaff = isStaffOrAdminUser();
+  const photos = npc.photos && npc.photos.length > 0 ? npc.photos : [npc.photo || 'Photos/demihuman.webp'];
+
+  // Perícias
+  const pericias = npc.pericias || [];
+  const visiblePericias = pericias.filter(p => isStaff || (npc.visiblePericiasAll && p.visible !== false) || p.visible === true);
+
+  // Habilidades
+  const habilidades = npc.habilidades || [];
+  const visibleHabilidades = habilidades.filter(h => isStaff || (npc.visibleHabilidadesAll && h.visible !== false) || h.visible === true);
 
   const html = `
     <div>
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:1px solid var(--wood-plank); padding-bottom:0.8rem;">
         <div>
           <span class="story-badge badge-type">NPC de Kensword</span>
-          <h2 style="font-family:'Cinzel',serif; color:var(--gold-bright); margin:0.3rem 0 0;">${char.name || 'NPC'}</h2>
-          <span style="font-size:0.85rem; color:var(--ink-light);">${char.title || char.class || 'Aventureiro / Morador'}</span>
+          <h2 style="font-family:'Cinzel Decorative',serif; color:var(--gold-bright); margin:0.3rem 0 0;">${npc.name || 'NPC'}</h2>
+          ${(npc.classes && (isStaff || npc.visibleClasses)) ? `<span style="font-size:0.85rem; color:var(--ink-light);">${npc.classes}</span>` : ''}
         </div>
         ${isStaff ? `
           <div style="display:flex; gap:0.5rem;">
-            <button onclick="openNpcEditor('${uid}')" class="admin-action-btn" style="padding:0.4rem 0.8rem; font-size:0.8rem;">✏️ Editar</button>
-            <button onclick="deleteNpc('${uid}')" class="admin-action-btn" style="padding:0.4rem 0.8rem; font-size:0.8rem; border-color:var(--red-wax); color:#ff6b6b;">🗑️ Excluir</button>
+            <button onclick="openNpcEditor('${npc.id}')" class="admin-action-btn" style="padding:0.4rem 0.8rem; font-size:0.8rem;">✏️ Editar</button>
+            <button onclick="deleteNpc('${npc.id}')" class="admin-action-btn" style="padding:0.4rem 0.8rem; font-size:0.8rem; border-color:var(--red-wax); color:#ff6b6b;">🗑️ Excluir</button>
           </div>
         ` : ''}
       </div>
 
-      <div style="display:flex; gap:1.5rem; margin-bottom:1.5rem; flex-wrap:wrap; justify-content:center;">
-        <img src="${char.avatar || 'Photos/demihuman.webp'}" alt="${char.name}" style="width:160px; height:160px; object-fit:cover; border-radius:8px; border:2px solid var(--gold); box-shadow:0 4px 10px rgba(0,0,0,0.4);">
-        <div style="flex:1; min-width:220px; display:flex; flex-direction:column; justify-content:center; gap:0.4rem;">
-          <p style="margin:0;"><strong>Raça:</strong> ${char.race || 'Humano'}</p>
-          <p style="margin:0;"><strong>Ocupação / Título:</strong> ${char.title || char.class || '—'}</p>
-          <p style="margin:0;"><strong>Localização Frequente:</strong> ${char.location || 'Continente de Kensword'}</p>
-          <p style="margin:0;"><strong>Personalidade:</strong> ${char.personality || '—'}</p>
+      <!-- FOTOS DO NPC (Galeria caso tenha mais de uma) -->
+      <div style="display:flex; gap:1.5rem; margin-bottom:1.5rem; flex-wrap:wrap; justify-content:center; align-items:center;">
+        <div style="display:flex; flex-direction:column; align-items:center; gap:0.5rem;">
+          <img id="npc-detail-main-img" src="${photos[0]}" alt="${npc.name}" style="width:180px; height:180px; object-fit:cover; object-position:top; border-radius:8px; border:2px solid var(--gold); box-shadow:0 4px 10px rgba(0,0,0,0.5);">
+          ${photos.length > 1 ? `
+            <div style="display:flex; gap:0.3rem; flex-wrap:wrap; max-width:180px; justify-content:center;">
+              ${photos.map((p, idx) => `
+                <img src="${p}" onclick="document.getElementById('npc-detail-main-img').src='${p}'" style="width:36px; height:36px; object-fit:cover; border-radius:4px; border:1px solid var(--wood-plank); cursor:pointer;" title="Foto #${idx+1}">
+              `).join('')}
+            </div>
+          ` : ''}
+        </div>
+
+        <div style="flex:1; min-width:220px; display:flex; flex-direction:column; gap:0.6rem; background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:8px; padding:1.2rem;">
+          <p style="margin:0; font-size:0.95rem;"><strong>Nome:</strong> <span style="color:var(--gold-bright);">${npc.name || '—'}</span></p>
+          ${npc.height ? `<p style="margin:0; font-size:0.95rem;"><strong>Altura:</strong> ${npc.height} m</p>` : ''}
+          ${(npc.age && (isStaff || npc.visibleAge)) ? `<p style="margin:0; font-size:0.95rem;"><strong>Idade:</strong> ${npc.age} anos ${(!npc.visibleAge && isStaff) ? '<span style="color:#e67e22; font-size:0.75rem;">(Oculto para Players)</span>' : ''}</p>` : ''}
+          ${(npc.classes && (isStaff || npc.visibleClasses)) ? `<p style="margin:0; font-size:0.95rem;"><strong>Classes:</strong> ${npc.classes} ${(!npc.visibleClasses && isStaff) ? '<span style="color:#e67e22; font-size:0.75rem;">(Oculto para Players)</span>' : ''}</p>` : ''}
+          ${(npc.magics && (isStaff || npc.visibleMagics)) ? `<p style="margin:0; font-size:0.95rem;"><strong>Magias:</strong> ${npc.magics} ${(!npc.visibleMagics && isStaff) ? '<span style="color:#e67e22; font-size:0.75rem;">(Oculto para Players)</span>' : ''}</p>` : ''}
         </div>
       </div>
 
-      <div style="background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:8px; padding:1.2rem; margin-bottom:1.5rem;">
-        <h4 style="font-family:'Cinzel',serif; color:var(--gold); margin-top:0; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:0.4rem;">📜 História &amp; Comportamento:</h4>
-        <div style="font-size:0.95rem; color:var(--ink); line-height:1.6; white-space:pre-wrap;">${char.description || char.history || 'Sem história detalhada.'}</div>
-      </div>
+      <!-- BOATOS (Parte visível a todos) -->
+      ${npc.boatos ? `
+        <div style="background:rgba(212,175,55,0.08); border-left:4px solid var(--gold); border-radius:6px; padding:1.2rem; margin-bottom:1.2rem;">
+          <h4 style="font-family:'Cinzel',serif; color:var(--gold-bright); margin-top:0; margin-bottom:0.4rem;">🗣️ Boatos &amp; Fama Popular:</h4>
+          <div style="font-size:0.95rem; color:var(--ink); line-height:1.6; white-space:pre-wrap;">${npc.boatos}</div>
+        </div>
+      ` : ''}
 
-      ${char.statsOrAbilities ? `
-        <div style="background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:8px; padding:1.2rem; margin-bottom:1.5rem;">
-          <h4 style="font-family:'Cinzel',serif; color:var(--gold); margin-top:0; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:0.4rem;">⚔️ Ficha &amp; Habilidades em Combate:</h4>
-          <div style="font-size:0.95rem; color:var(--ink); line-height:1.6; white-space:pre-wrap;">${char.statsOrAbilities}</div>
+      <!-- HISTÓRIA (OCULTA DOS JOGADORES - VISÍVEL SOMENTE PARA ADMINS) -->
+      ${(isStaff && npc.historia) ? `
+        <div style="background:rgba(192,57,43,0.1); border:1px solid #c0392b; border-radius:6px; padding:1.2rem; margin-bottom:1.2rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+            <h4 style="font-family:'Cinzel',serif; color:#e74c3c; margin:0;">🔒 História Real (Confidencial - Mestre Supremo):</h4>
+            <span style="background:#c0392b; color:#fff; font-size:0.65rem; padding:1px 6px; border-radius:3px; font-weight:bold;">OCULTO DE PLAYERS</span>
+          </div>
+          <div style="font-size:0.95rem; color:var(--ink); line-height:1.6; white-space:pre-wrap;">${npc.historia}</div>
+        </div>
+      ` : ''}
+
+      <!-- ATRIBUTOS DO NPC (Padrão oculto para players) -->
+      ${(isStaff || npc.visibleAttributes) && npc.attributes ? `
+        <div style="background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:6px; padding:1.2rem; margin-bottom:1.2rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:0.4rem; margin-bottom:0.8rem;">
+            <h4 style="font-family:'Cinzel',serif; color:var(--gold); margin:0;">⚔️ Atributos do NPC:</h4>
+            ${(!npc.visibleAttributes && isStaff) ? `<span style="color:#e67e22; font-size:0.75rem;">(Oculto para Players)</span>` : ''}
+          </div>
+          <div style="font-size:0.95rem; color:var(--ink); line-height:1.6; white-space:pre-wrap;">${npc.attributes}</div>
+        </div>
+      ` : ''}
+
+      <!-- PERÍCIAS DO NPC -->
+      ${visiblePericias.length > 0 ? `
+        <div style="background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:6px; padding:1.2rem; margin-bottom:1.2rem;">
+          <h4 style="font-family:'Cinzel',serif; color:var(--gold); margin-top:0; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:0.4rem;">🎓 Perícias:</h4>
+          <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.6rem;">
+            ${visiblePericias.map(p => `
+              <div class="entity-chip" style="font-size:0.85rem;">
+                <strong>${p.name}</strong> <span style="color:var(--gold-bright); font-weight:bold;">Lvl ${p.level || 1}</span>
+                ${(isStaff && p.visible === false) ? '<span style="color:#e67e22; font-size:0.7rem;">(oculto)</span>' : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- HABILIDADES DO NPC -->
+      ${visibleHabilidades.length > 0 ? `
+        <div style="background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:6px; padding:1.2rem; margin-bottom:1.2rem;">
+          <h4 style="font-family:'Cinzel',serif; color:var(--gold); margin-top:0; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:0.4rem;">🛡️ Habilidades &amp; Poderes:</h4>
+          <div style="display:flex; flex-direction:column; gap:0.8rem; margin-top:0.6rem;">
+            ${visibleHabilidades.map(h => `
+              <div style="background:rgba(255,255,255,0.03); padding:0.6rem; border-radius:4px; border-left:3px solid var(--gold);">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <strong style="color:var(--gold-bright); font-family:'Cinzel',serif;">${h.name}</strong>
+                  ${(isStaff && h.visible === false) ? '<span style="color:#e67e22; font-size:0.7rem;">(oculto para players)</span>' : ''}
+                </div>
+                <div style="font-size:0.9rem; color:var(--ink); margin-top:0.3rem; white-space:pre-wrap;">${h.desc || ''}</div>
+              </div>
+            `).join('')}
+          </div>
         </div>
       ` : ''}
 
       <div style="text-align:center; margin-top:1.5rem;">
-        <button onclick="closeWorldContentModal()" class="form-submit-btn" style="width:auto; padding:0.6rem 2rem;">
-          Fechar
-        </button>
+        <button onclick="closeWorldContentModal()" class="form-submit-btn" style="width:auto; padding:0.6rem 2.5rem;">Fechar</button>
       </div>
     </div>
   `;
@@ -947,15 +326,18 @@ function openNpcDetails(uid) {
 }
 
 // Editor de NPC (Mestre Supremo)
-function openNpcEditor(uid = null) {
+function openNpcEditor(npcId = null) {
   if (!isStaffOrAdminUser()) {
-    showToast('⚠️ Apenas o Administrador pode adicionar ou editar NPCs.', 'error');
+    showToast('⚠️ Apenas o Administrador/Mestre Supremo pode cadastrar NPCs.', 'error');
     return;
   }
 
-  const isEdit = !!uid;
-  const doc = isEdit ? (ALL_NPCS_CACHE[uid] || {}) : {};
-  const char = doc.character || {};
+  const isEdit = !!npcId;
+  const npc = isEdit ? ALL_NPCS.find(n => n.id === npcId) || {} : {};
+
+  const photosStr = (npc.photos || (npc.photo ? [npc.photo] : [])).join('\n');
+  const pericias = npc.pericias || [];
+  const habilidades = npc.habilidades || [];
 
   const html = `
     <div>
@@ -963,54 +345,122 @@ function openNpcEditor(uid = null) {
         ${isEdit ? '✏️ Editar NPC' : '🎭 Cadastrar Novo NPC'}
       </h2>
 
-      <form onsubmit="saveNpc(event, '${uid || ''}')">
+      <form id="npc-form" onsubmit="saveNpc(event, '${npcId || ''}')">
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:0.6rem 1rem; border-radius:6px; margin-bottom:1.2rem;">
+          <span style="font-family:'Cinzel',serif; font-size:0.9rem; color:var(--gold);">Visibilidade no Compêndio:</span>
+          <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+            <input type="checkbox" id="npc-is-visible" ${npc.isVisible !== false ? 'checked' : ''}>
+            <span>Tornar Visível para Jogadores</span>
+          </label>
+        </div>
+
         <div class="field-group">
           <label>Nome do NPC *</label>
-          <input type="text" id="npc-name" value="${(char.name || '').replace(/"/g, '&quot;')}" required placeholder="Ex: Mestre Elian, o Ferreiro">
+          <input type="text" id="npc-name" value="${(npc.name || '').replace(/"/g, '&quot;')}" required placeholder="Nome do NPC">
         </div>
 
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
           <div class="field-group">
-            <label>Raça</label>
-            <input type="text" id="npc-race" value="${(char.race || 'Humano').replace(/"/g, '&quot;')}" placeholder="Ex: Elfo Nobre, Anão, Humano">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <label>Idade (em números)</label>
+              <label style="font-size:0.75rem; display:flex; align-items:center; gap:0.3rem; cursor:pointer; color:var(--gold);">
+                <input type="checkbox" id="npc-vis-age" ${npc.visibleAge ? 'checked' : ''}> Visível
+              </label>
+            </div>
+            <input type="number" id="npc-age" value="${npc.age || ''}" placeholder="Ex: 34">
           </div>
           <div class="field-group">
-            <label>Título / Profissão</label>
-            <input type="text" id="npc-title" value="${(char.title || char.class || '').replace(/"/g, '&quot;')}" placeholder="Ex: Comandante da Guarda, Grão-Mago">
+            <label>Altura (em metros, aceitando vírgulas)</label>
+            <input type="text" id="npc-height" value="${(npc.height || '').replace(/"/g, '&quot;')}" placeholder="Ex: 1,82">
           </div>
         </div>
 
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-          <div class="field-group">
-            <label>Localização Principal</label>
-            <input type="text" id="npc-location" value="${(char.location || 'Balistia').replace(/"/g, '&quot;')}" placeholder="Ex: Balistia - Bairro Nobre">
-          </div>
-          <div class="field-group">
-            <label>Personalidade</label>
-            <input type="text" id="npc-personality" value="${(char.personality || '').replace(/"/g, '&quot;')}" placeholder="Ex: Sério, austero, leal à Guilda">
-          </div>
-        </div>
-
+        <!-- FOTOS DO NPC -->
         <div class="field-group">
-          <label>Foto / Avatar do NPC (URL ou Arquivo)</label>
-          <input type="text" id="npc-avatar" value="${(char.avatar || 'Photos/demihuman.webp').replace(/"/g, '&quot;')}" placeholder="URL da foto ou caminho relativo">
+          <label>Fotos do NPC (Uma ou mais URLs, uma por linha):</label>
+          <textarea id="npc-photos" rows="3" placeholder="https://exemplo.com/foto1.jpg&#10;https://exemplo.com/foto2.jpg" style="width:100%; box-sizing:border-box; padding:0.6rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-family:monospace; font-size:0.85rem;">${photosStr}</textarea>
           <div style="margin-top:0.4rem; display:flex; gap:0.6rem; align-items:center;">
-            <input type="file" id="npc-avatar-file" accept="image/*" style="display:none;" onchange="handleNpcAvatarUpload(event)">
-            <button type="button" onclick="document.getElementById('npc-avatar-file').click()" class="admin-action-btn" style="font-size:0.75rem; padding:0.25rem 0.6rem;">
+            <input type="file" id="npc-photo-upload" accept="image/*" style="display:none;" onchange="handleNpcPhotoUpload(event)">
+            <button type="button" onclick="document.getElementById('npc-photo-upload').click()" class="admin-action-btn" style="font-size:0.75rem; padding:0.25rem 0.6rem;">
               📁 Upload Imagem
             </button>
-            <span style="font-size:0.75rem; color:var(--ink-light);">Sugestões: Photos/demihuman.webp, Photos/Elf.jpg, Photos/Dwarf.jpg, Photos/Human.jpg</span>
           </div>
         </div>
 
+        <!-- CLASSES DO NPC -->
         <div class="field-group">
-          <label>Descrição / História do NPC</label>
-          <textarea id="npc-desc" rows="4" placeholder="Origem do NPC, motivações e importância para os aventureiros..." style="width:100%; box-sizing:border-box; padding:0.6rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-family:sans-serif;">${char.description || char.history || ''}</textarea>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <label>Classes do NPC</label>
+            <label style="font-size:0.75rem; display:flex; align-items:center; gap:0.3rem; cursor:pointer; color:var(--gold);">
+              <input type="checkbox" id="npc-vis-classes" ${npc.visibleClasses ? 'checked' : ''}> Visível para Jogadores
+            </label>
+          </div>
+          <input type="text" id="npc-classes" value="${(npc.classes || '').replace(/"/g, '&quot;')}" placeholder="Ex: Mago das Chamas, Espadachim">
         </div>
 
+        <!-- MAGIAS DO NPC -->
         <div class="field-group">
-          <label>Ficha &amp; Habilidades em Combate (Atributos, Magias, etc.)</label>
-          <textarea id="npc-stats" rows="4" placeholder="Ex: HP: 450 | Força: 80 | Magia: 120&#10;Habilidades: Golpe Sísmico, Escudo Sagrado..." style="width:100%; box-sizing:border-box; padding:0.6rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-family:sans-serif;">${char.statsOrAbilities || ''}</textarea>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <label>Magias do NPC</label>
+            <label style="font-size:0.75rem; display:flex; align-items:center; gap:0.3rem; cursor:pointer; color:var(--gold);">
+              <input type="checkbox" id="npc-vis-magics" ${npc.visibleMagics ? 'checked' : ''}> Visível para Jogadores
+            </label>
+          </div>
+          <textarea id="npc-magics" rows="2" placeholder="Ex: Bola de Fogo, Escudo Térmico..." style="width:100%; box-sizing:border-box; padding:0.5rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px;">${npc.magics || ''}</textarea>
+        </div>
+
+        <!-- ATRIBUTOS DO NPC (Oculto como padrão) -->
+        <div class="field-group">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <label>Atributos do NPC (Padrão: Oculto para Jogadores)</label>
+            <label style="font-size:0.75rem; display:flex; align-items:center; gap:0.3rem; cursor:pointer; color:var(--gold);">
+              <input type="checkbox" id="npc-vis-attrs" ${npc.visibleAttributes ? 'checked' : ''}> Visível para Jogadores
+            </label>
+          </div>
+          <textarea id="npc-attributes" rows="3" placeholder="Ex: Força: 80 Kg | Resistência: 90 Kg | Velocidade: 25 Km/h | Magia: 120" style="width:100%; box-sizing:border-box; padding:0.5rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px;">${npc.attributes || ''}</textarea>
+        </div>
+
+        <!-- PERÍCIAS (Seleção e Visibilidade Individual) -->
+        <div style="background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:6px; padding:1.2rem; margin-bottom:1.2rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
+            <label style="font-family:'Cinzel',serif; font-size:0.95rem; color:var(--gold); font-weight:bold; margin:0;">
+              🎓 Perícias do NPC (Configuração Individual):
+            </label>
+            <button type="button" onclick="addNpcPericiaRow()" class="admin-action-btn" style="font-size:0.75rem; padding:0.25rem 0.6rem;">
+              ➕ Adicionar Perícia
+            </button>
+          </div>
+          <div id="npc-pericias-container" style="display:flex; flex-direction:column; gap:0.5rem;">
+            <!-- Linhas de perícias inseridas dinamicamente -->
+          </div>
+        </div>
+
+        <!-- HABILIDADES (Únicas e Comuns com Visibilidade Individual) -->
+        <div style="background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:6px; padding:1.2rem; margin-bottom:1.2rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
+            <label style="font-family:'Cinzel',serif; font-size:0.95rem; color:var(--gold); font-weight:bold; margin:0;">
+              🛡️ Habilidades do NPC (Configuração Individual):
+            </label>
+            <button type="button" onclick="addNpcHabilidadeRow()" class="admin-action-btn" style="font-size:0.75rem; padding:0.25rem 0.6rem;">
+              ➕ Adicionar Habilidade
+            </button>
+          </div>
+          <div id="npc-habilidades-container" style="display:flex; flex-direction:column; gap:0.6rem;">
+            <!-- Linhas de habilidades inseridas dinamicamente -->
+          </div>
+        </div>
+
+        <!-- BOATOS (Parte visível) -->
+        <div class="field-group">
+          <label>Boatos (Parte visível do NPC para os jogadores):</label>
+          <textarea id="npc-boatos" rows="3" placeholder="O que se fala sobre este NPC pelas ruas e tavernas..." style="width:100%; box-sizing:border-box; padding:0.6rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px;">${npc.boatos || ''}</textarea>
+        </div>
+
+        <!-- HISTÓRIA (OCULTA DOS JOGADORES - VISÍVEL APENAS PARA ADMINS) -->
+        <div class="field-group" style="background:rgba(192,57,43,0.08); border:1px solid rgba(192,57,43,0.3); padding:1rem; border-radius:6px;">
+          <label style="color:#e74c3c; font-weight:bold;">🔒 História do NPC (OCULTA DE PLAYERS - Visível somente para Admins):</label>
+          <textarea id="npc-historia" rows="4" placeholder="Segredos, origem real e informações confidenciais conhecidas apenas pelo Mestre..." style="width:100%; box-sizing:border-box; padding:0.6rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px;">${npc.historia || ''}</textarea>
         </div>
 
         <div style="display:flex; justify-content:center; gap:1.2rem; margin-top:2rem;">
@@ -1018,7 +468,7 @@ function openNpcEditor(uid = null) {
             Cancelar
           </button>
           <button type="submit" class="form-submit-btn" style="width:auto; padding:0.8rem 2.5rem; background:var(--gold); border-color:var(--gold); color:#1a0f08; font-weight:bold;">
-            💾 ${isEdit ? 'Atualizar NPC' : 'Cadastrar NPC'}
+            💾 ${isEdit ? 'Atualizar NPC' : 'Salvar NPC'}
           </button>
         </div>
       </form>
@@ -1026,55 +476,139 @@ function openNpcEditor(uid = null) {
   `;
 
   openWorldContentModal(html);
+
+  // Inicializa perícias e habilidades existentes
+  pericias.forEach(p => addNpcPericiaRow(p.name, p.level, p.visible));
+  habilidades.forEach(h => addNpcHabilidadeRow(h.name, h.desc, h.visible));
 }
 
-function handleNpcAvatarUpload(event) {
+function addNpcPericiaRow(name = '', level = 1, visible = false) {
+  const container = document.getElementById('npc-pericias-container');
+  if (!container) return;
+  const rowId = 'pericia_row_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+
+  const row = document.createElement('div');
+  row.id = rowId;
+  row.style.cssText = 'display:flex; gap:0.5rem; align-items:center; background:rgba(255,255,255,0.03); padding:0.4rem; border-radius:4px;';
+  row.innerHTML = `
+    <select class="npc-p-name" style="flex:2; padding:0.4rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px;">
+      <option value="">Selecione a Perícia...</option>
+      ${KENSWORD_PERICIAS.map(p => `<option value="${p}" ${p === name ? 'selected' : ''}>${p}</option>`).join('')}
+    </select>
+    <select class="npc-p-level" style="flex:1; padding:0.4rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px;">
+      ${[1,2,3,4,5,6,7,8,9,10].map(lvl => `<option value="${lvl}" ${lvl == level ? 'selected' : ''}>Lvl ${lvl}</option>`).join('')}
+    </select>
+    <label style="font-size:0.75rem; display:flex; align-items:center; gap:0.3rem; cursor:pointer; color:var(--gold); white-space:nowrap;">
+      <input type="checkbox" class="npc-p-vis" ${visible ? 'checked' : ''}> Visível
+    </label>
+    <button type="button" onclick="document.getElementById('${rowId}').remove()" style="background:none; border:none; color:var(--red-wax); cursor:pointer; font-size:1rem;">&times;</button>
+  `;
+  container.appendChild(row);
+}
+
+function addNpcHabilidadeRow(name = '', desc = '', visible = false) {
+  const container = document.getElementById('npc-habilidades-container');
+  if (!container) return;
+  const rowId = 'hab_row_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+
+  const row = document.createElement('div');
+  row.id = rowId;
+  row.style.cssText = 'background:rgba(255,255,255,0.03); padding:0.6rem; border-radius:4px; border:1px solid rgba(212,175,55,0.15);';
+  row.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem; margin-bottom:0.4rem;">
+      <input type="text" class="npc-h-name" value="${(name || '').replace(/"/g, '&quot;')}" placeholder="Nome da Habilidade" style="flex:1; padding:0.35rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px;">
+      <label style="font-size:0.75rem; display:flex; align-items:center; gap:0.3rem; cursor:pointer; color:var(--gold); white-space:nowrap;">
+        <input type="checkbox" class="npc-h-vis" ${visible ? 'checked' : ''}> Visível
+      </label>
+      <button type="button" onclick="document.getElementById('${rowId}').remove()" style="background:none; border:none; color:var(--red-wax); cursor:pointer; font-size:1rem;">&times;</button>
+    </div>
+    <textarea class="npc-h-desc" rows="2" placeholder="Descrição da habilidade..." style="width:100%; box-sizing:border-box; padding:0.4rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-size:0.85rem;">${desc || ''}</textarea>
+  `;
+  container.appendChild(row);
+}
+
+function handleNpcPhotoUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = (e) => {
-    document.getElementById('npc-avatar').value = e.target.result;
-    showToast('🖼️ Avatar carregado!', 'success');
+    const area = document.getElementById('npc-photos');
+    if (area) {
+      area.value = area.value.trim() ? area.value.trim() + '\n' + e.target.result : e.target.result;
+      showToast('📸 Foto adicionada!', 'success');
+    }
   };
   reader.readAsDataURL(file);
 }
 
-async function saveNpc(event, uid) {
+async function saveNpc(event, npcId) {
   event.preventDefault();
   if (!isStaffOrAdminUser()) return;
 
+  const isVisible = document.getElementById('npc-is-visible').checked;
   const name = document.getElementById('npc-name').value.trim();
-  const race = document.getElementById('npc-race').value.trim();
-  const title = document.getElementById('npc-title').value.trim();
-  const location = document.getElementById('npc-location').value.trim();
-  const personality = document.getElementById('npc-personality').value.trim();
-  const avatar = document.getElementById('npc-avatar').value.trim() || 'Photos/demihuman.webp';
-  const description = document.getElementById('npc-desc').value.trim();
-  const statsOrAbilities = document.getElementById('npc-stats').value.trim();
+  const age = document.getElementById('npc-age').value.trim();
+  const visibleAge = document.getElementById('npc-vis-age').checked;
+  const height = document.getElementById('npc-height').value.trim();
+  const classes = document.getElementById('npc-classes').value.trim();
+  const visibleClasses = document.getElementById('npc-vis-classes').checked;
+  const magics = document.getElementById('npc-magics').value.trim();
+  const visibleMagics = document.getElementById('npc-vis-magics').checked;
+  const attributes = document.getElementById('npc-attributes').value.trim();
+  const visibleAttributes = document.getElementById('npc-vis-attrs').checked;
+  const boatos = document.getElementById('npc-boatos').value.trim();
+  const historia = document.getElementById('npc-historia').value.trim();
 
-  const npcDocId = uid || ('npc_' + Date.now());
+  // Fotos
+  const photos = document.getElementById('npc-photos').value.split('\n').map(p => p.trim()).filter(Boolean);
+
+  // Perícias
+  const pericias = [];
+  document.querySelectorAll('#npc-pericias-container > div').forEach(row => {
+    const pName = row.querySelector('.npc-p-name')?.value;
+    const pLevel = parseInt(row.querySelector('.npc-p-level')?.value) || 1;
+    const pVis = row.querySelector('.npc-p-vis')?.checked || false;
+    if (pName) pericias.push({ name: pName, level: pLevel, visible: pVis });
+  });
+
+  // Habilidades
+  const habilidades = [];
+  document.querySelectorAll('#npc-habilidades-container > div').forEach(row => {
+    const hName = row.querySelector('.npc-h-name')?.value.trim();
+    const hDesc = row.querySelector('.npc-h-desc')?.value.trim();
+    const hVis = row.querySelector('.npc-h-vis')?.checked || false;
+    if (hName) habilidades.push({ name: hName, desc: hDesc, visible: hVis });
+  });
 
   const npcData = {
-    type: 'NPC',
-    status: 'approved',
-    character: {
-      name,
-      race,
-      title,
-      class: title,
-      location,
-      personality,
-      avatar,
-      description,
-      statsOrAbilities,
-      isNpc: true
-    },
+    name,
+    age,
+    visibleAge,
+    height,
+    classes,
+    visibleClasses,
+    magics,
+    visibleMagics,
+    attributes,
+    visibleAttributes,
+    pericias,
+    habilidades,
+    boatos,
+    historia,
+    photos,
+    photo: photos[0] || 'Photos/demihuman.webp',
+    isVisible,
     updatedAt: Date.now()
   };
 
   try {
     showToast('💾 Salvando NPC...', 'info');
-    await _db.collection('characters').doc(npcDocId).set(npcData, { merge: true });
+    if (npcId) {
+      await _db.collection('npcs').doc(npcId).set(npcData, { merge: true });
+    } else {
+      npcData.createdAt = Date.now();
+      await _db.collection('npcs').add(npcData);
+    }
     showToast('✅ NPC salvo com sucesso!', 'success');
     closeWorldContentModal();
     await loadNpcsTab();
@@ -1084,15 +618,13 @@ async function saveNpc(event, uid) {
   }
 }
 
-async function deleteNpc(uid) {
+async function deleteNpc(npcId) {
   if (!isStaffOrAdminUser()) return;
   if (!confirm('⚠️ Tem certeza que deseja excluir este NPC permanentemente?')) return;
 
   try {
     showToast('🗑️ Excluindo NPC...', 'info');
-    await _db.collection('characters').doc(uid).delete();
-    delete ALL_CHARACTERS[uid];
-    delete ALL_NPCS_CACHE[uid];
+    await _db.collection('npcs').doc(npcId).delete();
     showToast('✅ NPC excluído com sucesso!', 'success');
     await loadNpcsTab();
   } catch (err) {
@@ -1102,82 +634,8 @@ async function deleteNpc(uid) {
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// 3. ABA MONSTROS (Bestiário de Kensword)
+// 2. ABA MONSTROS (Bestiário de Kensword)
 // ─────────────────────────────────────────────────────────────────────
-
-async function refreshMonsterCache() {
-  ALL_MONSTERS = [];
-  try {
-    if (_db) {
-      const snap = await _db.collection('monsters').get();
-      snap.forEach(doc => {
-        ALL_MONSTERS.push({ id: doc.id, ...doc.data() });
-      });
-    }
-  } catch (e) {
-    console.warn('Erro ao atualizar cache de monstros:', e);
-  }
-  if (ALL_MONSTERS.length === 0) {
-    ALL_MONSTERS = getStarterMonsters();
-  }
-}
-
-function getStarterMonsters() {
-  return [
-    {
-      id: 'monster_goblin',
-      name: 'Goblin Espreitador',
-      image: 'Photos/Goblin.jpg',
-      rank: 'Rank E',
-      habitat: 'Cavernas, Florestas Sombrias e Ruínas',
-      species: 'Humanoide Monstruoso',
-      description: 'Criaturas de baixa estatura porém ardilosas. Atacam em bandos numerosos utilizando emboscadas, venenos rústicos e armadilhas.',
-      stats: 'HP: 60 | Força: 18 Kg | Resistência: 15 Kg | Magia: 0 | Velocidade: 22 Km/h',
-      abilities: 'Ataque em Matilha (+10% dano quando em grupo de 3+), Furtividade Básica, Mordida Venenosa.',
-      weakness: 'Fogo, Luz Sagrada e ataques de corte direto.',
-      drops: 'Orelha de Goblin, Adaga Quebrada, Bolsa de Moedas (5 a 20 moedas).'
-    },
-    {
-      id: 'monster_kobold',
-      name: 'Kobold Caçador',
-      image: 'Photos/Kobold.webp',
-      rank: 'Rank D',
-      habitat: 'Masmorras dos Primeiros Andares e Galerias Subterrâneas',
-      species: 'Dracônico Inferior',
-      description: 'Parentes distantes dos grandes répteis, os Kobolds possuem escamas rígidas e visão noturna perfeita. Costumam servir criaturas mais poderosas.',
-      stats: 'HP: 110 | Força: 28 Kg | Resistência: 30 Kg | Magia: 10 | Velocidade: 26 Km/h',
-      abilities: 'Flecha Perfurante, Camuflagem Rochosa, Sentido Dracônico.',
-      weakness: 'Frio extremo e ataques de concussão pesada.',
-      drops: 'Escama de Kobold, Arco de Caça Rústico, Minério de Cobre (1x).'
-    },
-    {
-      id: 'monster_ghoul',
-      name: 'Ghoul Carniçal',
-      image: 'Photos/Ghoul.jpg',
-      rank: 'Rank C',
-      habitat: 'Cemitérios e Criptas Ancestrais',
-      species: 'Morto-Vivo Canibal',
-      description: 'Seres amaldiçoados que devoram cadáveres. Possuem a habilidade Estômago de Aço, imunes a doenças e maldições transmitidas por carne putrefata.',
-      stats: 'HP: 240 | Força: 55 Kg | Resistência: 50 Kg | Magia: 20 | Velocidade: 28 Km/h',
-      abilities: 'Estômago de Aço, Garras Paralisantes (chance de paralisar por 1 rodada), Salto Carniceiro.',
-      weakness: 'Elemento Sagrado, Fogo Puro.',
-      drops: 'Pó de Cadáver, Dente Amaldiçoado, Essência de Trevas.'
-    },
-    {
-      id: 'monster_succubus',
-      name: 'Succubus Tentadora',
-      image: 'Photos/Succubus.jpg',
-      rank: 'Rank B',
-      habitat: 'Andares Médios e Câmaras Ilusórias',
-      species: 'Demônio Arcana',
-      description: 'Demônios de grande beleza que manipulam mentes e corações de aventureiros desavisados para sugar sua energia vital.',
-      stats: 'HP: 380 | Força: 40 Kg | Resistência: 45 Kg | Magia: 180 | Velocidade: 35 Km/h',
-      abilities: 'Charme Ilusório, Drenagem de Vitalidade (recupera HP ao atacar), Asas Sombrias.',
-      weakness: 'Elemento Luz, Mente Focada (Perícia Concentração Lvl 5+).',
-      drops: 'Asa Demoníaca, Fragmento de Alma, Joia Mágica.'
-    }
-  ];
-}
 
 async function loadMonstersTab() {
   const container = document.getElementById('monsters-grid');
@@ -1196,7 +654,12 @@ async function loadMonstersTab() {
   container.innerHTML = '<div class="auth-loading active" style="margin:2rem auto;"><div class="auth-spinner"></div></div>';
 
   try {
-    await refreshMonsterCache();
+    ALL_MONSTERS = [];
+    if (_db) {
+      const snap = await _db.collection('monsters').get();
+      snap.forEach(doc => ALL_MONSTERS.push({ id: doc.id, ...doc.data() }));
+    }
+
     renderMonstersGrid(ALL_MONSTERS);
   } catch (err) {
     console.error('Erro ao carregar monstros:', err);
@@ -1209,24 +672,44 @@ function renderMonstersGrid(monsters) {
   if (!container) return;
 
   const isStaff = isStaffOrAdminUser();
-  let html = '';
+  const visibleList = monsters.filter(m => isStaff || m.isVisible !== false);
 
-  monsters.forEach(m => {
-    const rankClass = (m.rank || '').toLowerCase().includes('s') ? 'rank-s' :
-                      (m.rank || '').toLowerCase().includes('a') || (m.rank || '').toLowerCase().includes('b') ? 'rank-a' : 'rank-c';
+  if (visibleList.length === 0) {
+    container.innerHTML = `
+      <div class="coming-soon" style="grid-column: 1 / -1;">
+        <div class="cs-icon">👾</div>
+        <h3>Nenhum Monstro Registrado Ainda</h3>
+        <p>${isStaff ? 'Clique em "➕ Adicionar Monstro" para cadastrar a primeira criatura do Bestiário.' : 'Nenhuma criatura catalogada no momento.'}</p>
+      </div>
+    `;
+    return;
+  }
+
+  let html = '';
+  visibleList.forEach(m => {
+    const mainPhoto = (m.photos && m.photos.length > 0) ? m.photos[0] : (m.photo || 'Photos/demihuman.webp');
+    const isInvisible = m.isVisible === false;
+
+    const typeBadge = m.type === 'Chefe' ? 'background:rgba(231,76,60,0.25); border:1px solid #e74c3c; color:#ff6b6b;' :
+                      m.type === 'Mini-Chefe' ? 'background:rgba(243,156,18,0.25); border:1px solid #f39c12; color:#f1c40f;' :
+                      'background:rgba(46,204,113,0.2); border:1px solid #2ecc71; color:#2ecc71;';
 
     html += `
-      <div class="character-card" style="position:relative;">
+      <div class="character-card" style="position:relative; ${isInvisible ? 'opacity:0.75; border:1px dashed #e67e22;' : ''}">
+        ${isInvisible ? `<span style="position:absolute; top:4px; left:4px; z-index:3; background:#e67e22; color:#fff; font-size:0.6rem; padding:1px 5px; border-radius:3px; font-weight:bold;">INVISÍVEL</span>` : ''}
         <div onclick="openMonsterDetails('${m.id}')">
-          <span style="position:absolute; top:6px; right:6px; z-index:2;" class="rank-badge ${rankClass}">${m.rank || 'Rank D'}</span>
-          <img src="${m.image || 'Photos/Goblin.jpg'}" alt="${m.name}">
-          <div class="char-card-name" style="padding-bottom:0.2rem;">${m.name}</div>
-          <div style="font-size:0.75rem; color:var(--ink-light); padding-bottom:0.6rem;">${m.species || m.habitat || 'Criatura'}</div>
+          <span style="position:absolute; top:6px; right:6px; z-index:2; font-size:0.7rem; padding:1px 6px; border-radius:3px; font-family:'Cinzel',serif; font-weight:bold; ${typeBadge}">
+            ${m.type || 'Monstro Comum'}
+          </span>
+          <img src="${mainPhoto}" alt="${m.name || 'Monstro'}">
+          <div class="char-card-name" style="padding-bottom:0.2rem;">${m.name || 'Monstro'}</div>
+          ${m.height ? `<div style="font-size:0.75rem; color:var(--ink-light); padding-bottom:0.6rem;">${m.height} m</div>` : ''}
         </div>
         ${isStaff ? `
           <div style="display:flex; justify-content:center; gap:0.4rem; padding:0.4rem; border-top:1px solid var(--wood-plank); background:rgba(0,0,0,0.3);">
             <button onclick="openMonsterEditor('${m.id}')" style="background:none; border:none; cursor:pointer; font-size:0.85rem;" title="Editar Monstro">✏️</button>
-            <button onclick="deleteMonster('${m.id}')" style="background:none; border:none; cursor:pointer; font-size:0.85rem;" title="Excluir Monstro">🗑️</button>
+            <button onclick="toggleEntityVisibility('monsters', '${m.id}', ${!isInvisible})" style="background:none; border:none; cursor:pointer; font-size:0.85rem;" title="${isInvisible ? 'Tornar Visível' : 'Tornar Invisível'}">${isInvisible ? '👁️' : '🙈'}</button>
+            <button onclick="deleteMonster('${m.id}')" style="background:none; border:none; cursor:pointer; font-size:0.85rem; color:var(--red-wax);" title="Excluir Monstro">🗑️</button>
           </div>
         ` : ''}
       </div>
@@ -1236,22 +719,53 @@ function renderMonstersGrid(monsters) {
   container.innerHTML = html;
 }
 
-// Modal Detalhes do Monstro
-function openMonsterDetails(monsterId) {
+// Modal Detalhes do Monstro (com Abas de Variantes)
+let CURRENT_MONSTER_DETAIL = null;
+let CURRENT_ACTIVE_VARIANT_IDX = 0;
+
+function openMonsterDetails(monsterId, variantIdx = 0) {
   const m = ALL_MONSTERS.find(mon => mon.id === monsterId);
   if (!m) return;
 
+  CURRENT_MONSTER_DETAIL = m;
+  CURRENT_ACTIVE_VARIANT_IDX = variantIdx;
+
   const isStaff = isStaffOrAdminUser();
-  const rankClass = (m.rank || '').toLowerCase().includes('s') ? 'rank-s' :
-                    (m.rank || '').toLowerCase().includes('a') || (m.rank || '').toLowerCase().includes('b') ? 'rank-a' : 'rank-c';
+  const variants = m.variants && m.variants.length > 0 ? m.variants : [
+    {
+      name: 'Padrão',
+      photo: (m.photos && m.photos.length > 0) ? m.photos[0] : (m.photo || 'Photos/demihuman.webp'),
+      attributes: m.attributes || '',
+      visibleAttributes: m.visibleAttributes !== false,
+      pericias: m.pericias || [],
+      habilidades: m.habilidades || []
+    }
+  ];
+
+  const currentVar = variants[variantIdx] || variants[0];
+  const varPhoto = currentVar.photo || (m.photos && m.photos[0]) || 'Photos/demihuman.webp';
+
+  const typeBadge = m.type === 'Chefe' ? 'background:rgba(231,76,60,0.25); border:1px solid #e74c3c; color:#ff6b6b;' :
+                    m.type === 'Mini-Chefe' ? 'background:rgba(243,156,18,0.25); border:1px solid #f39c12; color:#f1c40f;' :
+                    'background:rgba(46,204,113,0.2); border:1px solid #2ecc71; color:#2ecc71;';
+
+  // Perícias da Variante atual
+  const pericias = currentVar.pericias || [];
+  const visiblePericias = pericias.filter(p => isStaff || p.visible !== false);
+
+  // Habilidades da Variante atual
+  const habilidades = currentVar.habilidades || [];
+  const visibleHabilidades = habilidades.filter(h => isStaff || h.visible !== false);
 
   const html = `
     <div>
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:1px solid var(--wood-plank); padding-bottom:0.8rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem; border-bottom:1px solid var(--wood-plank); padding-bottom:0.8rem;">
         <div>
-          <span class="rank-badge ${rankClass}">${m.rank || 'Rank D'}</span>
+          <span style="font-size:0.75rem; padding:2px 8px; border-radius:3px; font-family:'Cinzel',serif; font-weight:bold; ${typeBadge}">
+            ${m.type || 'Monstro Comum'}
+          </span>
           <h2 style="font-family:'Cinzel Decorative',serif; color:var(--gold-bright); margin:0.3rem 0 0;">${m.name}</h2>
-          <span style="font-size:0.85rem; color:var(--ink-light);">${m.species || 'Criatura de Kensword'}</span>
+          ${m.height ? `<span style="font-size:0.85rem; color:var(--ink-light);">Altura: ${m.height} m</span>` : ''}
         </div>
         ${isStaff ? `
           <div style="display:flex; gap:0.5rem;">
@@ -1261,46 +775,95 @@ function openMonsterDetails(monsterId) {
         ` : ''}
       </div>
 
-      <div style="display:flex; gap:1.5rem; margin-bottom:1.5rem; flex-wrap:wrap; justify-content:center;">
-        <img src="${m.image || 'Photos/Goblin.jpg'}" alt="${m.name}" style="width:160px; height:160px; object-fit:cover; border-radius:8px; border:2px solid var(--gold); box-shadow:0 4px 10px rgba(0,0,0,0.4);">
-        <div style="flex:1; min-width:220px; display:flex; flex-direction:column; justify-content:center; gap:0.4rem;">
-          <p style="margin:0;"><strong>Rank de Ameaça:</strong> <span class="rank-badge ${rankClass}">${m.rank || 'Rank D'}</span></p>
-          <p style="margin:0;"><strong>Habitat Natural:</strong> ${m.habitat || '—'}</p>
-          <p style="margin:0;"><strong>Espécie / Tipo:</strong> ${m.species || 'Besta'}</p>
-          ${m.weakness ? `<p style="margin:0; color:#e74c3c;"><strong>⚠️ Fraquezas:</strong> ${m.weakness}</p>` : ''}
-        </div>
-      </div>
-
-      <div style="background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:8px; padding:1.2rem; margin-bottom:1.2rem;">
-        <h4 style="font-family:'Cinzel',serif; color:var(--gold); margin-top:0; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:0.4rem;">📖 Ecologia &amp; Comportamento:</h4>
-        <div style="font-size:0.95rem; color:var(--ink); line-height:1.6; white-space:pre-wrap;">${m.description || 'Sem descrição.'}</div>
-      </div>
-
-      ${m.stats ? `
-        <div style="background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:8px; padding:1.2rem; margin-bottom:1.2rem;">
-          <h4 style="font-family:'Cinzel',serif; color:var(--gold); margin-top:0; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:0.4rem;">⚔️ Ficha &amp; Atributos de Combate:</h4>
-          <div style="font-size:0.95rem; color:var(--ink); line-height:1.6; white-space:pre-wrap;">${m.stats}</div>
+      <!-- SUB-ABAS ALTERNÁVEIS DE VARIANTES -->
+      ${variants.length > 1 ? `
+        <div style="display:flex; gap:0.5rem; border-bottom:2px solid var(--wood-plank); padding-bottom:0.4rem; margin-bottom:1.5rem; overflow-x:auto;">
+          ${variants.map((v, idx) => `
+            <button onclick="openMonsterDetails('${m.id}', ${idx})" style="padding:0.4rem 1rem; font-family:'Cinzel',serif; font-size:0.85rem; cursor:pointer; border-radius:4px; border:1px solid ${idx === variantIdx ? 'var(--gold)' : 'var(--wood-plank)'}; background:${idx === variantIdx ? 'var(--gold)' : 'rgba(0,0,0,0.3)'}; color:${idx === variantIdx ? '#1a0f08' : 'var(--ink)'}; font-weight:${idx === variantIdx ? 'bold' : 'normal'};">
+              ${v.name || ('Variante ' + (idx+1))}
+            </button>
+          `).join('')}
         </div>
       ` : ''}
 
-      ${m.abilities ? `
-        <div style="background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:8px; padding:1.2rem; margin-bottom:1.2rem;">
-          <h4 style="font-family:'Cinzel',serif; color:var(--gold); margin-top:0; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:0.4rem;">💥 Habilidades Especiais &amp; Ataques:</h4>
-          <div style="font-size:0.95rem; color:var(--ink); line-height:1.6; white-space:pre-wrap;">${m.abilities}</div>
+      <!-- FOTO NA FRENTE E DESCRIÇÃO AO LADO -->
+      <div style="display:flex; gap:1.5rem; margin-bottom:1.5rem; flex-wrap:wrap; justify-content:center; align-items:flex-start;">
+        <div style="text-align:center;">
+          <img src="${varPhoto}" alt="${m.name}" style="width:200px; height:200px; object-fit:cover; border-radius:8px; border:2px solid var(--gold); box-shadow:0 4px 12px rgba(0,0,0,0.5);">
+          ${variants.length > 1 ? `<div style="font-family:'Cinzel',serif; font-size:0.8rem; color:var(--gold); margin-top:0.4rem;">Variante: ${currentVar.name}</div>` : ''}
+        </div>
+
+        <div style="flex:1; min-width:260px; background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:8px; padding:1.2rem;">
+          <h4 style="font-family:'Cinzel',serif; color:var(--gold); margin-top:0; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:0.4rem;">📖 Descrição da Criatura:</h4>
+          <div style="font-size:0.95rem; color:var(--ink); line-height:1.6; white-space:pre-wrap;">${m.description || 'Sem descrição informada.'}</div>
+        </div>
+      </div>
+
+      <!-- BOATOS (Parte visível da espécie e Variante) -->
+      ${(m.boatos || currentVar.boatos) ? `
+        <div style="background:rgba(212,175,55,0.08); border-left:4px solid var(--gold); border-radius:6px; padding:1.2rem; margin-bottom:1.2rem;">
+          <h4 style="font-family:'Cinzel',serif; color:var(--gold-bright); margin-top:0; margin-bottom:0.4rem;">🗣️ Boatos &amp; Relatos de Campo:</h4>
+          <div style="font-size:0.95rem; color:var(--ink); line-height:1.6; white-space:pre-wrap;">${currentVar.boatos || m.boatos}</div>
         </div>
       ` : ''}
 
-      ${m.drops ? `
-        <div style="background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.3); border-radius:8px; padding:1.2rem; margin-bottom:1.2rem;">
-          <h4 style="font-family:'Cinzel',serif; color:var(--gold-bright); margin-top:0; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:0.4rem;">💰 Recompensas &amp; Drops:</h4>
-          <div style="font-size:0.95rem; color:var(--ink); line-height:1.6;">${m.drops}</div>
+      <!-- HISTÓRIA (OCULTA DOS JOGADORES - VISÍVEL APENAS PARA ADMINS) -->
+      ${(isStaff && m.historia) ? `
+        <div style="background:rgba(192,57,43,0.1); border:1px solid #c0392b; border-radius:6px; padding:1.2rem; margin-bottom:1.2rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+            <h4 style="font-family:'Cinzel',serif; color:#e74c3c; margin:0;">🔒 História da Espécie (Confidencial - Mestre Supremo):</h4>
+            <span style="background:#c0392b; color:#fff; font-size:0.65rem; padding:1px 6px; border-radius:3px; font-weight:bold;">OCULTO DE PLAYERS</span>
+          </div>
+          <div style="font-size:0.95rem; color:var(--ink); line-height:1.6; white-space:pre-wrap;">${m.historia}</div>
+        </div>
+      ` : ''}
+
+      <!-- ATRIBUTOS DO MONSTRO (Visíveis por padrão para players) -->
+      ${(isStaff || currentVar.visibleAttributes !== false) && currentVar.attributes ? `
+        <div style="background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:6px; padding:1.2rem; margin-bottom:1.2rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:0.4rem; margin-bottom:0.8rem;">
+            <h4 style="font-family:'Cinzel',serif; color:var(--gold); margin:0;">⚔️ Atributos (${currentVar.name || 'Padrão'}):</h4>
+            ${(currentVar.visibleAttributes === false && isStaff) ? `<span style="color:#e67e22; font-size:0.75rem;">(Oculto para Players)</span>` : ''}
+          </div>
+          <div style="font-size:0.95rem; color:var(--ink); line-height:1.6; white-space:pre-wrap;">${currentVar.attributes}</div>
+        </div>
+      ` : ''}
+
+      <!-- PERÍCIAS DO MONSTRO (Visíveis por padrão para players) -->
+      ${visiblePericias.length > 0 ? `
+        <div style="background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:6px; padding:1.2rem; margin-bottom:1.2rem;">
+          <h4 style="font-family:'Cinzel',serif; color:var(--gold); margin-top:0; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:0.4rem;">🎓 Perícias (${currentVar.name || 'Padrão'}):</h4>
+          <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.6rem;">
+            ${visiblePericias.map(p => `
+              <div class="entity-chip" style="font-size:0.85rem;">
+                <strong>${p.name}</strong> <span style="color:var(--gold-bright); font-weight:bold;">Lvl ${p.level || 1}</span>
+                ${(isStaff && p.visible === false) ? '<span style="color:#e67e22; font-size:0.7rem;">(oculto)</span>' : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- HABILIDADES DO MONSTRO (Visíveis individualmente por padrão) -->
+      ${visibleHabilidades.length > 0 ? `
+        <div style="background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:6px; padding:1.2rem; margin-bottom:1.2rem;">
+          <h4 style="font-family:'Cinzel',serif; color:var(--gold); margin-top:0; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:0.4rem;">💥 Habilidades Únicas &amp; Ataques (${currentVar.name || 'Padrão'}):</h4>
+          <div style="display:flex; flex-direction:column; gap:0.8rem; margin-top:0.6rem;">
+            ${visibleHabilidades.map(h => `
+              <div style="background:rgba(255,255,255,0.03); padding:0.6rem; border-radius:4px; border-left:3px solid #e74c3c;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <strong style="color:#ff6b6b; font-family:'Cinzel',serif;">${h.name}</strong>
+                  ${(isStaff && h.visible === false) ? '<span style="color:#e67e22; font-size:0.7rem;">(oculto para players)</span>' : ''}
+                </div>
+                <div style="font-size:0.9rem; color:var(--ink); margin-top:0.3rem; white-space:pre-wrap;">${h.desc || ''}</div>
+              </div>
+            `).join('')}
+          </div>
         </div>
       ` : ''}
 
       <div style="text-align:center; margin-top:1.5rem;">
-        <button onclick="closeWorldContentModal()" class="form-submit-btn" style="width:auto; padding:0.6rem 2rem;">
-          Fechar
-        </button>
+        <button onclick="closeWorldContentModal()" class="form-submit-btn" style="width:auto; padding:0.6rem 2.5rem;">Fechar</button>
       </div>
     </div>
   `;
@@ -1308,89 +871,115 @@ function openMonsterDetails(monsterId) {
   openWorldContentModal(html);
 }
 
-// Editor de Monstros (Mestre Supremo)
+// Editor de Monstro (Mestre Supremo)
 function openMonsterEditor(monsterId = null) {
   if (!isStaffOrAdminUser()) {
-    showToast('⚠️ Apenas o Administrador pode adicionar ou editar monstros.', 'error');
+    showToast('⚠️ Apenas o Administrador/Mestre Supremo pode cadastrar monstros.', 'error');
     return;
   }
 
   const isEdit = !!monsterId;
   const m = isEdit ? ALL_MONSTERS.find(mon => mon.id === monsterId) || {} : {};
 
+  const photosStr = (m.photos || (m.photo ? [m.photo] : [])).join('\n');
+  const variants = m.variants && m.variants.length > 0 ? m.variants : [
+    {
+      name: 'Padrão',
+      photo: (m.photos && m.photos[0]) || '',
+      attributes: m.attributes || '',
+      visibleAttributes: true,
+      pericias: m.pericias || [],
+      habilidades: m.habilidades || []
+    }
+  ];
+
   const html = `
     <div>
       <h2 style="font-family:'Cinzel',serif; text-align:center; color:var(--gold-bright); margin-bottom:1.5rem; border-bottom:1px solid var(--wood-plank); padding-bottom:0.5rem;">
-        ${isEdit ? '✏️ Editar Monstro' : '👾 Cadastrar Novo Monstro no Bestiário'}
+        ${isEdit ? '✏️ Editar Monstro' : '👾 Cadastrar Novo Monstro'}
       </h2>
 
-      <form onsubmit="saveMonster(event, '${monsterId || ''}')">
-        <div class="field-group">
-          <label>Nome do Monstro / Criatura *</label>
-          <input type="text" id="mon-name" value="${(m.name || '').replace(/"/g, '&quot;')}" required placeholder="Ex: Lobo Alfa da Meia-Noite">
+      <form id="monster-form" onsubmit="saveMonster(event, '${monsterId || ''}')">
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:0.6rem 1rem; border-radius:6px; margin-bottom:1.2rem;">
+          <span style="font-family:'Cinzel',serif; font-size:0.9rem; color:var(--gold);">Visibilidade no Bestiário:</span>
+          <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+            <input type="checkbox" id="mon-is-visible" ${m.isVisible !== false ? 'checked' : ''}>
+            <span>Tornar Visível para Jogadores</span>
+          </label>
         </div>
 
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
           <div class="field-group">
-            <label>Rank de Ameaça</label>
-            <select id="mon-rank" style="width:100%; padding:0.6rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px;">
-              <option value="Rank F" ${m.rank === 'Rank F' ? 'selected' : ''}>Rank F (Pragas / Animais Pequenos)</option>
-              <option value="Rank E" ${m.rank === 'Rank E' ? 'selected' : ''}>Rank E (Goblins, Kobolds Comuns)</option>
-              <option value="Rank D" ${m.rank === 'Rank D' ? 'selected' : ''}>Rank D (Bandos / Criaturas Hostis)</option>
-              <option value="Rank C" ${m.rank === 'Rank C' ? 'selected' : ''}>Rank C (Ghouls, Bestas Ferozes)</option>
-              <option value="Rank B" ${m.rank === 'Rank B' ? 'selected' : ''}>Rank B (Criaturas de Elite)</option>
-              <option value="Rank A" ${m.rank === 'Rank A' ? 'selected' : ''}>Rank A (Demônios Maiores, Quimeras)</option>
-              <option value="Rank S" ${m.rank === 'Rank S' ? 'selected' : ''}>Rank S (Dragões, Senhores da Noite)</option>
-              <option value="Boss de Andar" ${m.rank === 'Boss de Andar' ? 'selected' : ''}>Boss de Andar (10.000 XP)</option>
-            </select>
+            <label>Nome do Monstro *</label>
+            <input type="text" id="mon-name" value="${(m.name || '').replace(/"/g, '&quot;')}" required placeholder="Ex: Kobold, Ghoul">
           </div>
           <div class="field-group">
-            <label>Espécie / Tipo</label>
-            <input type="text" id="mon-species" value="${(m.species || '').replace(/"/g, '&quot;')}" placeholder="Ex: Besta Mágica, Morto-Vivo, Demônio">
+            <label>Altura (em metros, aceitando vírgulas)</label>
+            <input type="text" id="mon-height" value="${(m.height || '').replace(/"/g, '&quot;')}" placeholder="Ex: 1,30">
           </div>
         </div>
 
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-          <div class="field-group">
-            <label>Habitat Natural</label>
-            <input type="text" id="mon-habitat" value="${(m.habitat || '').replace(/"/g, '&quot;')}" placeholder="Ex: Floresta de Balistia, Andar 2">
-          </div>
-          <div class="field-group">
-            <label>Fraquezas</label>
-            <input type="text" id="mon-weakness" value="${(m.weakness || '').replace(/"/g, '&quot;')}" placeholder="Ex: Fogo, Luz Sagrada, Pancadas">
-          </div>
-        </div>
-
+        <!-- TIPO DE MONSTRO (Três opções) -->
         <div class="field-group">
-          <label>Imagem da Criatura (URL ou Arquivo)</label>
-          <input type="text" id="mon-image" value="${(m.image || 'Photos/Goblin.jpg').replace(/"/g, '&quot;')}" placeholder="URL da imagem">
-          <div style="margin-top:0.4rem; display:flex; gap:0.6rem; align-items:center;">
-            <input type="file" id="mon-image-file" accept="image/*" style="display:none;" onchange="handleMonImageUpload(event)">
-            <button type="button" onclick="document.getElementById('mon-image-file').click()" class="admin-action-btn" style="font-size:0.75rem; padding:0.25rem 0.6rem;">
-              📁 Upload Imagem
+          <label>Tipo do Monstro (Escolha uma opção):</label>
+          <div style="display:flex; gap:1.5rem; margin-top:0.4rem; background:rgba(0,0,0,0.2); padding:0.6rem; border-radius:4px;">
+            <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+              <input type="radio" name="mon-type" value="Monstro Comum" ${(!m.type || m.type === 'Monstro Comum') ? 'checked' : ''}>
+              <span>Monstro Comum</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+              <input type="radio" name="mon-type" value="Mini-Chefe" ${m.type === 'Mini-Chefe' ? 'checked' : ''}>
+              <span>Mini-Chefe</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+              <input type="radio" name="mon-type" value="Chefe" ${m.type === 'Chefe' ? 'checked' : ''}>
+              <span>Chefe</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- FOTOS DO MONSTRO -->
+        <div class="field-group">
+          <label>Fotos Gerais do Monstro (Uma ou mais URLs, uma por linha):</label>
+          <textarea id="mon-photos" rows="3" placeholder="https://exemplo.com/monstro.jpg" style="width:100%; box-sizing:border-box; padding:0.6rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-family:monospace; font-size:0.85rem;">${photosStr}</textarea>
+        </div>
+
+        <!-- DESCRIÇÃO DO MONSTRO -->
+        <div class="field-group">
+          <label>Descrição do Monstro (Exibida ao lado da foto) *</label>
+          <textarea id="mon-desc" rows="3" required placeholder="Aparência, biologia e comportamento da criatura..." style="width:100%; box-sizing:border-box; padding:0.6rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px;">${m.description || ''}</textarea>
+        </div>
+
+        <!-- VARIANTES (Sub-aba alternável com foto, atributos, perícias e habilidades que mudam com ela) -->
+        <div style="background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:8px; padding:1.2rem; margin-bottom:1.5rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
+            <div>
+              <h4 style="font-family:'Cinzel',serif; color:var(--gold-bright); margin:0;">
+                🧬 Variantes do Monstro (Sub-abas com Atributos &amp; Fotos Específicas):
+              </h4>
+              <span style="font-size:0.8rem; color:var(--ink-light);">Ex: Guerreiro, Mago, Bárbaro</span>
+            </div>
+            <button type="button" onclick="addMonsterVariantBlock()" class="admin-action-btn" style="font-size:0.75rem; padding:0.25rem 0.6rem;">
+              ➕ Adicionar Variante
             </button>
-            <span style="font-size:0.75rem; color:var(--ink-light);">Sugestões: Photos/Goblin.jpg, Photos/Kobold.webp, Photos/Ghoul.jpg, Photos/Demon.png</span>
+          </div>
+
+          <div id="monster-variants-container" style="display:flex; flex-direction:column; gap:1.2rem;">
+            <!-- Blocos de variantes inseridos dinamicamente -->
           </div>
         </div>
 
+        <!-- BOATOS -->
         <div class="field-group">
-          <label>Descrição &amp; Comportamento *</label>
-          <textarea id="mon-desc" rows="3" required placeholder="Como a criatura age, se ataca em bando ou solitária..." style="width:100%; box-sizing:border-box; padding:0.6rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-family:sans-serif;">${m.description || ''}</textarea>
+          <label>Boatos (Parte visível da espécie e variantes):</label>
+          <textarea id="mon-boatos" rows="3" placeholder="Histórias e boatos contados por aventureiros sobre a criatura..." style="width:100%; box-sizing:border-box; padding:0.6rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px;">${m.boatos || ''}</textarea>
         </div>
 
-        <div class="field-group">
-          <label>Ficha de Combate / Atributos (HP, Força, Resistência, etc.)</label>
-          <textarea id="mon-stats" rows="3" placeholder="HP: 150 | Força: 40 Kg | Resistência: 30 Kg | Magia: 10 | Velocidade: 25 Km/h" style="width:100%; box-sizing:border-box; padding:0.6rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-family:sans-serif;">${m.stats || ''}</textarea>
-        </div>
-
-        <div class="field-group">
-          <label>Habilidades Especiais &amp; Ataques</label>
-          <textarea id="mon-abilities" rows="2" placeholder="Ex: Mordida Ácida, Investida Selvagem, Camuflagem..." style="width:100%; box-sizing:border-box; padding:0.6rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-family:sans-serif;">${m.abilities || ''}</textarea>
-        </div>
-
-        <div class="field-group">
-          <label>Recompensas &amp; Drops</label>
-          <input type="text" id="mon-drops" value="${(m.drops || '').replace(/"/g, '&quot;')}" placeholder="Ex: Couro Resistente (1x), Dente de Lobo, 50 Moedas">
+        <!-- HISTÓRIA (OCULTA DOS JOGADORES) -->
+        <div class="field-group" style="background:rgba(192,57,43,0.08); border:1px solid rgba(192,57,43,0.3); padding:1rem; border-radius:6px;">
+          <label style="color:#e74c3c; font-weight:bold;">🔒 História da Espécie (OCULTA DE PLAYERS - Visível somente para Admins):</label>
+          <textarea id="mon-historia" rows="4" placeholder="Origem mística, segredos ancestrais e fraquezas confidenciais..." style="width:100%; box-sizing:border-box; padding:0.6rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px;">${m.historia || ''}</textarea>
         </div>
 
         <div style="display:flex; justify-content:center; gap:1.2rem; margin-top:2rem;">
@@ -1398,7 +987,7 @@ function openMonsterEditor(monsterId = null) {
             Cancelar
           </button>
           <button type="submit" class="form-submit-btn" style="width:auto; padding:0.8rem 2.5rem; background:var(--gold); border-color:var(--gold); color:#1a0f08; font-weight:bold;">
-            💾 ${isEdit ? 'Atualizar Monstro' : 'Cadastrar Monstro'}
+            💾 ${isEdit ? 'Atualizar Monstro' : 'Salvar Monstro'}
           </button>
         </div>
       </form>
@@ -1406,45 +995,181 @@ function openMonsterEditor(monsterId = null) {
   `;
 
   openWorldContentModal(html);
+
+  // Inicializa variantes
+  variants.forEach((v, idx) => addMonsterVariantBlock(v, idx));
 }
 
-function handleMonImageUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    document.getElementById('mon-image').value = e.target.result;
-    showToast('🖼️ Imagem do monstro carregada!', 'success');
-  };
-  reader.readAsDataURL(file);
+function addMonsterVariantBlock(v = {}, idx = 0) {
+  const container = document.getElementById('monster-variants-container');
+  if (!container) return;
+  const blockId = 'variant_block_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+
+  const block = document.createElement('div');
+  block.id = blockId;
+  block.className = 'monster-variant-block';
+  block.style.cssText = 'background:rgba(255,255,255,0.02); border:1px solid var(--wood-plank); border-left:3px solid var(--gold); padding:1rem; border-radius:6px;';
+  
+  block.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:0.4rem;">
+      <div style="display:flex; align-items:center; gap:0.6rem; flex:1;">
+        <label style="font-family:'Cinzel',serif; font-size:0.9rem; color:var(--gold-bright);">Nome da Variante:</label>
+        <input type="text" class="mon-v-name" value="${(v.name || (idx === 0 ? 'Padrão' : '')).replace(/"/g, '&quot;')}" placeholder="Ex: Guerreiro, Mago" style="padding:0.3rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; max-width:200px;">
+      </div>
+      <button type="button" onclick="document.getElementById('${blockId}').remove()" style="background:none; border:none; color:var(--red-wax); cursor:pointer; font-size:1.1rem;" title="Remover Variante">&times;</button>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; margin-bottom:0.8rem;">
+      <div>
+        <label style="font-size:0.8rem;">Foto Específica da Variante (URL):</label>
+        <input type="text" class="mon-v-photo" value="${(v.photo || '').replace(/"/g, '&quot;')}" placeholder="URL da foto desta variante" style="width:100%; box-sizing:border-box; padding:0.35rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-size:0.85rem;">
+      </div>
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <label style="font-size:0.8rem;">Atributos desta Variante:</label>
+          <label style="font-size:0.75rem; display:flex; align-items:center; gap:0.3rem; cursor:pointer; color:var(--gold);">
+            <input type="checkbox" class="mon-v-vis-attrs" ${v.visibleAttributes !== false ? 'checked' : ''}> Visível
+          </label>
+        </div>
+        <input type="text" class="mon-v-attrs" value="${(v.attributes || '').replace(/"/g, '&quot;')}" placeholder="Ex: HP: 200 | Força: 40 | Magia: 10" style="width:100%; box-sizing:border-box; padding:0.35rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-size:0.85rem;">
+      </div>
+    </div>
+
+    <!-- Perícias e Habilidades da Variante -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem;">
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem;">
+          <label style="font-size:0.8rem; font-weight:bold; color:var(--gold);">Perícias (Variante):</label>
+          <button type="button" onclick="addVariantPericia('${blockId}')" class="admin-action-btn" style="font-size:0.68rem; padding:0.15rem 0.4rem;">+ Perícia</button>
+        </div>
+        <div class="mon-v-pericias-list" style="display:flex; flex-direction:column; gap:0.3rem;"></div>
+      </div>
+
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem;">
+          <label style="font-size:0.8rem; font-weight:bold; color:var(--gold);">Habilidades (Variante):</label>
+          <button type="button" onclick="addVariantHabilidade('${blockId}')" class="admin-action-btn" style="font-size:0.68rem; padding:0.15rem 0.4rem;">+ Habilidade</button>
+        </div>
+        <div class="mon-v-habilidades-list" style="display:flex; flex-direction:column; gap:0.3rem;"></div>
+      </div>
+    </div>
+  `;
+  container.appendChild(block);
+
+  // Popula perícias e habilidades da variante
+  (v.pericias || []).forEach(p => addVariantPericia(blockId, p.name, p.level, p.visible));
+  (v.habilidades || []).forEach(h => addVariantHabilidade(blockId, h.name, h.desc, h.visible));
+}
+
+function addVariantPericia(blockId, name = '', level = 1, visible = true) {
+  const block = document.getElementById(blockId);
+  if (!block) return;
+  const list = block.querySelector('.mon-v-pericias-list');
+  const pRowId = 'vp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+
+  const row = document.createElement('div');
+  row.id = pRowId;
+  row.style.cssText = 'display:flex; gap:0.3rem; align-items:center;';
+  row.innerHTML = `
+    <select class="mv-p-name" style="flex:2; padding:0.25rem; font-size:0.8rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:3px;">
+      <option value="">Perícia...</option>
+      ${KENSWORD_PERICIAS.map(p => `<option value="${p}" ${p === name ? 'selected' : ''}>${p}</option>`).join('')}
+    </select>
+    <select class="mv-p-level" style="flex:1; padding:0.25rem; font-size:0.8rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:3px;">
+      ${[1,2,3,4,5,6,7,8,9,10].map(lvl => `<option value="${lvl}" ${lvl == level ? 'selected' : ''}>Lvl ${lvl}</option>`).join('')}
+    </select>
+    <label style="font-size:0.7rem; display:flex; align-items:center; gap:0.2rem; cursor:pointer;">
+      <input type="checkbox" class="mv-p-vis" ${visible !== false ? 'checked' : ''}> Vis
+    </label>
+    <button type="button" onclick="document.getElementById('${pRowId}').remove()" style="background:none; border:none; color:var(--red-wax); cursor:pointer;">&times;</button>
+  `;
+  list.appendChild(row);
+}
+
+function addVariantHabilidade(blockId, name = '', desc = '', visible = true) {
+  const block = document.getElementById(blockId);
+  if (!block) return;
+  const list = block.querySelector('.mon-v-habilidades-list');
+  const hRowId = 'vh_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+
+  const row = document.createElement('div');
+  row.id = hRowId;
+  row.style.cssText = 'display:flex; flex-direction:column; gap:0.2rem; background:rgba(0,0,0,0.2); padding:0.3rem; border-radius:3px;';
+  row.innerHTML = `
+    <div style="display:flex; gap:0.3rem; align-items:center;">
+      <input type="text" class="mv-h-name" value="${(name || '').replace(/"/g, '&quot;')}" placeholder="Habilidade" style="flex:1; padding:0.25rem; font-size:0.8rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:3px;">
+      <label style="font-size:0.7rem; display:flex; align-items:center; gap:0.2rem; cursor:pointer;">
+        <input type="checkbox" class="mv-h-vis" ${visible !== false ? 'checked' : ''}> Vis
+      </label>
+      <button type="button" onclick="document.getElementById('${hRowId}').remove()" style="background:none; border:none; color:var(--red-wax); cursor:pointer;">&times;</button>
+    </div>
+    <input type="text" class="mv-h-desc" value="${(desc || '').replace(/"/g, '&quot;')}" placeholder="Efeito..." style="width:100%; box-sizing:border-box; padding:0.2rem; font-size:0.75rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:3px;">
+  `;
+  list.appendChild(row);
 }
 
 async function saveMonster(event, monsterId) {
   event.preventDefault();
   if (!isStaffOrAdminUser()) return;
 
+  const isVisible = document.getElementById('mon-is-visible').checked;
   const name = document.getElementById('mon-name').value.trim();
-  const rank = document.getElementById('mon-rank').value;
-  const species = document.getElementById('mon-species').value.trim();
-  const habitat = document.getElementById('mon-habitat').value.trim();
-  const weakness = document.getElementById('mon-weakness').value.trim();
-  const image = document.getElementById('mon-image').value.trim() || 'Photos/Goblin.jpg';
+  const height = document.getElementById('mon-height').value.trim();
+  const type = document.querySelector('input[name="mon-type"]:checked')?.value || 'Monstro Comum';
   const description = document.getElementById('mon-desc').value.trim();
-  const stats = document.getElementById('mon-stats').value.trim();
-  const abilities = document.getElementById('mon-abilities').value.trim();
-  const drops = document.getElementById('mon-drops').value.trim();
+  const boatos = document.getElementById('mon-boatos').value.trim();
+  const historia = document.getElementById('mon-historia').value.trim();
+
+  // Fotos gerais
+  const photos = document.getElementById('mon-photos').value.split('\n').map(p => p.trim()).filter(Boolean);
+
+  // Variantes
+  const variants = [];
+  document.querySelectorAll('.monster-variant-block').forEach(block => {
+    const vName = block.querySelector('.mon-v-name')?.value.trim() || 'Padrão';
+    const vPhoto = block.querySelector('.mon-v-photo')?.value.trim();
+    const vAttrs = block.querySelector('.mon-v-attrs')?.value.trim();
+    const vVisAttrs = block.querySelector('.mon-v-vis-attrs')?.checked !== false;
+
+    // Perícias da variante
+    const vPericias = [];
+    block.querySelectorAll('.mon-v-pericias-list > div').forEach(r => {
+      const pName = r.querySelector('.mv-p-name')?.value;
+      const pLvl = parseInt(r.querySelector('.mv-p-level')?.value) || 1;
+      const pVis = r.querySelector('.mv-p-vis')?.checked !== false;
+      if (pName) vPericias.push({ name: pName, level: pLvl, visible: pVis });
+    });
+
+    // Habilidades da variante
+    const vHabilidades = [];
+    block.querySelectorAll('.mon-v-habilidades-list > div').forEach(r => {
+      const hName = r.querySelector('.mv-h-name')?.value.trim();
+      const hDesc = r.querySelector('.mv-h-desc')?.value.trim();
+      const hVis = r.querySelector('.mv-h-vis')?.checked !== false;
+      if (hName) vHabilidades.push({ name: hName, desc: hDesc, visible: hVis });
+    });
+
+    variants.push({
+      name: vName,
+      photo: vPhoto || photos[0] || '',
+      attributes: vAttrs,
+      visibleAttributes: vVisAttrs,
+      pericias: vPericias,
+      habilidades: vHabilidades
+    });
+  });
 
   const monData = {
     name,
-    rank,
-    species,
-    habitat,
-    weakness,
-    image,
+    height,
+    type,
     description,
-    stats,
-    abilities,
-    drops,
+    boatos,
+    historia,
+    photos,
+    photo: (variants[0] && variants[0].photo) || photos[0] || 'Photos/demihuman.webp',
+    variants,
+    isVisible,
     updatedAt: Date.now()
   };
 
@@ -1481,66 +1206,8 @@ async function deleteMonster(monsterId) {
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// 4. ABA ORGANIZAÇÕES & FACÇÕES
+// 3. ABA ORGANIZAÇÕES (Facções, Guildas e Ordens)
 // ─────────────────────────────────────────────────────────────────────
-
-async function refreshOrgCache() {
-  ALL_ORGS = [];
-  try {
-    if (_db) {
-      const snap = await _db.collection('organizations').get();
-      snap.forEach(doc => {
-        ALL_ORGS.push({ id: doc.id, ...doc.data() });
-      });
-    }
-  } catch (e) {
-    console.warn('Erro ao carregar organizações:', e);
-  }
-  if (ALL_ORGS.length === 0) {
-    ALL_ORGS = getStarterOrganizations();
-  }
-}
-
-function getStarterOrganizations() {
-  return [
-    {
-      id: 'org_guilda',
-      name: 'Guilda dos Aventureiros de Balistia',
-      image: 'Photos/Angel.jpg',
-      type: 'Guilda Oficial de Aventureiros',
-      leader: 'Mestre Supremo DanteSTR',
-      headquarters: 'Centro Cívico de Balistia',
-      motto: 'Pela lâmina, pela honra e pela glória de Kensword.',
-      description: 'A maior e mais respeitada instituição de mercenários e aventureiros do continente. Responsável pela emissão de licenças, recompensas por monstros e regulação das subidas de andar.',
-      influence: 'Alta — Presença em todas as cidades e postos avançados.',
-      benefits: 'Acesso a missões remuneradas, seguro de equipamentos e treino em dupla.'
-    },
-    {
-      id: 'org_igreja_dourada',
-      name: 'Igreja Dourada',
-      image: 'Photos/demihuman.webp',
-      type: 'Ordem Religiosa Solar',
-      leader: 'Sumo Sacerdote Aurélio',
-      headquarters: 'Catedral da Luz Dourada (Bairro Nobre de Balistia)',
-      motto: 'A Luz que purifica o ouro também purifica a alma.',
-      description: 'Uma das ordens religiosas mais ricas e influentes de Kensword. Pregam a prosperidade e a retidão divina, auxiliando os nobres e mantendo os registros sagrados.',
-      influence: 'Extrema — Controle sobre templos de cura e finanças sacras.',
-      benefits: 'Bênçãos sagradas, purificação de maldições e acolhimento em templos.'
-    },
-    {
-      id: 'org_fogo_eterno',
-      name: 'Igreja do Fogo Eterno',
-      image: 'Photos/Demon.png',
-      type: 'Culto Fervoroso Elemental',
-      leader: 'Grão-Inquisidor Ignis',
-      headquarters: 'Bastião das Chamas Rubras',
-      motto: 'Apenas no fogo o metal é forjado e a fraqueza é destruída.',
-      description: 'Ordem combativa e intransigente que cultua o elemento Fogo como a força primordial de renovação do mundo. Vêem criaturas das trevas com desprezo absoluto.',
-      influence: 'Média-Alta — Facção militar de forte apelo marcial.',
-      benefits: 'Treinamento avançado no elemento Fogo e forja de armamentos bélicos.'
-    }
-  ];
-}
 
 async function loadOrgsTab() {
   const container = document.getElementById('orgs-grid');
@@ -1559,7 +1226,12 @@ async function loadOrgsTab() {
   container.innerHTML = '<div class="auth-loading active" style="margin:2rem auto;"><div class="auth-spinner"></div></div>';
 
   try {
-    await refreshOrgCache();
+    ALL_ORGS = [];
+    if (_db) {
+      const snap = await _db.collection('organizations').get();
+      snap.forEach(doc => ALL_ORGS.push({ id: doc.id, ...doc.data() }));
+    }
+
     renderOrgsGrid(ALL_ORGS);
   } catch (err) {
     console.error('Erro ao carregar organizações:', err);
@@ -1572,20 +1244,41 @@ function renderOrgsGrid(orgs) {
   if (!container) return;
 
   const isStaff = isStaffOrAdminUser();
-  let html = '';
+  const visibleList = orgs.filter(o => isStaff || o.isVisible !== false);
 
-  orgs.forEach(o => {
+  if (visibleList.length === 0) {
+    container.innerHTML = `
+      <div class="coming-soon" style="grid-column: 1 / -1;">
+        <div class="cs-icon">🏰</div>
+        <h3>Nenhuma Organização Registrada Ainda</h3>
+        <p>${isStaff ? 'Clique em "➕ Adicionar Organização" para registrar a primeira guilda ou ordem.' : 'Nenhuma organização pública registrada no momento.'}</p>
+      </div>
+    `;
+    return;
+  }
+
+  let html = '';
+  visibleList.forEach(org => {
+    const isInvisible = org.isVisible === false;
+    const indoleColor = org.indole === 'Herói' ? '#2ecc71' :
+                        org.indole === 'Vilão' ? '#e74c3c' : '#f39c12';
+
     html += `
-      <div class="character-card" style="position:relative;">
-        <div onclick="openOrgDetails('${o.id}')">
-          <img src="${o.image || 'Photos/Angel.jpg'}" alt="${o.name}">
-          <div class="char-card-name" style="padding-bottom:0.2rem;">${o.name}</div>
-          <div style="font-size:0.75rem; color:var(--gold); padding-bottom:0.6rem; font-family:'Cinzel',serif;">${o.type || 'Organização'}</div>
+      <div class="character-card" style="position:relative; ${isInvisible ? 'opacity:0.75; border:1px dashed #e67e22;' : ''}">
+        ${isInvisible ? `<span style="position:absolute; top:4px; left:4px; z-index:3; background:#e67e22; color:#fff; font-size:0.6rem; padding:1px 5px; border-radius:3px; font-weight:bold;">INVISÍVEL</span>` : ''}
+        <div onclick="openOrgDetails('${org.id}')">
+          <span style="position:absolute; top:6px; right:6px; z-index:2; background:rgba(0,0,0,0.6); border:1px solid ${indoleColor}; color:${indoleColor}; font-size:0.7rem; padding:1px 6px; border-radius:3px; font-family:'Cinzel',serif; font-weight:bold;">
+            ${org.indole || 'Independente'}
+          </span>
+          <img src="${org.logo || 'Photos/demihuman.webp'}" alt="${org.name || 'Organização'}">
+          <div class="char-card-name" style="padding-bottom:0.2rem;">${org.name || 'Organização'}</div>
+          ${org.leaderName ? `<div style="font-size:0.75rem; color:var(--gold); padding-bottom:0.6rem;">Líder: ${org.leaderName}</div>` : ''}
         </div>
         ${isStaff ? `
           <div style="display:flex; justify-content:center; gap:0.4rem; padding:0.4rem; border-top:1px solid var(--wood-plank); background:rgba(0,0,0,0.3);">
-            <button onclick="openOrgEditor('${o.id}')" style="background:none; border:none; cursor:pointer; font-size:0.85rem;" title="Editar Organização">✏️</button>
-            <button onclick="deleteOrg('${o.id}')" style="background:none; border:none; cursor:pointer; font-size:0.85rem;" title="Excluir Organização">🗑️</button>
+            <button onclick="openOrgEditor('${org.id}')" style="background:none; border:none; cursor:pointer; font-size:0.85rem;" title="Editar Organização">✏️</button>
+            <button onclick="toggleEntityVisibility('organizations', '${org.id}', ${!isInvisible})" style="background:none; border:none; cursor:pointer; font-size:0.85rem;" title="${isInvisible ? 'Tornar Visível' : 'Tornar Invisível'}">${isInvisible ? '👁️' : '🙈'}</button>
+            <button onclick="deleteOrg('${org.id}')" style="background:none; border:none; cursor:pointer; font-size:0.85rem; color:var(--red-wax);" title="Excluir Organização">🗑️</button>
           </div>
         ` : ''}
       </div>
@@ -1601,14 +1294,19 @@ function openOrgDetails(orgId) {
   if (!o) return;
 
   const isStaff = isStaffOrAdminUser();
+  const indoleColor = o.indole === 'Herói' ? '#2ecc71' :
+                      o.indole === 'Vilão' ? '#e74c3c' : '#f39c12';
+
+  const members = o.members || [];
 
   const html = `
     <div>
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:1px solid var(--wood-plank); padding-bottom:0.8rem;">
         <div>
-          <span class="story-badge badge-type">${o.type || 'Organização'}</span>
+          <span style="font-size:0.75rem; padding:2px 8px; border-radius:3px; font-family:'Cinzel',serif; font-weight:bold; background:rgba(0,0,0,0.5); border:1px solid ${indoleColor}; color:${indoleColor};">
+            ${o.indole || 'Independente'}
+          </span>
           <h2 style="font-family:'Cinzel Decorative',serif; color:var(--gold-bright); margin:0.3rem 0 0;">${o.name}</h2>
-          ${o.motto ? `<p style="margin:0.2rem 0 0; font-style:italic; font-size:0.88rem; color:var(--ink-light);">"${o.motto}"</p>` : ''}
         </div>
         ${isStaff ? `
           <div style="display:flex; gap:0.5rem;">
@@ -1618,31 +1316,58 @@ function openOrgDetails(orgId) {
         ` : ''}
       </div>
 
-      <div style="display:flex; gap:1.5rem; margin-bottom:1.5rem; flex-wrap:wrap; justify-content:center;">
-        <img src="${o.image || 'Photos/Angel.jpg'}" alt="${o.name}" style="width:160px; height:160px; object-fit:cover; border-radius:8px; border:2px solid var(--gold); box-shadow:0 4px 10px rgba(0,0,0,0.4);">
-        <div style="flex:1; min-width:220px; display:flex; flex-direction:column; justify-content:center; gap:0.4rem;">
-          <p style="margin:0;"><strong>Líder / Fundador:</strong> ${o.leader || '—'}</p>
-          <p style="margin:0;"><strong>Sede Principal:</strong> ${o.headquarters || 'Balistia'}</p>
-          <p style="margin:0;"><strong>Grau de Influência:</strong> ${o.influence || 'Moderada'}</p>
-        </div>
-      </div>
-
-      <div style="background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:8px; padding:1.2rem; margin-bottom:1.2rem;">
-        <h4 style="font-family:'Cinzel',serif; color:var(--gold); margin-top:0; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:0.4rem;">🏛️ História &amp; Filosofia:</h4>
-        <div style="font-size:0.95rem; color:var(--ink); line-height:1.6; white-space:pre-wrap;">${o.description || 'Sem descrição.'}</div>
-      </div>
-
-      ${o.benefits ? `
-        <div style="background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.3); border-radius:8px; padding:1.2rem; margin-bottom:1.2rem;">
-          <h4 style="font-family:'Cinzel',serif; color:var(--gold-bright); margin-top:0; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:0.4rem;">🌟 Vantagens &amp; Atuação para Membros:</h4>
-          <div style="font-size:0.95rem; color:var(--ink); line-height:1.6;">${o.benefits}</div>
+      <!-- ESPAÇO PEQUENO DO LÍDER ACIMA -->
+      ${(o.leaderName || o.leaderPhoto) ? `
+        <div style="display:flex; align-items:center; gap:0.8rem; background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.3); border-radius:6px; padding:0.6rem 1rem; margin-bottom:1.2rem; width:fit-content;">
+          ${o.leaderPhoto ? `<img src="${o.leaderPhoto}" style="width:42px; height:42px; object-fit:cover; border-radius:50%; border:2px solid var(--gold);">` : '<span style="font-size:1.5rem;">👑</span>'}
+          <div>
+            <div style="font-size:0.72rem; color:var(--gold); font-family:'Cinzel',serif; text-transform:uppercase; letter-spacing:0.05em;">Líder da Organização</div>
+            <div style="font-size:0.95rem; font-weight:bold; color:var(--gold-bright); font-family:'Cinzel',serif;">${o.leaderName || 'Não Informado'}</div>
+          </div>
         </div>
       ` : ''}
 
+      <!-- LOGO AO LADO E DESCRIÇÃO NA FRENTE -->
+      <div style="display:flex; gap:1.5rem; margin-bottom:1.5rem; flex-wrap:wrap; justify-content:center; align-items:flex-start;">
+        <img src="${o.logo || 'Photos/demihuman.webp'}" alt="${o.name}" style="width:180px; height:180px; object-fit:contain; background:rgba(0,0,0,0.4); border-radius:8px; border:2px solid var(--gold); padding:0.5rem; box-shadow:0 4px 10px rgba(0,0,0,0.5);">
+        
+        <div style="flex:1; min-width:260px; background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:8px; padding:1.2rem;">
+          <h4 style="font-family:'Cinzel',serif; color:var(--gold); margin-top:0; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:0.4rem;">📜 Descrição da Organização:</h4>
+          <div style="font-size:0.95rem; color:var(--ink); line-height:1.6; white-space:pre-wrap;">${o.description || 'Sem descrição informada.'}</div>
+        </div>
+      </div>
+
+      <!-- MEMBROS RELACIONADOS (Carrossel / Scroll Horizontal com perfis seguros) -->
+      <div style="background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:8px; padding:1.2rem; margin-bottom:1.5rem;">
+        <h4 style="font-family:'Cinzel',serif; color:var(--gold-bright); margin-top:0; margin-bottom:0.6rem;">
+          👥 Membros Relacionados (${members.length}):
+        </h4>
+        <span style="font-size:0.8rem; color:var(--ink-light); display:block; margin-bottom:0.8rem;">
+          Arraste para os lados para analisar cada membro. Ao clicar, a ficha exibe apenas dados públicos de aventureiro.
+        </span>
+
+        ${members.length > 0 ? `
+          <div class="org-members-carousel" style="display:flex; gap:1rem; overflow-x:auto; padding:0.6rem 0.2rem 1rem; scrollbar-width:thin;">
+            ${members.map(mem => {
+              const avatar = mem.avatar || 'Photos/demihuman.webp';
+              const name = mem.name || 'Membro';
+              const uid = mem.uid;
+              return `
+                <div class="character-card" onclick="${uid ? `openCharacterSheet('${uid}')` : `openCustomEntityViewer('${name}', 'npc', '${(mem.role || '').replace(/'/g, "\\'")}', '${avatar}')`}" style="min-width:130px; max-width:130px; flex-shrink:0; cursor:pointer;" title="Clique para ver a ficha de ${name}">
+                  <img src="${avatar}" alt="${name}" style="width:130px; height:130px; object-fit:cover;">
+                  <div class="char-card-name" style="font-size:0.82rem; padding:0.4rem;">${name}</div>
+                  ${mem.role ? `<div style="font-size:0.7rem; color:var(--gold); padding-bottom:0.4rem;">${mem.role}</div>` : ''}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        ` : `
+          <p style="font-size:0.85rem; color:var(--ink-light); font-style:italic;">Nenhum membro registrado nesta organização.</p>
+        `}
+      </div>
+
       <div style="text-align:center; margin-top:1.5rem;">
-        <button onclick="closeWorldContentModal()" class="form-submit-btn" style="width:auto; padding:0.6rem 2rem;">
-          Fechar
-        </button>
+        <button onclick="closeWorldContentModal()" class="form-submit-btn" style="width:auto; padding:0.6rem 2.5rem;">Fechar</button>
       </div>
     </div>
   `;
@@ -1653,72 +1378,97 @@ function openOrgDetails(orgId) {
 // Editor de Organização (Mestre Supremo)
 function openOrgEditor(orgId = null) {
   if (!isStaffOrAdminUser()) {
-    showToast('⚠️ Apenas o Administrador pode adicionar ou editar organizações.', 'error');
+    showToast('⚠️ Apenas o Administrador/Mestre Supremo pode cadastrar organizações.', 'error');
     return;
   }
 
   const isEdit = !!orgId;
   const o = isEdit ? ALL_ORGS.find(org => org.id === orgId) || {} : {};
+  const members = o.members || [];
 
   const html = `
     <div>
       <h2 style="font-family:'Cinzel',serif; text-align:center; color:var(--gold-bright); margin-bottom:1.5rem; border-bottom:1px solid var(--wood-plank); padding-bottom:0.5rem;">
-        ${isEdit ? '✏️ Editar Organização' : '🏰 Cadastrar Nova Organização / Facção'}
+        ${isEdit ? '✏️ Editar Organização' : '🏰 Cadastrar Nova Organização'}
       </h2>
 
-      <form onsubmit="saveOrg(event, '${orgId || ''}')">
+      <form id="org-form" onsubmit="saveOrg(event, '${orgId || ''}')">
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:0.6rem 1rem; border-radius:6px; margin-bottom:1.2rem;">
+          <span style="font-family:'Cinzel',serif; font-size:0.9rem; color:var(--gold);">Visibilidade:</span>
+          <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+            <input type="checkbox" id="org-is-visible" ${o.isVisible !== false ? 'checked' : ''}>
+            <span>Tornar Visível para Jogadores</span>
+          </label>
+        </div>
+
         <div class="field-group">
           <label>Nome da Organização *</label>
-          <input type="text" id="org-name" value="${(o.name || '').replace(/"/g, '&quot;')}" required placeholder="Ex: Ordem dos Cavaleiros de Balistia">
+          <input type="text" id="org-name" value="${(o.name || '').replace(/"/g, '&quot;')}" required placeholder="Ex: Guilda dos Cavaleiros">
         </div>
 
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-          <div class="field-group">
-            <label>Tipo de Organização</label>
-            <input type="text" id="org-type" value="${(o.type || 'Guilda / Ordem').replace(/"/g, '&quot;')}" placeholder="Ex: Ordem Religiosa, Guilda Comercial">
-          </div>
-          <div class="field-group">
-            <label>Líder / Fundador</label>
-            <input type="text" id="org-leader" value="${(o.leader || '').replace(/"/g, '&quot;')}" placeholder="Ex: Grão-Mestre DanteSTR">
-          </div>
-        </div>
-
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-          <div class="field-group">
-            <label>Sede Principal</label>
-            <input type="text" id="org-headquarters" value="${(o.headquarters || 'Balistia').replace(/"/g, '&quot;')}" placeholder="Ex: Balistia - Bairro Nobre">
-          </div>
-          <div class="field-group">
-            <label>Grau de Influência</label>
-            <input type="text" id="org-influence" value="${(o.influence || 'Alta').replace(/"/g, '&quot;')}" placeholder="Ex: Extrema, Alta, Regional">
-          </div>
-        </div>
-
+        <!-- FOTO DA LOGO -->
         <div class="field-group">
-          <label>Lema / Ideologia</label>
-          <input type="text" id="org-motto" value="${(o.motto || '').replace(/"/g, '&quot;')}" placeholder="Ex: Pela honra e pela proteção do reino">
-        </div>
-
-        <div class="field-group">
-          <label>Brasão / Imagem (URL ou Arquivo)</label>
-          <input type="text" id="org-image" value="${(o.image || 'Photos/Angel.jpg').replace(/"/g, '&quot;')}" placeholder="URL da foto ou caminho">
+          <label>Foto da Logo / Brasão da Organização *</label>
+          <input type="text" id="org-logo" value="${(o.logo || '').replace(/"/g, '&quot;')}" required placeholder="URL da Logo">
           <div style="margin-top:0.4rem; display:flex; gap:0.6rem; align-items:center;">
-            <input type="file" id="org-image-file" accept="image/*" style="display:none;" onchange="handleOrgImageUpload(event)">
-            <button type="button" onclick="document.getElementById('org-image-file').click()" class="admin-action-btn" style="font-size:0.75rem; padding:0.25rem 0.6rem;">
-              📁 Upload Brasão
+            <input type="file" id="org-logo-upload" accept="image/*" style="display:none;" onchange="handleOrgLogoUpload(event)">
+            <button type="button" onclick="document.getElementById('org-logo-upload').click()" class="admin-action-btn" style="font-size:0.75rem; padding:0.25rem 0.6rem;">
+              📁 Upload Logo
             </button>
-            <span style="font-size:0.75rem; color:var(--ink-light);">Sugestões: Photos/Angel.jpg, Photos/demihuman.webp, Photos/Demon.png</span>
           </div>
         </div>
 
-        <div class="field-group">
-          <label>História &amp; Descrição Detalhada *</label>
-          <textarea id="org-desc" rows="4" required placeholder="Origens da organização, propósito e atuação no RPG..." style="width:100%; box-sizing:border-box; padding:0.6rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-family:sans-serif;">${o.description || ''}</textarea>
+        <!-- LÍDER: NOME E FOTO -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+          <div class="field-group">
+            <label>Nome do Líder</label>
+            <input type="text" id="org-leader-name" value="${(o.leaderName || '').replace(/"/g, '&quot;')}" placeholder="Ex: DanteSTR">
+          </div>
+          <div class="field-group">
+            <label>Foto do Líder (URL)</label>
+            <input type="text" id="org-leader-photo" value="${(o.leaderPhoto || '').replace(/"/g, '&quot;')}" placeholder="URL da foto do líder">
+          </div>
         </div>
 
+        <!-- ÍNDOLE: TRÊS OPÇÕES (Só aparece a escolhida aos players) -->
         <div class="field-group">
-          <label>Vantagens &amp; Atuação para Membros</label>
-          <textarea id="org-benefits" rows="2" placeholder="Benefícios que membros da organização recebem..." style="width:100%; box-sizing:border-box; padding:0.6rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-family:sans-serif;">${o.benefits || ''}</textarea>
+          <label>Índole da Organização (Escolha uma opção):</label>
+          <div style="display:flex; gap:1.5rem; margin-top:0.4rem; background:rgba(0,0,0,0.2); padding:0.6rem; border-radius:4px;">
+            <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+              <input type="radio" name="org-indole" value="Herói" ${o.indole === 'Herói' ? 'checked' : ''}>
+              <span style="color:#2ecc71; font-weight:bold;">Herói</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+              <input type="radio" name="org-indole" value="Independente" ${(!o.indole || o.indole === 'Independente') ? 'checked' : ''}>
+              <span style="color:#f39c12; font-weight:bold;">Independente</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+              <input type="radio" name="org-indole" value="Vilão" ${o.indole === 'Vilão' ? 'checked' : ''}>
+              <span style="color:#e74c3c; font-weight:bold;">Vilão</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- DESCRIÇÃO -->
+        <div class="field-group">
+          <label>Descrição da Organização *</label>
+          <textarea id="org-desc" rows="4" required placeholder="História, princípios e atuação da organização..." style="width:100%; box-sizing:border-box; padding:0.6rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px;">${o.description || ''}</textarea>
+        </div>
+
+        <!-- MEMBROS RELACIONADOS -->
+        <div style="background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:6px; padding:1.2rem; margin-bottom:1.2rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
+            <label style="font-family:'Cinzel',serif; font-size:0.95rem; color:var(--gold); font-weight:bold; margin:0;">
+              👥 Membros Relacionados (Players ou Personagens):
+            </label>
+            <button type="button" onclick="addOrgMemberRow()" class="admin-action-btn" style="font-size:0.75rem; padding:0.25rem 0.6rem;">
+              ➕ Vincular Membro
+            </button>
+          </div>
+          <div id="org-members-container" style="display:flex; flex-direction:column; gap:0.6rem;">
+            <!-- Linhas de membros adicionados -->
+          </div>
         </div>
 
         <div style="display:flex; justify-content:center; gap:1.2rem; margin-top:2rem;">
@@ -1726,7 +1476,7 @@ function openOrgEditor(orgId = null) {
             Cancelar
           </button>
           <button type="submit" class="form-submit-btn" style="width:auto; padding:0.8rem 2.5rem; background:var(--gold); border-color:var(--gold); color:#1a0f08; font-weight:bold;">
-            💾 ${isEdit ? 'Atualizar Organização' : 'Cadastrar Organização'}
+            💾 ${isEdit ? 'Atualizar Organização' : 'Salvar Organização'}
           </button>
         </div>
       </form>
@@ -1734,15 +1484,54 @@ function openOrgEditor(orgId = null) {
   `;
 
   openWorldContentModal(html);
+
+  // Inicializa membros existentes
+  members.forEach(m => addOrgMemberRow(m.uid, m.name, m.avatar, m.role));
 }
 
-function handleOrgImageUpload(event) {
+function addOrgMemberRow(uid = '', name = '', avatar = '', role = '') {
+  const container = document.getElementById('org-members-container');
+  if (!container) return;
+  const rowId = 'mem_row_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+
+  const allCharsKeys = typeof ALL_CHARACTERS !== 'undefined' ? Object.keys(ALL_CHARACTERS) : [];
+
+  const row = document.createElement('div');
+  row.id = rowId;
+  row.style.cssText = 'display:flex; gap:0.5rem; align-items:center; background:rgba(255,255,255,0.03); padding:0.5rem; border-radius:4px;';
+  row.innerHTML = `
+    <select class="org-m-char-select" onchange="autoFillOrgMember(this, '${rowId}')" style="flex:1.5; padding:0.35rem; font-size:0.85rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px;">
+      <option value="">Selecionar da lista de personagens...</option>
+      ${allCharsKeys.map(k => {
+        const c = ALL_CHARACTERS[k].character || {};
+        return `<option value="${k}" ${k === uid ? 'selected' : ''}>${c.name || 'Sem Nome'} (${c.race || 'Player'})</option>`;
+      }).join('')}
+    </select>
+    <input type="text" class="org-m-name" value="${(name || '').replace(/"/g, '&quot;')}" placeholder="Nome do Membro" style="flex:1; padding:0.35rem; font-size:0.85rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px;">
+    <input type="text" class="org-m-avatar" value="${(avatar || '').replace(/"/g, '&quot;')}" placeholder="URL da Foto" style="flex:1.2; padding:0.35rem; font-size:0.85rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px;">
+    <input type="text" class="org-m-role" value="${(role || '').replace(/"/g, '&quot;')}" placeholder="Cargo / Título" style="flex:1; padding:0.35rem; font-size:0.85rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px;">
+    <button type="button" onclick="document.getElementById('${rowId}').remove()" style="background:none; border:none; color:var(--red-wax); cursor:pointer; font-size:1.1rem;">&times;</button>
+  `;
+  container.appendChild(row);
+}
+
+function autoFillOrgMember(selectEl, rowId) {
+  const row = document.getElementById(rowId);
+  if (!row) return;
+  const uid = selectEl.value;
+  if (!uid || !ALL_CHARACTERS || !ALL_CHARACTERS[uid]) return;
+  const char = ALL_CHARACTERS[uid].character || {};
+  row.querySelector('.org-m-name').value = char.name || '';
+  row.querySelector('.org-m-avatar').value = char.avatar || '';
+}
+
+function handleOrgLogoUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = (e) => {
-    document.getElementById('org-image').value = e.target.result;
-    showToast('🖼️ Brasão carregado!', 'success');
+    document.getElementById('org-logo').value = e.target.result;
+    showToast('🖼️ Logo carregada!', 'success');
   };
   reader.readAsDataURL(file);
 }
@@ -1751,26 +1540,40 @@ async function saveOrg(event, orgId) {
   event.preventDefault();
   if (!isStaffOrAdminUser()) return;
 
+  const isVisible = document.getElementById('org-is-visible').checked;
   const name = document.getElementById('org-name').value.trim();
-  const type = document.getElementById('org-type').value.trim();
-  const leader = document.getElementById('org-leader').value.trim();
-  const headquarters = document.getElementById('org-headquarters').value.trim();
-  const influence = document.getElementById('org-influence').value.trim();
-  const motto = document.getElementById('org-motto').value.trim();
-  const image = document.getElementById('org-image').value.trim() || 'Photos/Angel.jpg';
+  const logo = document.getElementById('org-logo').value.trim();
+  const leaderName = document.getElementById('org-leader-name').value.trim();
+  const leaderPhoto = document.getElementById('org-leader-photo').value.trim();
+  const indole = document.querySelector('input[name="org-indole"]:checked')?.value || 'Independente';
   const description = document.getElementById('org-desc').value.trim();
-  const benefits = document.getElementById('org-benefits').value.trim();
+
+  // Membros
+  const members = [];
+  document.querySelectorAll('#org-members-container > div').forEach(row => {
+    const selUid = row.querySelector('.org-m-char-select')?.value;
+    const mName = row.querySelector('.org-m-name')?.value.trim();
+    const mAvatar = row.querySelector('.org-m-avatar')?.value.trim();
+    const mRole = row.querySelector('.org-m-role')?.value.trim();
+    if (mName || selUid) {
+      members.push({
+        uid: selUid || null,
+        name: mName || (selUid && ALL_CHARACTERS[selUid]?.character?.name) || 'Membro',
+        avatar: mAvatar || (selUid && ALL_CHARACTERS[selUid]?.character?.avatar) || 'Photos/demihuman.webp',
+        role: mRole || ''
+      });
+    }
+  });
 
   const orgData = {
     name,
-    type,
-    leader,
-    headquarters,
-    influence,
-    motto,
-    image,
+    logo,
+    leaderName,
+    leaderPhoto,
+    indole,
     description,
-    benefits,
+    members,
+    isVisible,
     updatedAt: Date.now()
   };
 
@@ -1806,7 +1609,574 @@ async function deleteOrg(orgId) {
   }
 }
 
-// Inicializa a aba de história ao carregar a página
+// ─────────────────────────────────────────────────────────────────────
+// 4. ABA HISTÓRIAS & MISSÕES
+// ─────────────────────────────────────────────────────────────────────
+
+async function loadHistoryTab() {
+  const container = document.getElementById('history-container');
+  const adminActions = document.getElementById('history-admin-actions');
+  if (!container) return;
+
+  const isStaff = isStaffOrAdminUser();
+  if (adminActions) {
+    adminActions.innerHTML = isStaff ? `
+      <button onclick="openStoryEditor()" class="admin-action-btn">
+        <span>➕</span> Nova História / Missão
+      </button>
+    ` : '';
+  }
+
+  container.innerHTML = '<div class="auth-loading active" style="margin:2rem auto;"><div class="auth-spinner"></div></div>';
+
+  try {
+    ALL_STORIES = [];
+    if (_db) {
+      const snap = await _db.collection('stories').get();
+      snap.forEach(doc => ALL_STORIES.push({ id: doc.id, ...doc.data() }));
+    }
+
+    ALL_STORIES.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    renderStoriesList(ALL_STORIES);
+  } catch (err) {
+    console.error('Erro ao carregar histórias:', err);
+    container.innerHTML = '<p style="text-align:center; color:var(--red-wax);">Erro ao carregar histórias e missões.</p>';
+  }
+}
+
+function renderStoriesList(stories) {
+  const container = document.getElementById('history-container');
+  if (!container) return;
+
+  const isStaff = isStaffOrAdminUser();
+  const visibleList = stories.filter(s => isStaff || s.isVisible !== false);
+
+  if (visibleList.length === 0) {
+    container.innerHTML = `
+      <div class="coming-soon">
+        <div class="cs-icon">📖</div>
+        <h3>Nenhuma História ou Missão Registrada</h3>
+        <p>${isStaff ? 'Clique em "➕ Nova História / Missão" para cadastrar a primeira crônica.' : 'As histórias do Continente de Kensword serão registradas aqui à medida que o RPG avança.'}</p>
+      </div>
+    `;
+    return;
+  }
+
+  let html = '';
+  visibleList.forEach(story => {
+    const isInvisible = story.isVisible === false;
+    const photos = story.photos || [];
+
+    // Miniaturas das fotos (140x140px)
+    let photosHtml = '';
+    if (photos.length > 0) {
+      photosHtml = `
+        <div style="margin-top:1rem;">
+          <div style="font-family:'Cinzel',serif; font-size:0.85rem; color:var(--gold-bright); font-weight:bold; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.4rem;">
+            <span>📸</span> Fotos Relacionadas com a Missão (${photos.length}):
+          </div>
+          <div class="story-photo-gallery">
+            ${photos.map((pUrl, idx) => `
+              <div class="story-photo-item" onclick="zoomPhoto('${pUrl}', '${(story.title || '').replace(/'/g, "\\'")} - Foto #${idx+1}')" title="Clique para ampliar">
+                <img src="${pUrl}" alt="Foto">
+                <div class="photo-zoom-hint">🔍 Ampliar</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // NPCs Relacionados
+    const npcs = story.npcs || [];
+    let npcsHtml = '';
+    if (npcs.length > 0) {
+      npcsHtml = `
+        <div class="story-entity-row">
+          <div class="story-entity-label"><span>🎭</span> NPCs:</div>
+          <div class="story-chips-container">
+            ${npcs.map(npc => {
+              const name = typeof npc === 'string' ? npc : (npc.name || 'NPC');
+              const details = (typeof npc === 'object' && npc.details) ? npc.details.replace(/"/g, '&quot;') : '';
+              const avatar = (typeof npc === 'object' && npc.avatar) ? npc.avatar : 'Photos/demihuman.webp';
+              const npcId = typeof npc === 'object' ? npc.id : null;
+              
+              if (npcId) {
+                return `
+                  <div class="entity-chip" onclick="openNpcDetails('${npcId}')" title="Clique para ver detalhes do NPC">
+                    <img src="${avatar}" class="entity-chip-avatar" alt="${name}">
+                    <strong>${name}</strong>
+                  </div>
+                `;
+              }
+              return `
+                <div class="entity-chip" onclick="openCustomEntityViewer('${name}', 'npc', '${details}', '${avatar}')" title="Clique para ver detalhes do NPC">
+                  <img src="${avatar}" class="entity-chip-avatar" alt="${name}">
+                  <strong>${name}</strong>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // Monstros na Missão
+    const monsters = story.monsters || [];
+    let monstersHtml = '';
+    if (monsters.length > 0) {
+      monstersHtml = `
+        <div class="story-entity-row">
+          <div class="story-entity-label"><span>👾</span> Monstros:</div>
+          <div class="story-chips-container">
+            ${monsters.map(mon => {
+              const name = typeof mon === 'string' ? mon : (mon.name || 'Monstro');
+              const details = (typeof mon === 'object' && mon.details) ? mon.details.replace(/"/g, '&quot;') : '';
+              const avatar = (typeof mon === 'object' && mon.avatar) ? mon.avatar : 'Photos/demihuman.webp';
+              const monId = typeof mon === 'object' ? mon.id : null;
+
+              if (monId) {
+                return `
+                  <div class="entity-chip" onclick="openMonsterDetails('${monId}')" title="Clique para ver a ficha do Monstro">
+                    <img src="${avatar}" class="entity-chip-avatar" alt="${name}">
+                    <strong>${name}</strong>
+                  </div>
+                `;
+              }
+              return `
+                <div class="entity-chip" onclick="openCustomEntityViewer('${name}', 'monster', '${details}', '${avatar}')" title="Clique para ver a ficha do Monstro">
+                  <img src="${avatar}" class="entity-chip-avatar" alt="${name}">
+                  <strong>${name}</strong>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // Organizações Relacionadas
+    const orgs = story.orgs || [];
+    let orgsHtml = '';
+    if (orgs.length > 0) {
+      orgsHtml = `
+        <div class="story-entity-row">
+          <div class="story-entity-label"><span>🏰</span> Organizações:</div>
+          <div class="story-chips-container">
+            ${orgs.map(org => {
+              const name = typeof org === 'string' ? org : (org.name || 'Organização');
+              const details = (typeof org === 'object' && org.details) ? org.details.replace(/"/g, '&quot;') : '';
+              const avatar = (typeof org === 'object' && org.avatar) ? org.avatar : 'Photos/demihuman.webp';
+              const orgId = typeof org === 'object' ? org.id : null;
+
+              if (orgId) {
+                return `
+                  <div class="entity-chip" onclick="openOrgDetails('${orgId}')" title="Clique para ver a ficha da Organização">
+                    <img src="${avatar}" class="entity-chip-avatar" alt="${name}">
+                    <strong>${name}</strong>
+                  </div>
+                `;
+              }
+              return `
+                <div class="entity-chip" onclick="openCustomEntityViewer('${name}', 'org', '${details}', '${avatar}')" title="Clique para ver detalhes da Organização">
+                  <img src="${avatar}" class="entity-chip-avatar" alt="${name}">
+                  <strong>${name}</strong>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    let adminControls = '';
+    if (isStaff) {
+      adminControls = `
+        <div style="display:flex; gap:0.5rem;">
+          <button onclick="openStoryEditor('${story.id}')" class="admin-action-btn" style="padding:0.3rem 0.8rem; font-size:0.75rem;">✏️ Editar</button>
+          <button onclick="toggleEntityVisibility('stories', '${story.id}', ${!isInvisible})" class="admin-action-btn" style="padding:0.3rem 0.8rem; font-size:0.75rem;">${isInvisible ? '👁️ Exibir' : '🙈 Ocultar'}</button>
+          <button onclick="deleteStory('${story.id}')" class="admin-action-btn" style="padding:0.3rem 0.8rem; font-size:0.75rem; border-color:var(--red-wax); color:#ff6b6b;">🗑️ Excluir</button>
+        </div>
+      `;
+    }
+
+    html += `
+      <div class="story-card" style="${isInvisible ? 'opacity:0.75; border-left-color:#e67e22;' : ''}">
+        <div class="story-header">
+          <div>
+            <h3 class="story-title">${story.title}</h3>
+            ${isInvisible ? `<span style="background:#e67e22; color:#fff; font-size:0.65rem; padding:1px 6px; border-radius:3px; font-weight:bold;">INVISÍVEL PARA PLAYERS</span>` : ''}
+          </div>
+          <div>${adminControls}</div>
+        </div>
+
+        ${story.summary ? `<div class="story-summary">${story.summary}</div>` : ''}
+        ${photosHtml}
+
+        <div class="story-entities-section">
+          ${npcsHtml}
+          ${monstersHtml}
+          ${orgsHtml}
+        </div>
+
+        ${story.content ? `
+          <div style="margin-top:1.5rem; text-align:right;">
+            <button onclick="openStoryDetails('${story.id}')" class="form-submit-btn" style="width:auto; padding:0.5rem 1.5rem; font-family:'Cinzel',serif; font-size:0.85rem; background:rgba(212,175,55,0.15); border-color:var(--gold); color:var(--gold-bright);">
+              📜 Ler Relato Completo &amp; Detalhes
+            </button>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+// Detalhes Completos da História
+function openStoryDetails(storyId) {
+  const story = ALL_STORIES.find(s => s.id === storyId);
+  if (!story) return;
+
+  const photos = story.photos || [];
+
+  const html = `
+    <div>
+      <div style="text-align:center; margin-bottom:1.5rem; border-bottom:1px solid var(--wood-plank); padding-bottom:1rem;">
+        <h2 style="font-family:'Cinzel Decorative',serif; color:var(--gold-bright); margin:0.3rem 0 0.5rem;">${story.title}</h2>
+      </div>
+
+      ${photos.length > 0 ? `
+        <div style="margin-bottom:1.5rem;">
+          <h4 style="font-family:'Cinzel',serif; color:var(--gold); margin-bottom:0.6rem;">📸 Fotos e Registros da Missão:</h4>
+          <div class="story-photo-gallery">
+            ${photos.map((p, idx) => `
+              <div class="story-photo-item" onclick="zoomPhoto('${p}', '${(story.title || '').replace(/'/g, "\\'")} - Foto #${idx+1}')" title="Clique para ampliar">
+                <img src="${p}" alt="Foto">
+                <div class="photo-zoom-hint">🔍 Ampliar</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      <div style="background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:8px; padding:1.5rem; margin-bottom:1.5rem;">
+        <h4 style="font-family:'Cinzel',serif; color:var(--gold); margin-top:0; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:0.4rem;">📖 Relato Oficial:</h4>
+        <div style="font-size:0.95rem; color:var(--ink); line-height:1.7; white-space:pre-wrap;">${story.content || story.summary || 'Sem conteúdo.'}</div>
+      </div>
+
+      <div style="display:flex; justify-content:center; gap:1rem; margin-top:1.5rem;">
+        <button onclick="closeWorldContentModal()" class="form-submit-btn" style="width:auto; padding:0.6rem 2rem;">Fechar</button>
+      </div>
+    </div>
+  `;
+
+  openWorldContentModal(html);
+}
+
+// Editor de História / Missão
+async function openStoryEditor(storyId = null) {
+  if (!isStaffOrAdminUser()) {
+    showToast('⚠️ Apenas o Administrador/Mestre Supremo pode cadastrar histórias.', 'error');
+    return;
+  }
+
+  const isEdit = !!storyId;
+  const story = isEdit ? ALL_STORIES.find(s => s.id === storyId) || {} : {};
+
+  // Atualiza listas do banco
+  if (_db) {
+    if (ALL_NPCS.length === 0) {
+      const snapN = await _db.collection('npcs').get();
+      snapN.forEach(d => ALL_NPCS.push({ id: d.id, ...d.data() }));
+    }
+    if (ALL_MONSTERS.length === 0) {
+      const snapM = await _db.collection('monsters').get();
+      snapM.forEach(d => ALL_MONSTERS.push({ id: d.id, ...d.data() }));
+    }
+    if (ALL_ORGS.length === 0) {
+      const snapO = await _db.collection('organizations').get();
+      snapO.forEach(d => ALL_ORGS.push({ id: d.id, ...d.data() }));
+    }
+  }
+
+  const selectedNpcIds = (story.npcs || []).map(n => typeof n === 'object' ? n.id : n).filter(Boolean);
+  const selectedMonIds = (story.monsters || []).map(m => typeof m === 'object' ? m.id : m).filter(Boolean);
+  const selectedOrgIds = (story.orgs || []).map(o => typeof o === 'object' ? o.id : o).filter(Boolean);
+
+  const existingPhotosStr = (story.photos || []).join('\n');
+
+  const html = `
+    <div>
+      <h2 style="font-family:'Cinzel',serif; text-align:center; color:var(--gold-bright); margin-bottom:1.5rem; border-bottom:1px solid var(--wood-plank); padding-bottom:0.5rem;">
+        ${isEdit ? '✏️ Editar História / Missão' : '📜 Registrar Nova História / Missão'}
+      </h2>
+
+      <form id="story-form" onsubmit="saveStory(event, '${storyId || ''}')">
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:0.6rem 1rem; border-radius:6px; margin-bottom:1.2rem;">
+          <span style="font-family:'Cinzel',serif; font-size:0.9rem; color:var(--gold);">Visibilidade da História:</span>
+          <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+            <input type="checkbox" id="se-is-visible" ${story.isVisible !== false ? 'checked' : ''}>
+            <span>Tornar Visível para Jogadores</span>
+          </label>
+        </div>
+
+        <div class="field-group">
+          <label>Título da História / Missão *</label>
+          <input type="text" id="se-title" value="${(story.title || '').replace(/"/g, '&quot;')}" required placeholder="Título da História ou Missão">
+        </div>
+
+        <div class="field-group">
+          <label>Resumo / Sinopse da Missão</label>
+          <textarea id="se-summary" rows="3" placeholder="Breve resumo da missão que aparece no card..." style="width:100%; box-sizing:border-box; padding:0.6rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px;">${story.summary || ''}</textarea>
+        </div>
+
+        <div class="field-group">
+          <label>Conteúdo Completo &amp; Relato da Missão</label>
+          <textarea id="se-content" rows="6" placeholder="Relato detalhado da história..." style="width:100%; box-sizing:border-box; padding:0.6rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px;">${story.content || ''}</textarea>
+        </div>
+
+        <!-- FOTOS RELACIONADAS (140x140px) -->
+        <div class="field-group" style="background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.3); border-radius:6px; padding:1rem;">
+          <label style="color:var(--gold-bright); font-weight:bold;">📸 Fotos Relacionadas com a Missão (Miniaturas 140x140px):</label>
+          <span style="font-size:0.8rem; color:var(--ink-light); display:block; margin-bottom:0.5rem;">Insira as URLs das imagens (uma por linha):</span>
+          <textarea id="se-photos" rows="3" placeholder="https://exemplo.com/foto1.jpg&#10;https://exemplo.com/foto2.jpg" style="width:100%; box-sizing:border-box; padding:0.6rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-family:monospace; font-size:0.85rem;">${existingPhotosStr}</textarea>
+          <div style="margin-top:0.4rem;">
+            <input type="file" id="se-photo-upload" accept="image/*" style="display:none;" onchange="handleStoryPhotoUpload(event)">
+            <button type="button" onclick="document.getElementById('se-photo-upload').click()" class="admin-action-btn" style="font-size:0.75rem; padding:0.25rem 0.6rem;">
+              📁 Upload Foto
+            </button>
+          </div>
+        </div>
+
+        <!-- NPCS RELACIONADOS -->
+        <div style="background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:6px; padding:1.2rem; margin-bottom:1.2rem;">
+          <label style="font-family:'Cinzel',serif; font-size:0.95rem; color:var(--gold); font-weight:bold; display:block; margin-bottom:0.4rem;">
+            🎭 NPCs Relacionados com a Missão:
+          </label>
+          <span style="font-size:0.8rem; color:var(--ink-light); display:block; margin-bottom:0.6rem;">Marque os NPCs existentes na aba NPCs ou digite um novo:</span>
+          
+          <div style="display:flex; flex-wrap:wrap; gap:0.5rem; max-height:120px; overflow-y:auto; padding:0.4rem; background:rgba(0,0,0,0.2); border-radius:4px; margin-bottom:0.8rem;">
+            ${ALL_NPCS.map(n => `
+              <label style="display:inline-flex; align-items:center; gap:0.3rem; background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:4px; font-size:0.85rem; cursor:pointer;">
+                <input type="checkbox" name="se-npcs" value="${n.id}" ${selectedNpcIds.includes(n.id) ? 'checked' : ''}>
+                ${n.name}
+              </label>
+            `).join('')}
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1.5fr; gap:0.6rem;">
+            <input type="text" id="se-custom-npc-name" placeholder="Outro NPC (Nome)" style="padding:0.4rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-size:0.85rem;">
+            <input type="text" id="se-custom-npc-desc" placeholder="Ficha e detalhes do NPC nesta missão..." style="padding:0.4rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-size:0.85rem;">
+          </div>
+        </div>
+
+        <!-- MONSTROS NA MISSÃO -->
+        <div style="background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:6px; padding:1.2rem; margin-bottom:1.2rem;">
+          <label style="font-family:'Cinzel',serif; font-size:0.95rem; color:var(--gold); font-weight:bold; display:block; margin-bottom:0.4rem;">
+            👾 Monstros Presentes na Missão:
+          </label>
+          <span style="font-size:0.8rem; color:var(--ink-light); display:block; margin-bottom:0.6rem;">Marque os monstros da aba Monstros ou digite um novo:</span>
+          
+          <div style="display:flex; flex-wrap:wrap; gap:0.5rem; max-height:120px; overflow-y:auto; padding:0.4rem; background:rgba(0,0,0,0.2); border-radius:4px; margin-bottom:0.8rem;">
+            ${ALL_MONSTERS.map(m => `
+              <label style="display:inline-flex; align-items:center; gap:0.3rem; background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:4px; font-size:0.85rem; cursor:pointer;">
+                <input type="checkbox" name="se-monsters" value="${m.id}" ${selectedMonIds.includes(m.id) ? 'checked' : ''}>
+                ${m.name}
+              </label>
+            `).join('')}
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1.5fr; gap:0.6rem;">
+            <input type="text" id="se-custom-mon-name" placeholder="Outro Monstro (Nome)" style="padding:0.4rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-size:0.85rem;">
+            <input type="text" id="se-custom-mon-desc" placeholder="Ficha e atributos do Monstro..." style="padding:0.4rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-size:0.85rem;">
+          </div>
+        </div>
+
+        <!-- ORGANIZAÇÕES RELACIONADAS -->
+        <div style="background:rgba(0,0,0,0.3); border:1px solid var(--wood-plank); border-radius:6px; padding:1.2rem; margin-bottom:1.2rem;">
+          <label style="font-family:'Cinzel',serif; font-size:0.95rem; color:var(--gold); font-weight:bold; display:block; margin-bottom:0.4rem;">
+            🏰 Organizações Relacionadas com a Missão:
+          </label>
+          <span style="font-size:0.8rem; color:var(--ink-light); display:block; margin-bottom:0.6rem;">Marque as organizações da aba Organizações ou digite uma nova:</span>
+          
+          <div style="display:flex; flex-wrap:wrap; gap:0.5rem; max-height:120px; overflow-y:auto; padding:0.4rem; background:rgba(0,0,0,0.2); border-radius:4px; margin-bottom:0.8rem;">
+            ${ALL_ORGS.map(o => `
+              <label style="display:inline-flex; align-items:center; gap:0.3rem; background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:4px; font-size:0.85rem; cursor:pointer;">
+                <input type="checkbox" name="se-orgs" value="${o.id}" ${selectedOrgIds.includes(o.id) ? 'checked' : ''}>
+                ${o.name}
+              </label>
+            `).join('')}
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1.5fr; gap:0.6rem;">
+            <input type="text" id="se-custom-org-name" placeholder="Outra Organização (Nome)" style="padding:0.4rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-size:0.85rem;">
+            <input type="text" id="se-custom-org-desc" placeholder="Detalhes da Organização no evento..." style="padding:0.4rem; background:var(--parchment); color:var(--ink); border:1px solid var(--wood-plank); border-radius:4px; font-size:0.85rem;">
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:center; gap:1.2rem; margin-top:2rem;">
+          <button type="button" onclick="closeWorldContentModal()" class="form-submit-btn" style="width:auto; padding:0.8rem 2rem; background:rgba(0,0,0,0.4); border-color:var(--wood-plank);">
+            Cancelar
+          </button>
+          <button type="submit" class="form-submit-btn" style="width:auto; padding:0.8rem 2.5rem; background:var(--gold); border-color:var(--gold); color:#1a0f08; font-weight:bold;">
+            💾 ${isEdit ? 'Atualizar História' : 'Salvar História / Missão'}
+          </button>
+        </div>
+      </form>
+    </div>
+  `;
+
+  openWorldContentModal(html);
+}
+
+function handleStoryPhotoUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const area = document.getElementById('se-photos');
+    if (area) {
+      area.value = area.value.trim() ? area.value.trim() + '\n' + e.target.result : e.target.result;
+      showToast('📸 Foto adicionada à missão!', 'success');
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveStory(event, storyId) {
+  event.preventDefault();
+  if (!isStaffOrAdminUser()) return;
+
+  const isVisible = document.getElementById('se-is-visible').checked;
+  const title = document.getElementById('se-title').value.trim();
+  const summary = document.getElementById('se-summary').value.trim();
+  const content = document.getElementById('se-content').value.trim();
+
+  // Fotos (140x140px)
+  const photos = document.getElementById('se-photos').value.split('\n').map(p => p.trim()).filter(Boolean);
+
+  // NPCs
+  const npcs = [];
+  document.querySelectorAll('input[name="se-npcs"]:checked').forEach(cb => {
+    const n = ALL_NPCS.find(npc => npc.id === cb.value);
+    if (n) {
+      npcs.push({
+        id: n.id,
+        name: n.name,
+        avatar: (n.photos && n.photos[0]) || n.photo || 'Photos/demihuman.webp'
+      });
+    }
+  });
+  const customNpcName = document.getElementById('se-custom-npc-name').value.trim();
+  const customNpcDesc = document.getElementById('se-custom-npc-desc').value.trim();
+  if (customNpcName) {
+    npcs.push({ name: customNpcName, details: customNpcDesc, avatar: 'Photos/demihuman.webp' });
+  }
+
+  // Monstros
+  const monsters = [];
+  document.querySelectorAll('input[name="se-monsters"]:checked').forEach(cb => {
+    const m = ALL_MONSTERS.find(mon => mon.id === cb.value);
+    if (m) {
+      monsters.push({
+        id: m.id,
+        name: m.name,
+        avatar: (m.photos && m.photos[0]) || m.photo || 'Photos/demihuman.webp'
+      });
+    }
+  });
+  const customMonName = document.getElementById('se-custom-mon-name').value.trim();
+  const customMonDesc = document.getElementById('se-custom-mon-desc').value.trim();
+  if (customMonName) {
+    monsters.push({ name: customMonName, details: customMonDesc, avatar: 'Photos/demihuman.webp' });
+  }
+
+  // Organizações
+  const orgs = [];
+  document.querySelectorAll('input[name="se-orgs"]:checked').forEach(cb => {
+    const o = ALL_ORGS.find(org => org.id === cb.value);
+    if (o) {
+      orgs.push({
+        id: o.id,
+        name: o.name,
+        avatar: o.logo || 'Photos/demihuman.webp'
+      });
+    }
+  });
+  const customOrgName = document.getElementById('se-custom-org-name').value.trim();
+  const customOrgDesc = document.getElementById('se-custom-org-desc').value.trim();
+  if (customOrgName) {
+    orgs.push({ name: customOrgName, details: customOrgDesc, avatar: 'Photos/demihuman.webp' });
+  }
+
+  const storyData = {
+    title,
+    summary,
+    content,
+    photos,
+    npcs,
+    monsters,
+    orgs,
+    isVisible,
+    updatedAt: Date.now()
+  };
+
+  try {
+    showToast('💾 Salvando história...', 'info');
+    if (storyId) {
+      await _db.collection('stories').doc(storyId).set(storyData, { merge: true });
+    } else {
+      storyData.createdAt = Date.now();
+      await _db.collection('stories').add(storyData);
+    }
+    showToast('✅ História salva com sucesso!', 'success');
+    closeWorldContentModal();
+    await loadHistoryTab();
+  } catch (err) {
+    console.error('Erro ao salvar história:', err);
+    showToast('❌ Falha ao salvar história.', 'error');
+  }
+}
+
+async function deleteStory(storyId) {
+  if (!isStaffOrAdminUser()) return;
+  if (!confirm('⚠️ Tem certeza que deseja excluir esta história/missão permanentemente?')) return;
+
+  try {
+    showToast('🗑️ Excluindo história...', 'info');
+    await _db.collection('stories').doc(storyId).delete();
+    showToast('✅ História excluída com sucesso!', 'success');
+    await loadHistoryTab();
+  } catch (err) {
+    console.error('Erro ao excluir história:', err);
+    showToast('❌ Falha ao excluir história.', 'error');
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// 5. HELPER PARA TORNAR VISÍVEL / INVISÍVEL
+// ─────────────────────────────────────────────────────────────────────
+
+async function toggleEntityVisibility(collectionName, entityId, newVisibility) {
+  if (!isStaffOrAdminUser()) return;
+  try {
+    await _db.collection(collectionName).doc(entityId).set({
+      isVisible: newVisibility
+    }, { merge: true });
+    showToast(newVisibility ? '👁️ Item tornado visível!' : '🙈 Item ocultado para jogadores!', 'info');
+    if (collectionName === 'npcs') await loadNpcsTab();
+    if (collectionName === 'monsters') await loadMonstersTab();
+    if (collectionName === 'organizations') await loadOrgsTab();
+    if (collectionName === 'stories') await loadHistoryTab();
+  } catch (e) {
+    console.error('Erro ao alterar visibilidade:', e);
+    showToast('❌ Falha ao alterar visibilidade.', 'error');
+  }
+}
+
+// Inicialização ao carregar
 document.addEventListener('DOMContentLoaded', () => {
   if (typeof loadHistoryTab === 'function') {
     loadHistoryTab();
