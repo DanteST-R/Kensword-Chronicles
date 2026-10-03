@@ -27,7 +27,7 @@ const RACES_DATA = [
         appearance: "Pele clara, corpo esbelto, orelhas pontudas e Cabelos/Olhos normalmente claros, costumam viver 1.000 anos.",
         desc: "São os elfos mais comuns, esnobes, famosos loiros branquelos dos mundos de fantasia (em sua maioria, mas existem claro, ruivos e com outras cores de cabelo) uma sociedade sofisticada e orgulhosa em plenitude de seus afazeres e sua relação com a natureza sendo locais com floresta alta seu habitat.",
         abilityName: "Olho por Olho",
-        abilityDesc: "Altos elfos tem uma habilidade que aumenta sua agilidade em 15% e enquanto mirando podem usar vinhas ou árvores e outros tipo de vegetação do seu habitat para atacar ou formar outras coisas como casas pequenas. Ele tem acesso ao Elemento Planta como extra de início."
+        abilityDesc: "Altos elfos tem uma habilidade que aumenta sua agilidade em 15% e enquanto mirando podem usar vinhas ou árvores e outros tipo de vegetação do seu habitat para atacar ou formar outras coisas como casas pequenas. Ele tem acesso a Fitocinese como Cinese Extra de início."
       },
       {
         name: "Drow",
