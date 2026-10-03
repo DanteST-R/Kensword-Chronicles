@@ -295,6 +295,11 @@ async function approveCharacterSheet(uid) {
     showToast('✅ Ficha aprovada com sucesso!', 'success');
     closeCharacterSheet();
 
+    if (ALL_CHARACTERS[uid]) {
+      ALL_CHARACTERS[uid].status = 'approved';
+    }
+    ALL_CHARACTERS = await getAllCharacters();
+
     if (typeof loadCharactersTab === 'function') await loadCharactersTab();
     if (typeof loadPendingTab === 'function') await loadPendingTab();
 
@@ -304,6 +309,61 @@ async function approveCharacterSheet(uid) {
   } catch (err) {
     console.error('Erro ao aprovar ficha:', err);
     showToast('❌ Falha ao aprovar ficha.', 'error');
+  }
+}
+
+// ── Reprovar Ficha e Devolver ao Player ────────────────────────────
+async function rejectCharacterSheet(uid) {
+  const reasonInput = document.getElementById('reject-reason-input');
+  const reason = reasonInput ? reasonInput.value.trim() : '';
+
+  const confirmMsg = reason
+    ? `Deseja reprovar esta ficha e devolvê-la ao jogador com o seguinte motivo?\n\n"${reason}"\n\nO jogador receberá uma notificação com o motivo informado.`
+    : `Deseja reprovar esta ficha sem informar um motivo?\nO jogador receberá uma notificação genérica solicitando revisão.`;
+
+  if (!confirm(confirmMsg)) return;
+
+  try {
+    showToast('⚡ Reprovando ficha...', 'info');
+
+    const charData = ALL_CHARACTERS[uid] || {};
+    const player = charData.player || {};
+    const char = charData.character || {};
+    const playerName = player.name || 'Jogador';
+    const charName = char.name || 'Personagem';
+
+    const notifications = charData.notifications || [];
+    const notifText = reason
+      ? `${playerName}, sua ficha "${charName}" foi reprovada pelo Mestre. Motivo: ${reason}. Por favor, revise e reenvie!`
+      : `${playerName}, sua ficha "${charName}" foi reprovada pelo Mestre e precisa de ajustes. Por favor, revise sua ficha!`;
+
+    notifications.push({
+      text: notifText,
+      timestamp: Date.now(),
+      type: 'error'
+    });
+
+    // A ficha permanece com status 'pending' para o player poder editá-la e reenviar
+    // Apenas limpa quaisquer dados de análise e adiciona a notificação de reprovação
+    await _db.collection('characters').doc(uid).update({
+      status: 'pending',
+      rejectionReason: reason || null,
+      rejectedAt: Date.now(),
+      notifications: notifications,
+      // Limpar dados parciais de aprovação caso existam
+      hasPendingModifications: firebase.firestore.FieldValue.delete(),
+      modificationRequest: firebase.firestore.FieldValue.delete()
+    });
+
+    showToast('❌ Ficha reprovada e devolvida ao jogador!', 'success');
+    closeCharacterSheet();
+
+    ALL_CHARACTERS = await getAllCharacters();
+    if (typeof loadPendingTab === 'function') await loadPendingTab();
+    if (typeof loadCharactersTab === 'function') await loadCharactersTab();
+  } catch (err) {
+    console.error('Erro ao reprovar ficha:', err);
+    showToast('❌ Falha ao reprovar ficha.', 'error');
   }
 }
 

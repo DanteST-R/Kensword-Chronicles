@@ -8,11 +8,20 @@ function showTab(name) {
   if (tabBtn) tabBtn.classList.add('active');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
+  if (name === 'history' && typeof loadHistoryTab === 'function') {
+    loadHistoryTab();
+  }
   if (name === 'characters' && typeof loadCharactersTab === 'function') {
     loadCharactersTab();
   }
   if (name === 'npcs' && typeof loadNpcsTab === 'function') {
     loadNpcsTab();
+  }
+  if (name === 'monsters' && typeof loadMonstersTab === 'function') {
+    loadMonstersTab();
+  }
+  if (name === 'orgs' && typeof loadOrgsTab === 'function') {
+    loadOrgsTab();
   }
   if (name === 'pending' && typeof loadPendingTab === 'function') {
     loadPendingTab();

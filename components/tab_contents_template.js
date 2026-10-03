@@ -2,12 +2,16 @@ window.KENSWORD_TEMPLATES = window.KENSWORD_TEMPLATES || {};
 window.KENSWORD_TEMPLATES.tabContents = `
   <section id="tab-content-history" class="tab-content active">
     <div class="parchment-panel">
-      <h2 class="section-title">📜 História Geral</h2>
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:0.5rem;">
+        <h2 class="section-title" style="margin:0;">📜 Histórias &amp; Missões</h2>
+        <div id="history-admin-actions"></div>
+      </div>
       <div class="ornament-divider"><span>✦</span></div>
-      <div class="coming-soon">
-        <div class="cs-icon">📖</div>
-        <h3>Os Pergaminhos Ainda Estão Sendo Escritos</h3>
-        <p>A história do Continente de Kensword será registrada aqui à medida que o RPG avança.</p>
+      <p style="text-align:center; font-style:italic; color:var(--ink-light); margin-bottom:1.8rem;">
+        Crônicas, eventos de andar e missões oficiais do Continente de Kensword registradas pela Guilda.
+      </p>
+      <div id="history-container">
+        <!-- Injetado dinamicamente via js/world_content.js -->
       </div>
     </div>
   </section>
@@ -757,8 +761,14 @@ window.KENSWORD_TEMPLATES.tabContents = `
 
   <section id="tab-content-npcs" class="tab-content">
     <div class="parchment-panel">
-      <h2 class="section-title">🎭 NPCs</h2>
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:0.5rem;">
+        <h2 class="section-title" style="margin:0;">🎭 NPCs</h2>
+        <div id="npcs-admin-actions"></div>
+      </div>
       <div class="ornament-divider"><span>⚔️</span></div>
+      <p style="text-align:center; font-style:italic; color:var(--ink-light); margin-bottom:1.5rem;">
+        Personagens notáveis, mentores, comerciantes e figuras influentes do Continente de Kensword.
+      </p>
       <div id="npcs-grid" class="characters-grid"></div>
     </div>
   </section>
@@ -860,25 +870,29 @@ window.KENSWORD_TEMPLATES.tabContents = `
 
   <section id="tab-content-orgs" class="tab-content">
     <div class="parchment-panel">
-      <h2 class="section-title">🏰 Organizações</h2>
-      <div class="ornament-divider"><span>✦</span></div>
-      <div class="coming-soon">
-        <div class="cs-icon">🏛️</div>
-        <h3>Facções e Guildas</h3>
-        <p>Igreja Dourada, Igreja do Fogo Eterno, Guilda de Aventureiros e outras serão detalhadas aqui.</p>
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:0.5rem;">
+        <h2 class="section-title" style="margin:0;">🏰 Organizações &amp; Facções</h2>
+        <div id="orgs-admin-actions"></div>
       </div>
+      <div class="ornament-divider"><span>✦</span></div>
+      <p style="text-align:center; font-style:italic; color:var(--ink-light); margin-bottom:1.5rem;">
+        Grandes guildas, ordens religiosas e sindicatos que moldam o poder no Continente de Kensword.
+      </p>
+      <div id="orgs-grid" class="characters-grid"></div>
     </div>
   </section>
 
   <section id="tab-content-monsters" class="tab-content">
     <div class="parchment-panel">
-      <h2 class="section-title">👾 Bestiário</h2>
-      <div class="ornament-divider"><span>✦</span></div>
-      <div class="coming-soon">
-        <div class="cs-icon">🐉</div>
-        <h3>Bestiário de Kensword</h3>
-        <p>Goblins, Kobolds e outras criaturas serão catalogados aqui.</p>
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:0.5rem;">
+        <h2 class="section-title" style="margin:0;">👾 Bestiário de Kensword</h2>
+        <div id="monsters-admin-actions"></div>
       </div>
+      <div class="ornament-divider"><span>✦</span></div>
+      <p style="text-align:center; font-style:italic; color:var(--ink-light); margin-bottom:1.5rem;">
+        Catálogo de criaturas, bestas mágicas e chefes de andar que habitam o continente.
+      </p>
+      <div id="monsters-grid" class="characters-grid"></div>
     </div>
   </section>
 `;

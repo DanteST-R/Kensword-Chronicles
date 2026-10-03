@@ -616,6 +616,11 @@ async function approveCharacterSheet(uid) {
     showToast('✅ Ficha aprovada com sucesso!', 'success');
     closeCharacterSheet();
 
+    if (ALL_CHARACTERS[uid]) {
+      ALL_CHARACTERS[uid].status = 'approved';
+    }
+    ALL_CHARACTERS = await getAllCharacters();
+
     if (typeof loadCharactersTab === 'function') await loadCharactersTab();
     if (typeof loadPendingTab === 'function') await loadPendingTab();
 
@@ -629,6 +634,43 @@ async function approveCharacterSheet(uid) {
 }
 
 // ── Modificações de Ficha Propostas (Sub-admins) ─────────────────────
+// Reprovar Ficha e Devolver ao Player
+async function rejectCharacterSheet(uid) {
+  const reasonInput = document.getElementById('reject-reason-input');
+  const reason = reasonInput ? reasonInput.value.trim() : '';
+  const confirmMsg = reason
+    ? 'Deseja reprovar esta ficha com o motivo informado? O jogador sera notificado.'
+    : 'Deseja reprovar esta ficha? O jogador recebera uma notificacao generica.';
+  if (!confirm(confirmMsg)) return;
+  try {
+    showToast('Reprovando ficha...', 'info');
+    const charData = ALL_CHARACTERS[uid] || {};
+    const player = charData.player || {};
+    const char = charData.character || {};
+    const playerName = player.name || 'Jogador';
+    const charName = char.name || 'Personagem';
+    const notifications = charData.notifications || [];
+    const notifText = reason
+      ? playerName + ', sua ficha "' + charName + '" foi reprovada pelo Mestre. Motivo: ' + reason + '. Por favor, revise e reenvie!'
+      : playerName + ', sua ficha "' + charName + '" foi reprovada pelo Mestre. Por favor, revise sua ficha!';
+    notifications.push({ text: notifText, timestamp: Date.now(), type: 'error' });
+    await _db.collection('characters').doc(uid).update({
+      status: 'pending', rejectionReason: reason || null, rejectedAt: Date.now(),
+      notifications: notifications,
+      hasPendingModifications: firebase.firestore.FieldValue.delete(),
+      modificationRequest: firebase.firestore.FieldValue.delete()
+    });
+    showToast('Ficha reprovada e devolvida ao jogador!', 'success');
+    closeCharacterSheet();
+    ALL_CHARACTERS = await getAllCharacters();
+    if (typeof loadPendingTab === 'function') await loadPendingTab();
+    if (typeof loadCharactersTab === 'function') await loadCharactersTab();
+  } catch (err) {
+    console.error('Erro ao reprovar ficha:', err);
+    showToast('Falha ao reprovar ficha.', 'error');
+  }
+}
+
 function openProposedChangesModal(uid) {
   const data = ALL_CHARACTERS[uid];
   if (!data) return;

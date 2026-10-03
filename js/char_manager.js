@@ -385,9 +385,12 @@ async function loadCharactersTab() {
 
   try {
     ALL_CHARACTERS = await getAllCharacters();
+    const keys = Object.keys(ALL_CHARACTERS || {});
+    let html = '';
     let charCount = 0;
     keys.forEach(uid => {
       const doc = ALL_CHARACTERS[uid];
+      if (!doc) return;
       if (doc.type === 'NPC') return; // Filtra NPCs da aba geral de personagens
       if (doc.status !== 'approved') return; // Filtra personagens não aprovados (pendentes/deletados)
       if (!doc.character || !doc.character.name) return; // Filtra fichas incompletas ou deletadas
@@ -434,7 +437,7 @@ function openCharacterSheet(uid) {
      (currentUserData.player.name.trim().toLowerCase() === 'dantestr' || 
       currentUserData.player.name.trim().toLowerCase() === 'dantest-r'))
   );
-  const isStaff = isDante || (currentUserData && (currentUserData.isAdmin || currentUserData.isSubAdmin));
+  const isStaff = isDante || (currentUserData && (currentUserData.isAdmin || currentUserData.isSubAdmin || currentUserData.user_role === 'admin' || currentUserData.user_role === 'sub-admin'));
   const isPending = data.status === 'pending';
 
   let editButtonHtml = '<div style="display:flex; justify-content:flex-end; gap:0.8rem; margin-bottom:1rem; margin-top:-0.5rem; position:relative; z-index:10; flex-wrap:wrap;">';
@@ -506,7 +509,17 @@ function openCharacterSheet(uid) {
     `;
   }
 
-  let html = editButtonHtml + `<h2 style="font-family:'Cinzel',serif; text-align:center; color:var(--ink); margin-bottom:1.5rem; border-bottom:1px solid var(--wood-plank); padding-bottom:0.5rem;">${char.name}</h2>
+  // Banner de ficha reprovada (visível para o próprio player)
+  const isRejected = data.rejectedAt && data.rejectionReason;
+  const rejectionBannerHtml = (isPending && !isStaff && isRejected) ? `
+    <div style="background:rgba(230,126,34,0.15); border:2px solid #e67e22; border-radius:8px; padding:1rem 1.2rem; margin-bottom:1.5rem;">
+      <p style="margin:0 0 0.4rem; font-family:'Cinzel',serif; font-size:1rem; color:#e67e22; font-weight:bold;">⚠️ Ficha Reprovada pelo Mestre</p>
+      <p style="margin:0; font-size:0.9rem; color:var(--ink); line-height:1.5;"><strong>Motivo:</strong> ${data.rejectionReason}</p>
+      <p style="margin:0.5rem 0 0; font-size:0.82rem; color:#888; font-style:italic;">Por favor, revise sua ficha com base no motivo acima e aguarde nova avaliação.</p>
+    </div>
+  ` : '';
+
+  let html = editButtonHtml + rejectionBannerHtml + `<h2 style="font-family:'Cinzel',serif; text-align:center; color:var(--ink); margin-bottom:1.5rem; border-bottom:1px solid var(--wood-plank); padding-bottom:0.5rem;">${char.name}</h2>
     <div style="display:flex; gap:1.5rem; margin-bottom:1.5rem; flex-wrap:wrap; justify-content:center;">
       <img src="${char.avatar || 'kensword_database/kensword_photos/demihuman.webp'}" style="width:180px; height:180px; object-fit:cover; object-position:top; image-rendering:-webkit-optimize-contrast; filter:brightness(1.02) contrast(1.03) saturate(1.02); border-radius:8px; border:2px solid var(--wood-plank); box-shadow:0 4px 6px rgba(0,0,0,0.3);">
       <div style="flex:1; min-width:200px; display:flex; flex-direction:column; justify-content:center;">
@@ -516,6 +529,7 @@ function openCharacterSheet(uid) {
         <p style="margin-bottom:0.5rem; display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;"><strong>Linhagem:</strong> ${lineageHtml}</p>
       </div>
     </div>
+
     
     ${attrsHtml}
     
@@ -903,10 +917,19 @@ function openCharacterSheet(uid) {
   let approveButtonHtml = '';
   if (isStaff && isPending) {
     approveButtonHtml = `
-      <div style="margin-top:2rem; text-align:center; padding-top:1.5rem; border-top:1px solid var(--wood-plank);">
-        <button onclick="approveCharacterSheet('${uid}')" class="form-submit-btn" style="background:var(--red-wax); color:#fff; border-color:var(--red-wax); width:auto; padding:0.8rem 2.5rem; font-family:'Cinzel',serif; font-size:1.15rem; box-shadow:0 4px 10px rgba(0,0,0,0.4); cursor:pointer; letter-spacing:0.05em;">
-          🛡️ Aprovar Ficha e Aplicar Modificações
-        </button>
+      <div style="margin-top:2rem; padding-top:1.5rem; border-top:1px solid var(--wood-plank);">
+        <div style="background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.3); border-radius:8px; padding:1.2rem; margin-bottom:1.2rem;">
+          <label style="font-family:'Cinzel',serif; font-size:0.9rem; color:var(--gold); font-weight:bold; display:block; margin-bottom:0.5rem;">📝 Motivo da Reprovação (opcional):</label>
+          <textarea id="reject-reason-input" rows="3" placeholder="Descreva o motivo da reprovação para o jogador..." style="width:100%; box-sizing:border-box; border:1px solid var(--wood-plank); border-radius:4px; padding:0.6rem; background:var(--parchment); color:var(--ink); font-family:sans-serif; font-size:0.9rem; resize:vertical;"></textarea>
+        </div>
+        <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
+          <button onclick="rejectCharacterSheet('${uid}')" class="form-submit-btn" style="background:#c0392b; color:#fff; border-color:#c0392b; width:auto; padding:0.8rem 2rem; font-family:'Cinzel',serif; font-size:1rem; box-shadow:0 4px 10px rgba(0,0,0,0.3); cursor:pointer; letter-spacing:0.05em;">
+            ❌ Reprovar Ficha
+          </button>
+          <button onclick="approveCharacterSheet('${uid}')" class="form-submit-btn" style="background:#27ae60; color:#fff; border-color:#27ae60; width:auto; padding:0.8rem 2rem; font-family:'Cinzel',serif; font-size:1rem; box-shadow:0 4px 10px rgba(0,0,0,0.4); cursor:pointer; letter-spacing:0.05em;">
+            🛡️ Aprovar Ficha
+          </button>
+        </div>
       </div>
     `;
   }
@@ -2011,7 +2034,18 @@ async function deleteCharacterSheet(uid) {
   const user = _auth.currentUser;
   
   const currentUserData = ALL_CHARACTERS[user.uid];
-  const isStaff = currentUserData && (currentUserData.isAdmin || currentUserData.isSubAdmin);
+  const isDante = user && (
+    (user.email && user.email.toLowerCase().includes('dantestr')) ||
+    (currentUserData && currentUserData.player && currentUserData.player.name && 
+     (currentUserData.player.name.trim().toLowerCase() === 'dantestr' || 
+      currentUserData.player.name.trim().toLowerCase() === 'dantest-r'))
+  );
+  const isStaff = isDante || (currentUserData && (
+    currentUserData.isAdmin || 
+    currentUserData.isSubAdmin || 
+    currentUserData.user_role === 'admin' || 
+    currentUserData.user_role === 'sub-admin'
+  ));
 
   if (user.uid !== uid && !isStaff) {
     showToast('⚠️ Operação não permitida.', 'error');
@@ -2021,20 +2055,16 @@ async function deleteCharacterSheet(uid) {
   const isSelf = user.uid === uid;
   const confirmMsg = isSelf 
     ? "⚠️ ATENÇÃO: Tem certeza que deseja excluir permanentemente o seu personagem?\nIsso apagará todos os dados da sua ficha (História, Linhagem, Habilidades, Atributos, etc.).\nEsta ação NÃO pode ser desfeita! Suas informações de login e conta de jogador continuarão existindo normalmente."
-    : `⚠️ ATENÇÃO: Como Administrador, você está prestes a excluir permanentemente o personagem de outro jogador.\nEsta ação NÃO pode ser desfeita! A conta de jogador do usuário continuará existindo normalmente para que ele possa criar outro personagem.`;
+    : `⚠️ ATENÇÃO: Como Administrador, você está prestes a excluir permanentemente esta ficha.\nEsta ação NÃO pode ser desfeita!`;
 
   if (!confirm(confirmMsg)) return;
 
   try {
     showToast('🔮 Excluindo personagem...', 'info');
-    
-    await _db.collection('characters').doc(uid).update({
-      character: firebase.firestore.FieldValue.delete(),
-      status: firebase.firestore.FieldValue.delete(),
-      pendingAbilities: firebase.firestore.FieldValue.delete(),
-      hasPendingModifications: firebase.firestore.FieldValue.delete(),
-      modificationRequest: firebase.firestore.FieldValue.delete()
-    });
+
+    // Deleta o documento do Firestore permanentemente
+    await _db.collection('characters').doc(uid).delete();
+    delete ALL_CHARACTERS[uid];
 
     closeCharacterSheet();
     showToast('🗑️ Personagem excluído com sucesso!', 'success');

@@ -158,17 +158,26 @@ async function loadProfileSubtabData(tabName) {
       let html = '';
       
       pendingChars.forEach(uid => {
-        const char = ALL_CHARACTERS[uid].character || {};
+        const charDocData = ALL_CHARACTERS[uid];
+        const char = charDocData.character || {};
         const name = char.name || 'Sem Nome';
         const avatar = char.avatar || 'kensword_database/kensword_photos/demihuman.webp';
+        const isRejected = charDocData.rejectedAt && charDocData.rejectionReason;
+        const rejectionReason = charDocData.rejectionReason || '';
+        const badgeBg = isRejected ? '#e67e22' : 'var(--red-wax)';
+        const badgeText = isRejected ? 'REPROVADA' : 'NOVA';
+        const cardBorder = isRejected ? '2px solid #e67e22' : '';
+        const titleAttr = isRejected ? `title="Motivo: ${rejectionReason.replace(/"/g, '&quot;')}"` : '';
         html += `
-          <div class="character-card" onclick="openCharacterSheet('${uid}')" style="position:relative; max-width:130px; margin:0 auto;">
-            <span style="position:absolute; top:4px; right:4px; background:var(--red-wax); color:#fff; font-family:'Cinzel',serif; font-size:0.55rem; padding:1px 4px; border-radius:2px; z-index:2;">NOVA</span>
+          <div class="character-card" onclick="openCharacterSheet('${uid}')" style="position:relative; max-width:130px; margin:0 auto; ${cardBorder ? 'border:' + cardBorder + ';' : ''}" ${titleAttr}>
+            <span style="position:absolute; top:4px; right:4px; background:${badgeBg}; color:#fff; font-family:'Cinzel',serif; font-size:0.55rem; padding:1px 4px; border-radius:2px; z-index:2;">${badgeText}</span>
             <img src="${avatar}" alt="${name}" style="width:100%; aspect-ratio:1/1; object-fit:cover; object-position:top; image-rendering:-webkit-optimize-contrast; filter:brightness(1.02) contrast(1.03) saturate(1.02);">
             <div class="char-card-name" style="padding:0.4rem; font-size:0.85rem;">${name}</div>
+            ${isRejected ? `<div style="font-size:0.65rem; color:#e67e22; padding:0 0.3rem 0.3rem; text-align:center; font-style:italic; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${rejectionReason.replace(/"/g, '&quot;')}">⚠️ Ver motivo na ficha</div>` : ''}
           </div>
         `;
       });
+
 
       modificationRequests.forEach(uid => {
         const charData = ALL_CHARACTERS[uid];
