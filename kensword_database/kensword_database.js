@@ -76,6 +76,19 @@ window.KENSWORD_ELEMENTS_DB = {
   "Trevas": (typeof kensword_darkness_element !== 'undefined') ? kensword_darkness_element : null
 };
 
+// 3.1 BANCO DE DADOS DE CINESES (KENSWORD_CINESIS_DB)
+window.KENSWORD_CINESIS_DB = {
+  "Termocinese": (typeof kensword_thermocinesis !== 'undefined') ? kensword_thermocinesis : null,
+  "Aurocinese": (typeof kensword_aurocinesis !== 'undefined') ? kensword_aurocinesis : null,
+  "Hemocinese": (typeof kensword_hemocinesis !== 'undefined') ? kensword_hemocinesis : null,
+  "Osseocinese": (typeof kensword_osseocinesis !== 'undefined') ? kensword_osseocinesis : null,
+  "Gravitocinese": (typeof kensword_gravitocinesis !== 'undefined') ? kensword_gravitocinesis : null,
+  "Fonocinese": (typeof kensword_phonocinesis !== 'undefined') ? kensword_phonocinesis : null,
+  "Telecinese": (typeof kensword_telekinesis !== 'undefined') ? kensword_telekinesis : null,
+  "Criocinese": (typeof kensword_cryocinesis !== 'undefined') ? kensword_cryocinesis : null,
+  "Fitocinese": (typeof kensword_phytocinesis !== 'undefined') ? kensword_phytocinesis : null
+};
+
 // 4. MÉTODOS DE BUSCA E UTILITÁRIOS GLOBAIS
 window.getAllKenswordAbilities = function() {
   let list = [];

@@ -191,6 +191,75 @@ function buildElements() {
     `;
   });
 
+  // Renderizar seção de CINESES abaixo de Trevas / Elementos
+  if (window.KENSWORD_CINESIS_DB && Object.keys(window.KENSWORD_CINESIS_DB).length > 0) {
+    const cinesisList = Object.values(window.KENSWORD_CINESIS_DB).filter(Boolean);
+
+    html += `
+      <div class="ornament-divider" style="margin: 4rem 0 2rem;"><span>✦ 🌀 ✦</span></div>
+
+      <div class="cinesis-header" style="text-align:center; margin-bottom: 2rem;">
+        <h2 class="section-title" style="font-size:2rem; margin-bottom: 0.5rem;">Cineses</h2>
+        <div style="font-family:'Cinzel',serif; font-size:0.95rem; color:var(--gold); letter-spacing:0.1em; margin-bottom:1rem;">
+          SISTEMA DE MANIPULAÇÃO CINÉTICA
+        </div>
+      </div>
+
+      <!-- Painel de Regras Gerais das Cineses -->
+      <div class="cinesis-rules-box" style="background: rgba(18, 14, 12, 0.75); border: 1px solid var(--wood-plank); border-left: 4px solid var(--gold); border-radius: 8px; padding: 1.5rem; margin-bottom: 2.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+        <h4 style="font-family:'Cinzel',serif; color:var(--gold); font-size:1.15rem; margin-top:0; margin-bottom:0.8rem; display:flex; align-items:center; gap:0.5rem;">
+          📜 Regras Gerais sobre Cineses
+        </h4>
+        <ul style="margin:0; padding-left:1.2rem; line-height:1.7; font-size:0.92rem; color:var(--ink);">
+          <li><strong>Perícia Requerida:</strong> Cineses dentro do universo do RPG <em>usam Perícia Manipulação para funcionar</em>.</li>
+          <li><strong>Atributo de Dano:</strong> No sistema, o atributo de dano é o atributo <em>Magia</em> (com exceção da <em>Osseocinese</em>, que utiliza <em>Resistência</em>).</li>
+          <li><strong>Restrição de Alvo:</strong> É <strong>proibido manipular o corpo de pessoas</strong> através de Cineses <em>(com exceção de Hemocinese para a raça Vampiro no LvL 15)</em>.</li>
+          <li><strong>Limite por Personagem:</strong> Você pode ter no <strong>máximo uma cinese</strong>.</li>
+          <li><strong>Diferença de Elemento:</strong> Cinese é <strong>diferente de Elemento</strong>, por isso <em>não existem cineses dos elementos</em>.</li>
+          <li><strong>Slot de Habilidade:</strong> Para manipular uma cinese, é <strong>necessário usar um slot de habilidade</strong>.</li>
+        </ul>
+      </div>
+
+      <h3 class="section-title" style="margin-top:1.5rem; font-size:1.5rem; text-align:left;">Cineses Disponíveis</h3>
+      <div class="races-grid">
+        ${cinesisList.map(cin => {
+          const dmgStat = cin.damageStat || 'Magia';
+          const statBadge = dmgStat === 'Resistência'
+            ? `<span style="background:rgba(180, 80, 40, 0.25); color:#ff9d76; border:1px solid rgba(255,120,60,0.3); padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:bold;">🛡️ Dano: Resistência</span>`
+            : `<span style="background:rgba(40, 140, 80, 0.25); color:#8bc34a; border:1px solid rgba(139,195,74,0.3); padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:bold;">✨ Dano: Magia</span>`;
+
+          const vampBadge = cin.restriction
+            ? `<span style="background:rgba(180, 20, 30, 0.3); color:#ff6b6b; border:1px solid rgba(255,80,80,0.4); padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:bold;">🩸 ${cin.restriction}</span>`
+            : '';
+
+          return `
+            <div class="element-card" style="border: 1px solid var(--wood-plank); border-radius:8px; padding:1.2rem; background:rgba(0,0,0,0.25); box-shadow:0 4px 6px rgba(0,0,0,0.15); display:flex; flex-direction:column; justify-content:space-between;">
+              <div>
+                <div class="el-title" style="font-family:'Cinzel',serif; font-size:1.2rem; font-weight:bold; color:var(--gold); margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                  <span>${cin.emoji} ${cin.name}</span>
+                </div>
+                <div style="display:flex; flex-wrap:wrap; gap:0.4rem; margin-bottom:0.6rem;">
+                  <span style="background:rgba(212,175,55,0.15); color:var(--gold); border:1px solid rgba(212,175,55,0.3); padding:2px 8px; border-radius:4px; font-size:0.75rem;">🎯 Perícia: Manipulação</span>
+                  ${statBadge}
+                  <span style="background:rgba(150,150,150,0.15); color:#ccc; border:1px solid rgba(255,255,255,0.15); padding:2px 8px; border-radius:4px; font-size:0.75rem;">🔮 1 Slot de Habilidade</span>
+                  ${vampBadge}
+                </div>
+                <div class="el-traits" style="font-style:italic; font-size:0.83rem; color:#aaa; margin-bottom:0.6rem;">${cin.traits ? cin.traits.join(' • ') : ''}</div>
+                <div class="el-desc" style="font-size:0.88rem; line-height:1.5; color:var(--ink); margin-bottom:0.8rem;">${cin.description}</div>
+              </div>
+
+              ${cin.specialRule ? `
+                <div style="margin-top:auto; font-size:0.82rem; color:var(--gold); background:rgba(0,0,0,0.3); border-left:3px solid var(--gold); padding:6px 10px; border-radius:0 4px 4px 0;">
+                  <strong>⚡ Efeito / Regra:</strong> ${cin.specialRule}
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
   container.innerHTML = html;
 }
 
