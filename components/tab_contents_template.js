@@ -160,6 +160,108 @@ window.KENSWORD_TEMPLATES.tabContents = `
         </div><!-- fim coluna direita -->
       </div><!-- fim grid -->
 
+      <!-- ======================== SISTEMA DE TREINOS ======================== -->
+      <div class="ornament-divider" style="margin: 3.5rem 0 2rem;"><span>✦ 🏋️ ✦</span></div>
+
+      <h3 class="section-title" style="font-size:1.6rem; margin-bottom:0.6rem;">🏋️ Sistema de Treinos</h3>
+      <p style="text-align:center; font-style:italic; color:var(--ink-light); margin-bottom:2.5rem; font-size:0.95rem;">
+        Treine seu personagem para ganhar XP, pontos de atributos e evoluir suas perícias.
+      </p>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:1.5rem; max-width:1000px; margin:0 auto;">
+
+        <!-- Treino Solo -->
+        <div style="border:1px solid var(--wood-plank); border-top:3px solid #f0a050; border-radius:10px; padding:1.3rem; background:rgba(0,0,0,0.25); box-shadow:0 4px 12px rgba(0,0,0,0.25); display:flex; flex-direction:column; gap:0.9rem;">
+          <div>
+            <div style="font-family:'Cinzel',serif; font-size:1.2rem; color:#f0a050; font-weight:bold; margin-bottom:0.3rem;">⚔️ Treino Solo</div>
+            <div style="font-size:0.88rem; color:var(--ink-light); line-height:1.5;">Treino para fortalecer seu personagem.</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:0.35rem;">
+            <div style="font-size:0.8rem; color:#ccc; display:flex; align-items:center; gap:0.5rem;">
+              <span style="color:#f0a050;">📝</span> <span><strong>Mínimo:</strong> 100 palavras</span>
+            </div>
+            <div style="font-size:0.8rem; color:#ccc; display:flex; align-items:center; gap:0.5rem;">
+              <span style="color:#f0a050;">🔁</span> <span><strong>Limite:</strong> 3 vezes por semana</span>
+            </div>
+          </div>
+          <div style="border-top:1px solid rgba(255,255,255,0.08); padding-top:0.8rem;">
+            <div style="font-family:'Cinzel',serif; font-size:0.75rem; color:var(--gold); letter-spacing:0.08em; margin-bottom:0.5rem;">RECOMPENSAS</div>
+            <div style="display:flex; flex-direction:column; gap:0.3rem;">
+              <div style="font-size:0.88rem; color:#8bc34a; display:flex; align-items:center; gap:0.5rem;"><span>✅</span> <strong>+10 XP</strong> (Level)</div>
+              <div style="font-size:0.88rem; color:#8bc34a; display:flex; align-items:center; gap:0.5rem;"><span>✅</span> <strong>+1 Ponto</strong> para distribuir</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Treino em Dupla -->
+        <div style="border:1px solid var(--wood-plank); border-top:3px solid #52d4e0; border-radius:10px; padding:1.3rem; background:rgba(0,0,0,0.25); box-shadow:0 4px 12px rgba(0,0,0,0.25); display:flex; flex-direction:column; gap:0.9rem;">
+          <div>
+            <div style="font-family:'Cinzel',serif; font-size:1.2rem; color:#52d4e0; font-weight:bold; margin-bottom:0.3rem;">🤝 Treino em Dupla</div>
+            <div style="font-size:0.88rem; color:var(--ink-light); line-height:1.5;">Treino que beneficia os dois lados.</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:0.35rem;">
+            <div style="font-size:0.8rem; color:#ccc; display:flex; align-items:center; gap:0.5rem;">
+              <span style="color:#52d4e0;">📝</span> <span><strong>Mínimo:</strong> 5 cenas por player</span>
+            </div>
+            <div style="font-size:0.8rem; color:#ccc; display:flex; align-items:center; gap:0.5rem;">
+              <span style="color:#52d4e0;">🔁</span> <span><strong>Limite:</strong> 2 vezes por semana</span>
+            </div>
+          </div>
+          <div style="border-top:1px solid rgba(255,255,255,0.08); padding-top:0.8rem;">
+            <div style="font-family:'Cinzel',serif; font-size:0.75rem; color:var(--gold); letter-spacing:0.08em; margin-bottom:0.5rem;">RECOMPENSAS</div>
+            <div style="display:flex; flex-direction:column; gap:0.3rem;">
+              <div style="font-size:0.88rem; color:#8bc34a; display:flex; align-items:center; gap:0.5rem;"><span>✅</span> <strong>+30 XP</strong> (Level)</div>
+              <div style="font-size:0.88rem; color:#8bc34a; display:flex; align-items:center; gap:0.5rem;"><span>✅</span> <strong>+3 Pontos</strong> para distribuir</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Treino de Perícia -->
+        <div style="border:1px solid var(--wood-plank); border-top:3px solid #a05ee0; border-radius:10px; padding:1.3rem; background:rgba(0,0,0,0.25); box-shadow:0 4px 12px rgba(0,0,0,0.25); display:flex; flex-direction:column; gap:0.9rem;">
+          <div>
+            <div style="font-family:'Cinzel',serif; font-size:1.2rem; color:#a05ee0; font-weight:bold; margin-bottom:0.3rem;">📚 Treino de Perícia</div>
+            <div style="font-size:0.88rem; color:var(--ink-light); line-height:1.5;">Para melhorar suas habilidades. É o único meio de aprender perícias sem ser em missões.</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:0.35rem;">
+            <div style="font-size:0.8rem; color:#ccc; display:flex; align-items:center; gap:0.5rem;">
+              <span style="color:#a05ee0;">📝</span> <span><strong>Mínimo:</strong> 100 palavras</span>
+            </div>
+            <div style="font-size:0.8rem; color:#ccc; display:flex; align-items:center; gap:0.5rem;">
+              <span style="color:#a05ee0;">🔁</span> <span><strong>Limite:</strong> 1 vez por semana por perícia</span>
+            </div>
+          </div>
+          <div style="border-top:1px solid rgba(255,255,255,0.08); padding-top:0.8rem;">
+            <div style="font-family:'Cinzel',serif; font-size:0.75rem; color:var(--gold); letter-spacing:0.08em; margin-bottom:0.5rem;">RECOMPENSAS</div>
+            <div style="display:flex; flex-direction:column; gap:0.3rem;">
+              <div style="font-size:0.88rem; color:#8bc34a; display:flex; align-items:center; gap:0.5rem;"><span>✅</span> <strong>+10 XP</strong> (Level)</div>
+              <div style="font-size:0.88rem; color:#8bc34a; display:flex; align-items:center; gap:0.5rem;"><span>✅</span> <strong>+1 Nível</strong> na Perícia Treinada</div>
+              <div style="font-size:0.88rem; color:#8bc34a; display:flex; align-items:center; gap:0.5rem;"><span>✅</span> <strong>+1 Ponto</strong> para distribuir</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Treino de Magia -->
+        <div style="border:1px solid var(--wood-plank); border-top:3px solid #e05252; border-radius:10px; padding:1.3rem; background:rgba(0,0,0,0.25); box-shadow:0 4px 12px rgba(0,0,0,0.25); display:flex; flex-direction:column; gap:0.9rem;">
+          <div>
+            <div style="font-family:'Cinzel',serif; font-size:1.2rem; color:#e05252; font-weight:bold; margin-bottom:0.3rem;">✨ Treino de Magia</div>
+            <div style="font-size:0.88rem; color:var(--ink-light); line-height:1.5;">Para criar, treinar ou melhorar magias. Existem magias que só podem ser obtidas com NPCs.</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:0.35rem;">
+            <div style="font-size:0.8rem; color:#ccc; display:flex; align-items:center; gap:0.5rem;">
+              <span style="color:#e05252;">🔁</span> <span><strong>Limite:</strong> 2 vezes por semana</span>
+            </div>
+          </div>
+          <div style="border-top:1px solid rgba(255,255,255,0.08); padding-top:0.8rem;">
+            <div style="font-family:'Cinzel',serif; font-size:0.75rem; color:var(--gold); letter-spacing:0.08em; margin-bottom:0.5rem;">RECOMPENSAS</div>
+            <div style="display:flex; flex-direction:column; gap:0.3rem;">
+              <div style="font-size:0.88rem; color:#8bc34a; display:flex; align-items:center; gap:0.5rem;"><span>✅</span> <strong>1 Magia</strong> (se foi treinada)</div>
+              <div style="font-size:0.88rem; color:#8bc34a; display:flex; align-items:center; gap:0.5rem;"><span>✅</span> <strong>+1 Ponto</strong> de Magia</div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- fim grid treinos -->
+
     </div>
   </section>
 
