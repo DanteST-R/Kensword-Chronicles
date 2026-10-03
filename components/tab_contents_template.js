@@ -265,6 +265,259 @@ window.KENSWORD_TEMPLATES.tabContents = `
     </div>
   </section>
 
+  <!-- ======================== ABA PERÍCIAS ======================== -->
+  <section id="tab-content-pericias" class="tab-content">
+    <div class="parchment-panel">
+      <h2 class="section-title">🎓 Perícias & Especializações</h2>
+      <div class="ornament-divider"><span>⚔️</span></div>
+      
+      <!-- Regra Geral & Exemplos -->
+      <div style="background:rgba(212,175,55,0.08); border-left:4px solid var(--gold); border-radius:8px; padding:1.2rem 1.5rem; margin-bottom:2.5rem; max-width:980px; margin-left:auto; margin-right:auto;">
+        <h3 style="font-family:'Cinzel',serif; color:var(--gold); font-size:1.15rem; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.5rem;">
+          <span>⚠️</span> Requisito de Habilitação
+        </h3>
+        <p style="font-size:0.95rem; color:var(--ink); line-height:1.6; margin-bottom:0.8rem;">
+          É <strong>obrigatório possuir a perícia correspondente</strong> para conseguir fazer uso da área ou empunhar armas eficientemente. Sem a perícia, o personagem é considerado <strong>Totalmente Inexperiente</strong>, sofrendo penalidades graves ou incapacidade de ação.
+        </p>
+        <div style="background:rgba(0,0,0,0.25); border-radius:6px; padding:0.8rem 1rem; border:1px solid rgba(255,255,255,0.05); font-size:0.9rem; color:var(--ink-light); line-height:1.6;">
+          <strong style="color:var(--gold-bright);">💡 Exemplos Práticos:</strong><br>
+          <span style="color:#8bc34a;">▸</span> <strong>Perícia em Espada:</strong> Aprende a usar espada com precisão.<br>
+          <span style="color:#52d4e0;">▸</span> <strong>Melhoria na Perícia em Espada:</strong> Melhora o uso em combate, tornando-se mais ágil, eficiente e letal.
+        </div>
+      </div>
+
+      <!-- Duas Colunas: Progressão de Níveis + Sugestões de Efeitos -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:2rem; max-width:1050px; margin:0 auto 3rem;">
+        
+        <!-- Coluna Esquerda: Requisitos de Progressão -->
+        <div style="border:1px solid var(--wood-plank); border-radius:10px; padding:1.5rem; background:rgba(0,0,0,0.25); box-shadow:0 4px 12px rgba(0,0,0,0.3);">
+          <h3 style="font-family:'Cinzel',serif; color:var(--gold); font-size:1.2rem; margin-bottom:0.8rem; display:flex; align-items:center; gap:0.5rem;">
+            <span>📊</span> Níveis de Proficiência (1 a 10)
+          </h3>
+          <p style="font-size:0.85rem; color:var(--ink-light); margin-bottom:1.2rem;">
+            A proficiência evolui através de treinos e missões até o nível máximo.
+          </p>
+
+          <div style="display:flex; flex-direction:column; gap:0.45rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0.8rem; border-radius:6px; background:rgba(224,82,82,0.1); border:1px solid rgba(224,82,82,0.25);">
+              <span style="font-weight:bold; color:#e05252; font-size:0.9rem;">Sem Perícia</span>
+              <span style="font-size:0.82rem; color:var(--ink-light);">Totalmente Inexperiente (Penalidades)</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.45rem 0.8rem; border-radius:6px; background:rgba(255,255,255,0.02);">
+              <span style="font-weight:bold; color:var(--gold-bright); font-size:0.9rem;">Lvl 1</span>
+              <span style="font-size:0.85rem; color:var(--ink);">Aprendiz / Iniciante</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.45rem 0.8rem; border-radius:6px; background:rgba(255,255,255,0.04);">
+              <span style="font-weight:bold; color:var(--gold-bright); font-size:0.9rem;">Lvl 2</span>
+              <span style="font-size:0.85rem; color:var(--ink);">Praticante</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.45rem 0.8rem; border-radius:6px; background:rgba(82,212,224,0.08); border-left:3px solid #52d4e0;">
+              <div>
+                <span style="font-weight:bold; color:#52d4e0; font-size:0.9rem;">Lvl 3</span>
+                <span style="font-size:0.75rem; color:#52d4e0; margin-left:6px; background:rgba(82,212,224,0.15); padding:1px 5px; border-radius:3px;">Desbloqueio</span>
+              </div>
+              <span style="font-size:0.85rem; color:var(--ink);">Habilitado (Hab. Derivadas Comuns)</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.45rem 0.8rem; border-radius:6px; background:rgba(255,255,255,0.02);">
+              <span style="font-weight:bold; color:var(--gold-bright); font-size:0.9rem;">Lvl 4</span>
+              <span style="font-size:0.85rem; color:var(--ink);">Proficiente</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.45rem 0.8rem; border-radius:6px; background:rgba(160,94,224,0.08); border-left:3px solid #a05ee0;">
+              <div>
+                <span style="font-weight:bold; color:#a05ee0; font-size:0.9rem;">Lvl 5</span>
+                <span style="font-size:0.75rem; color:#a05ee0; margin-left:6px; background:rgba(160,94,224,0.15); padding:1px 5px; border-radius:3px;">Desbloqueio</span>
+              </div>
+              <span style="font-size:0.85rem; color:var(--ink);">Veterano (Hab. Intermediárias)</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.45rem 0.8rem; border-radius:6px; background:rgba(255,255,255,0.02);">
+              <span style="font-weight:bold; color:var(--gold-bright); font-size:0.9rem;">Lvl 6</span>
+              <span style="font-size:0.85rem; color:var(--ink);">Elite</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.45rem 0.8rem; border-radius:6px; background:rgba(255,255,255,0.04);">
+              <span style="font-weight:bold; color:var(--gold-bright); font-size:0.9rem;">Lvl 7</span>
+              <span style="font-size:0.85rem; color:var(--ink);">Mestre de Campo</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.45rem 0.8rem; border-radius:6px; background:rgba(240,160,80,0.08); border-left:3px solid #f0a050;">
+              <span style="font-weight:bold; color:#f0a050; font-size:0.9rem;">Lvl 8</span>
+              <span style="font-size:0.85rem; color:var(--ink);">Grão-Mestre (Pode treinar outros em dupla)</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.45rem 0.8rem; border-radius:6px; background:rgba(255,255,255,0.02);">
+              <span style="font-weight:bold; color:var(--gold-bright); font-size:0.9rem;">Lvl 9</span>
+              <span style="font-size:0.85rem; color:var(--ink);">Lenda Viva</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0.8rem; border-radius:6px; background:rgba(212,175,55,0.18); border:1px solid rgba(212,175,55,0.4);">
+              <div>
+                <span style="font-weight:bold; color:var(--gold-bright); font-size:0.95rem;">Lvl 10</span>
+                <span style="font-size:0.75rem; color:var(--gold); margin-left:6px; background:rgba(212,175,55,0.25); padding:1px 6px; border-radius:3px;">MÁXIMO</span>
+              </div>
+              <span style="font-size:0.85rem; font-weight:bold; color:var(--gold-bright);">Expert (Eficiência Máxima / Sem Limitações)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Coluna Direita: Efeitos e Benefícios -->
+        <div style="border:1px solid var(--wood-plank); border-radius:10px; padding:1.5rem; background:rgba(0,0,0,0.25); box-shadow:0 4px 12px rgba(0,0,0,0.3); display:flex; flex-direction:column; gap:1.1rem;">
+          <h3 style="font-family:'Cinzel',serif; color:var(--gold); font-size:1.2rem; display:flex; align-items:center; gap:0.5rem;">
+            <span>💡</span> Bônus por Nível Investido
+          </h3>
+          <p style="font-size:0.85rem; color:var(--ink-light); line-height:1.5;">
+            Investir em perícias concede bônus passivos escalonados de acordo com a área de aplicação:
+          </p>
+
+          <!-- Card Bônus Combate -->
+          <div style="border-left:3px solid #e05252; background:rgba(224,82,82,0.06); padding:0.9rem 1.1rem; border-radius:0 8px 8px 0;">
+            <div style="font-weight:bold; color:#e05252; font-size:0.95rem; margin-bottom:0.25rem;">⚔️ Combate & Armas</div>
+            <div style="font-size:0.88rem; color:var(--ink); line-height:1.5;">
+              <strong>+2% de Dano Físico e Acerto</strong> por nível empunhando a arma da perícia (máx. <strong>+20%</strong> no Lvl 10).
+            </div>
+          </div>
+
+          <!-- Card Bônus Magia -->
+          <div style="border-left:3px solid #a05ee0; background:rgba(160,94,224,0.06); padding:0.9rem 1.1rem; border-radius:0 8px 8px 0;">
+            <div style="font-weight:bold; color:#a05ee0; font-size:0.95rem; margin-bottom:0.25rem;">✨ Magia & Apoio</div>
+            <div style="font-size:0.88rem; color:var(--ink); line-height:1.5;">
+              <strong>+2% de Eficiência Mágica, Cura ou Velocidade de Conjuração</strong> por nível naquela escola (máx. <strong>+20%</strong> no Lvl 10).
+            </div>
+          </div>
+
+          <!-- Card Bônus Defesa -->
+          <div style="border-left:3px solid #52d4e0; background:rgba(82,212,224,0.06); padding:0.9rem 1.1rem; border-radius:0 8px 8px 0;">
+            <div style="font-weight:bold; color:#52d4e0; font-size:0.95rem; margin-bottom:0.25rem;">🛡️ Sobrevivência & Defesa</div>
+            <div style="font-size:0.88rem; color:var(--ink); line-height:1.5;">
+              <strong>+2% de chance de ativação ou redução de dano</strong> por nível (Esquiva, Bloqueio, Resiliência — máx. <strong>+20%</strong>).
+            </div>
+          </div>
+
+          <!-- Card Bônus Ofícios -->
+          <div style="border-left:3px solid #f0a050; background:rgba(240,160,80,0.06); padding:0.9rem 1.1rem; border-radius:0 8px 8px 0;">
+            <div style="font-weight:bold; color:#f0a050; font-size:0.95rem; margin-bottom:0.25rem;">🔨 Ofícios & Criação</div>
+            <div style="font-size:0.88rem; color:var(--ink); line-height:1.5;">
+              <strong>+3% de chance de fabricação</strong> ou <strong>+2% de atributos adicionais</strong> em itens criados por nível.
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ======================== COMPÊNDIO DE PERÍCIAS ======================== -->
+      <div class="ornament-divider" style="margin: 3.5rem 0 2rem;"><span>✦ 🗂️ ✦</span></div>
+
+      <h3 class="section-title" style="font-size:1.6rem; margin-bottom:0.6rem;">🗂️ Compêndio de Perícias Oficiais</h3>
+      <p style="text-align:center; font-style:italic; color:var(--ink-light); margin-bottom:2.5rem; font-size:0.95rem;">
+        Todas as perícias disponíveis agrupadas por categoria temática.
+      </p>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:1.6rem; max-width:1100px; margin:0 auto;">
+
+        <!-- 1. Combate & Aptidões Físicas -->
+        <div style="border:1px solid var(--wood-plank); border-top:3px solid #e05252; border-radius:10px; padding:1.4rem; background:rgba(0,0,0,0.25); box-shadow:0 4px 12px rgba(0,0,0,0.25);">
+          <div style="font-family:'Cinzel',serif; font-size:1.15rem; color:#e05252; font-weight:bold; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
+            <span>🥊</span> Combate & Físicas
+          </div>
+          <div style="display:flex; flex-direction:column; gap:0.55rem;">
+            <div style="font-size:0.88rem; color:var(--ink); line-height:1.4;"><strong style="color:var(--gold-bright);">Combate:</strong> Habilidade de luta geral armada ou tática.</div>
+            <div style="font-size:0.88rem; color:var(--ink); line-height:1.4;"><strong style="color:var(--gold-bright);">Arte Marcial:</strong> Combate corpo a corpo desarmado.</div>
+            <div style="font-size:0.88rem; color:var(--ink); line-height:1.4;"><strong style="color:var(--gold-bright);">Vitalidade:</strong> Expansão do vigor físico geral e fôlego.</div>
+            <div style="font-size:0.88rem; color:var(--ink); line-height:1.4;"><strong style="color:var(--gold-bright);">Resistência:</strong> Suporte a impactos e traumas físicos.</div>
+            <div style="font-size:0.88rem; color:var(--ink); line-height:1.4;"><strong style="color:var(--gold-bright);">Resiliência:</strong> Tolerância a dores, venenos e efeitos adversos.</div>
+            <div style="font-size:0.88rem; color:var(--ink); line-height:1.4;"><strong style="color:var(--gold-bright);">Bloqueio:</strong> Absorção de impacto com escudos ou antebraço.</div>
+            <div style="font-size:0.88rem; color:var(--ink); line-height:1.4;"><strong style="color:var(--gold-bright);">Esquiva:</strong> Reflexos rápidos para esquivar e evasão.</div>
+            <div style="font-size:0.88rem; color:var(--ink); line-height:1.4;"><strong style="color:var(--gold-bright);">Agilidade:</strong> Flexibilidade, saltos e mobilidade no combate.</div>
+          </div>
+        </div>
+
+        <!-- 2. Armas & Equipamentos -->
+        <div style="border:1px solid var(--wood-plank); border-top:3px solid #f0a050; border-radius:10px; padding:1.4rem; background:rgba(0,0,0,0.25); box-shadow:0 4px 12px rgba(0,0,0,0.25);">
+          <div style="font-family:'Cinzel',serif; font-size:1.15rem; color:#f0a050; font-weight:bold; margin-bottom:0.8rem; display:flex; align-items:center; gap:0.5rem;">
+            <span>⚔️</span> Armas & Equipamentos
+          </div>
+          <p style="font-size:0.82rem; color:var(--ink-light); margin-bottom:0.9rem; font-style:italic;">
+            Cada arma exige sua própria perícia. A velocidade de ataque depende da arma empunhada.
+          </p>
+          <div style="display:flex; flex-wrap:wrap; gap:0.4rem; margin-bottom:1rem;">
+            <span style="background:rgba(240,160,80,0.12); border:1px solid rgba(240,160,80,0.3); color:#f0a050; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Adaga</span>
+            <span style="background:rgba(240,160,80,0.12); border:1px solid rgba(240,160,80,0.3); color:#f0a050; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Espada</span>
+            <span style="background:rgba(240,160,80,0.12); border:1px solid rgba(240,160,80,0.3); color:#f0a050; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Katana</span>
+            <span style="background:rgba(240,160,80,0.12); border:1px solid rgba(240,160,80,0.3); color:#f0a050; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Lança</span>
+            <span style="background:rgba(240,160,80,0.12); border:1px solid rgba(240,160,80,0.3); color:#f0a050; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Alabarda</span>
+            <span style="background:rgba(240,160,80,0.12); border:1px solid rgba(240,160,80,0.3); color:#f0a050; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Espadão</span>
+            <span style="background:rgba(240,160,80,0.12); border:1px solid rgba(240,160,80,0.3); color:#f0a050; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Machado</span>
+            <span style="background:rgba(240,160,80,0.12); border:1px solid rgba(240,160,80,0.3); color:#f0a050; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Foice</span>
+            <span style="background:rgba(240,160,80,0.12); border:1px solid rgba(240,160,80,0.3); color:#f0a050; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Martelo</span>
+            <span style="background:rgba(240,160,80,0.12); border:1px solid rgba(240,160,80,0.3); color:#f0a050; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Maça</span>
+            <span style="background:rgba(240,160,80,0.12); border:1px solid rgba(240,160,80,0.3); color:#f0a050; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Escudo</span>
+            <span style="background:rgba(240,160,80,0.12); border:1px solid rgba(240,160,80,0.3); color:#f0a050; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Ioiô</span>
+            <span style="background:rgba(240,160,80,0.12); border:1px solid rgba(240,160,80,0.3); color:#f0a050; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Cajado</span>
+            <span style="background:rgba(240,160,80,0.12); border:1px solid rgba(240,160,80,0.3); color:#f0a050; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.85rem; font-weight:bold;">Grimório</span>
+          </div>
+          <div style="background:rgba(0,0,0,0.3); border-radius:6px; padding:0.6rem 0.8rem; border:1px solid rgba(255,255,255,0.06); font-size:0.85rem; color:var(--ink);">
+            🏹 <strong>Arco e flecha:</strong> Velocidade de ataque e recuo dependem do tipo de arco e da tensão utilizada.
+          </div>
+        </div>
+
+        <!-- 3. Arcanismo & Mente -->
+        <div style="border:1px solid var(--wood-plank); border-top:3px solid #a05ee0; border-radius:10px; padding:1.4rem; background:rgba(0,0,0,0.25); box-shadow:0 4px 12px rgba(0,0,0,0.25);">
+          <div style="font-family:'Cinzel',serif; font-size:1.15rem; color:#a05ee0; font-weight:bold; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
+            <span>🔮</span> Arcano & Mente
+          </div>
+          <div style="display:flex; flex-direction:column; gap:0.55rem;">
+            <div style="font-size:0.88rem; color:var(--ink); line-height:1.4;"><strong style="color:var(--gold-bright);">Magia:</strong> Manipulação de fluxos de mana e magias ativas.</div>
+            <div style="font-size:0.88rem; color:var(--ink); line-height:1.4;"><strong style="color:var(--gold-bright);">Inteligência:</strong> Raciocínio tático, decifração e estratégias.</div>
+            <div style="font-size:0.88rem; color:var(--ink); line-height:1.4;"><strong style="color:var(--gold-bright);">Magia de Apoio:</strong> Conjuração de curas, buffs, barreiras e purificação.</div>
+            <div style="font-size:0.88rem; color:var(--ink); line-height:1.4;"><strong style="color:var(--gold-bright);">Concentração:</strong> Foco absoluto e proteção contra interrupções.</div>
+            <div style="font-size:0.88rem; color:var(--ink); line-height:1.4;"><strong style="color:var(--gold-bright);">Percepção:</strong> Visão em combate, identificação de armadilhas e pontos fracos.</div>
+            <div style="font-size:0.88rem; color:var(--ink); line-height:1.4;"><strong style="color:var(--gold-bright);">Furtividade:</strong> Movimentação silenciosa e ocultação nas sombras.</div>
+            <div style="font-size:0.88rem; color:var(--ink); line-height:1.4;"><strong style="color:var(--gold-bright);">Manuseio:</strong> Destreza manual, arrombamento e gatilhos rápidos.</div>
+            <div style="font-size:0.88rem; color:var(--ink); line-height:1.4;"><strong style="color:var(--gold-bright);">Precaução:</strong> Sentido de alerta prévio contra emboscadas.</div>
+            <div style="font-size:0.88rem; color:var(--ink); line-height:1.4;"><strong style="color:var(--gold-bright);">Encantar:</strong> Aplicação de infusões mágicas em armas e itens.</div>
+          </div>
+        </div>
+
+        <!-- 4. Ofícios, Trabalho & Exploração -->
+        <div style="border:1px solid var(--wood-plank); border-top:3px solid #8bc34a; border-radius:10px; padding:1.4rem; background:rgba(0,0,0,0.25); box-shadow:0 4px 12px rgba(0,0,0,0.25);">
+          <div style="font-family:'Cinzel',serif; font-size:1.15rem; color:#8bc34a; font-weight:bold; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
+            <span>🌿</span> Ofícios, Trabalho & Exploração
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:0.4rem; margin-bottom:1rem;">
+            <span style="background:rgba(139,195,74,0.12); border:1px solid rgba(139,195,74,0.3); color:#8bc34a; padding:0.25rem 0.55rem; border-radius:5px; font-size:0.82rem;">Agricultura</span>
+            <span style="background:rgba(139,195,74,0.12); border:1px solid rgba(139,195,74,0.3); color:#8bc34a; padding:0.25rem 0.55rem; border-radius:5px; font-size:0.82rem;">Pecuária</span>
+            <span style="background:rgba(139,195,74,0.12); border:1px solid rgba(139,195,74,0.3); color:#8bc34a; padding:0.25rem 0.55rem; border-radius:5px; font-size:0.82rem;">Culinária</span>
+            <span style="background:rgba(139,195,74,0.12); border:1px solid rgba(139,195,74,0.3); color:#8bc34a; padding:0.25rem 0.55rem; border-radius:5px; font-size:0.82rem;">Mineração</span>
+            <span style="background:rgba(139,195,74,0.12); border:1px solid rgba(139,195,74,0.3); color:#8bc34a; padding:0.25rem 0.55rem; border-radius:5px; font-size:0.82rem;">Artesanato</span>
+            <span style="background:rgba(139,195,74,0.12); border:1px solid rgba(139,195,74,0.3); color:#8bc34a; padding:0.25rem 0.55rem; border-radius:5px; font-size:0.82rem;">Metalurgia</span>
+            <span style="background:rgba(139,195,74,0.12); border:1px solid rgba(139,195,74,0.3); color:#8bc34a; padding:0.25rem 0.55rem; border-radius:5px; font-size:0.82rem;">Síntese</span>
+            <span style="background:rgba(139,195,74,0.12); border:1px solid rgba(139,195,74,0.3); color:#8bc34a; padding:0.25rem 0.55rem; border-radius:5px; font-size:0.82rem;">Estilismo</span>
+            <span style="background:rgba(139,195,74,0.12); border:1px solid rgba(139,195,74,0.3); color:#8bc34a; padding:0.25rem 0.55rem; border-radius:5px; font-size:0.82rem;">Caça</span>
+            <span style="background:rgba(139,195,74,0.12); border:1px solid rgba(139,195,74,0.3); color:#8bc34a; padding:0.25rem 0.55rem; border-radius:5px; font-size:0.82rem;">Monstros</span>
+            <span style="background:rgba(139,195,74,0.12); border:1px solid rgba(139,195,74,0.3); color:#8bc34a; padding:0.25rem 0.55rem; border-radius:5px; font-size:0.82rem;">Ciência</span>
+            <span style="background:rgba(139,195,74,0.12); border:1px solid rgba(139,195,74,0.3); color:#8bc34a; padding:0.25rem 0.55rem; border-radius:5px; font-size:0.82rem;">Alquimia</span>
+            <span style="background:rgba(139,195,74,0.12); border:1px solid rgba(139,195,74,0.3); color:#8bc34a; padding:0.25rem 0.55rem; border-radius:5px; font-size:0.82rem;">Masmorra</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:0.35rem; font-size:0.85rem; color:var(--ink-light); border-top:1px solid rgba(255,255,255,0.06); padding-top:0.6rem;">
+            <div>🌱 <strong>Conhecimento da Flora:</strong> Identificação e colheita de ervas e plantas místicas.</div>
+            <div>🐾 <strong>Conhecimento da Fauna:</strong> Comportamento, rastreamento e anatomia de animais.</div>
+          </div>
+        </div>
+
+        <!-- 5. Social & Intriga -->
+        <div style="border:1px solid var(--wood-plank); border-top:3px solid #e052a5; border-radius:10px; padding:1.4rem; background:rgba(0,0,0,0.25); box-shadow:0 4px 12px rgba(0,0,0,0.25);">
+          <div style="font-family:'Cinzel',serif; font-size:1.15rem; color:#e052a5; font-weight:bold; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
+            <span>🎭</span> Social & Intriga
+          </div>
+          <div style="display:flex; flex-direction:column; gap:0.55rem;">
+            <div style="font-size:0.88rem; color:var(--ink); line-height:1.4;"><strong style="color:var(--gold-bright);">Comunicação:</strong> Eloquência, oratória e influência interpessoal.</div>
+            <div style="font-size:0.88rem; color:var(--ink); line-height:1.4;"><strong style="color:var(--gold-bright);">Negociação:</strong> Obtenção de melhores preços em comércio e acordos.</div>
+            <div style="font-size:0.88rem; color:var(--ink); line-height:1.4;"><strong style="color:var(--gold-bright);">Sedução:</strong> Charme, atração e persuasão de indivíduos.</div>
+            <div style="font-size:0.88rem; color:var(--ink); line-height:1.4;"><strong style="color:var(--gold-bright);">Drenagem Vital:</strong> Manipulação de essência de terceiros em contato íntimo ou social.</div>
+            <div style="font-size:0.88rem; color:var(--ink); line-height:1.4;"><strong style="color:var(--gold-bright);">Manipulação:</strong> Enganação, leitura de intenções e controle de percepção alheia.</div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
   <section id="tab-content-characters" class="tab-content">
     <div class="parchment-panel">
       <h2 class="section-title">🧑‍🤝‍🧑 Personagens</h2>

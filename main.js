@@ -297,5 +297,5 @@ buildLevelTable();
 
 // Active tab from URL hash
 const hash = window.location.hash.replace('#', '');
-const validTabs = ['history','races','elements','nivelamento','map','characters','npcs','orgs','monsters','profile','pending','learn-abilities'];
+const validTabs = ['history','races','elements','nivelamento','pericias','map','characters','npcs','orgs','monsters','profile','pending','learn-abilities'];
 if (validTabs.includes(hash)) showTab(hash);
