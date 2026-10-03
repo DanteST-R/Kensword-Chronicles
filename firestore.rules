@@ -7,21 +7,17 @@ service cloud.firestore {
       return request.auth != null && 
         (get(/databases/$(database)/documents/characters/$(request.auth.uid)).data.isAdmin == true ||
          get(/databases/$(database)/documents/characters/$(request.auth.uid)).data.isSubAdmin == true ||
+         get(/databases/$(database)/documents/characters/$(request.auth.uid)).data.user_role == 'admin' ||
+         get(/databases/$(database)/documents/characters/$(request.auth.uid)).data.user_role == 'sub-admin' ||
          (request.auth.token.keys().hasAll(['email']) && request.auth.token.email.matches('.*dantestr.*')));
     }
 
     // Regras para Coleção de Personagens
     match /characters/{uid} {
-      // Leitura livre para membros logados verem o grupo
       allow read: if request.auth != null;
-      
-      // Criação de ficha: jogador comum só cria como "pending". Apenas Admin cria aprovado de imediato.
       allow create: if request.auth != null && 
                     (request.resource.data.status == 'pending' || 
                      request.resource.data.isAdmin == true);
-
-      // Atualização: Staff pode alterar tudo (incluindo status). 
-      // O próprio dono da ficha pode editar, mas NÃO pode alterar seu status ou se auto-promover a staff.
       allow update: if request.auth != null && (
         isStaff() || 
         (request.auth.uid == uid && 
@@ -29,9 +25,25 @@ service cloud.firestore {
          request.resource.data.isAdmin == resource.data.isAdmin &&
          request.resource.data.isSubAdmin == resource.data.isSubAdmin)
       );
-
-      // Deleção: Apenas Staff ou o próprio dono da ficha
       allow delete: if request.auth != null && (isStaff() || request.auth.uid == uid);
+    }
+
+    // Regras para Coleção de Histórias / Missões
+    match /stories/{storyId} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+
+    // Regras para Coleção de Monstros (Bestiário)
+    match /monsters/{monsterId} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+
+    // Regras para Coleção de Organizações
+    match /organizations/{orgId} {
+      allow read: if true;
+      allow write: if isStaff();
     }
 
     // Regras para Coleção de Notícias/Comunicados
