@@ -41,8 +41,8 @@ window.KENSWORD_TEMPLATES.tabContents = `
       <h2 class="section-title">🗺️ Localizações &amp; Mapa</h2>
       <div class="ornament-divider"><span>✦</span></div>
       <div class="map-container">
-        <img src="Photos/Kensword_Map.jpeg" alt="Mapa do Continente de Kensword — Kensword Chronicles">
-        <p style="font-family:'Cinzel',serif;font-size:0.8rem;color:var(--wood-plank);margin-top:0.8rem;letter-spacing:0.1em;">MAPA OFICIAL DE KENSWORD</p>
+        <img src="Photos/Kensword_Map.jpeg?v=2" alt="Mapa Oficial do Continente de Kensword">
+        <p style="font-family:'Cinzel',serif;font-size:0.85rem;color:var(--gold);margin-top:0.8rem;letter-spacing:0.12em;">MAPA OFICIAL DO CONTINENTE DE KENSWORD</p>
       </div>
       <div class="coming-soon"><p>Detalhes sobre cada continente e região serão adicionados em breve.</p></div>
     </div>
